@@ -28,7 +28,7 @@ makedocs(;
     repo = Documenter.Remotes.GitHub("JuliaAstro", "SolarPosition.jl"),
     sitename = "SolarPosition.jl",
     format = Documenter.HTML(;
-        canonical = "https://JuliaAstro.github.io/SolarPosition.jl",
+        canonical = "https://juliaastro.org/SolarPosition/stable/",
         size_threshold = 2^20, # 1 MB
     ),
     plugins = [bib],
@@ -44,4 +44,8 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/JuliaAstro/SolarPosition.jl")
+deploydocs(;
+    repo = "github.com/JuliaAstro/SolarPosition.jl",
+    push_preview = true,
+    versions = ["stable" => "v^", "v#.#"], # Restrict to minor releases
+)

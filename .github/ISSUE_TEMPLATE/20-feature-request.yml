@@ -9,7 +9,7 @@ body:
         Please, before submitting, make sure that:
 
         - There is not an [existing issue](https://github.com/JuliaAstro/SolarPosition.jl/issues) with the same question
-        - You have read the [contributing guide](https://JuliaAstro.github.io/SolarPosition.jl/dev/contributing/)
+        - You have read the [contributing guide](https://juliaastro.org/SolarPosition.jl/dev/contributing/)
         The form below should help you in filling out this issue.
   - type: textarea
     id: description

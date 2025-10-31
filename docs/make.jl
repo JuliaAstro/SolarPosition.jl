@@ -46,6 +46,6 @@ makedocs(;
 
 deploydocs(;
     repo = "github.com/JuliaAstro/SolarPosition.jl",
-    push_preview = true,
     versions = ["stable" => "v^", "v#.#"], # Restrict to minor releases
+    push_preview = true,
 )

@@ -1,7 +1,7 @@
 # SolarPosition.jl
 
-[![Stable documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaastro.org/SolarPosition/stable)
-[![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaastro.org/SolarPosition.jl/dev)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaastro.org/SolarPosition/stable/)
+[![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaastro.org/SolarPosition.jl/dev/)
 
 [![Test workflow status](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml/badge.svg?branch=main)](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaAstro/SolarPosition.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaAstro/SolarPosition.jl)

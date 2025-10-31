@@ -6,6 +6,7 @@ CurrentModule = SolarPosition
 
 ## SolarPosition.jl
 
+[![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaastro.org/SolarPosition.jl/dev/)
 [![Test workflow status](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml/badge.svg?branch=main)](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaAstro/SolarPosition.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaAstro/SolarPosition.jl)
 [![Lint workflow Status](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Lint.yml/badge.svg?branch=main)](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Lint.yml?query=branch%3Amain)
@@ -81,4 +82,4 @@ If you use SolarPosition.jl in your work, please cite using the reference given 
 
 ## Contributing
 
-If you want to make contributions of any kind, please first that a look into our [contributing guide directly on GitHub](https://github.com/JuliaAstro/SolarPosition.jl/blob/main/docs/src/contributing.md) or the [contributing page on the website](https://JuliaAstro.github.io/SolarPosition.jl/dev/contributing/)
+If you want to make contributions of any kind, please first that a look into our [contributing guide directly on GitHub](https://github.com/JuliaAstro/SolarPosition.jl/blob/main/docs/src/contributing.md) or the [contributing page on the website](https://juliaastro.org/SolarPosition/stable/contributing/)

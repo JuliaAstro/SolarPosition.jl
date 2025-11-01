@@ -22,7 +22,7 @@ refraction corrections.
 module Positioning
 
 using Dates: datetime2julian, DateTime, Date, daysinmonth, dayofyear
-using Dates: year, month, day, hour, minute, second
+using Dates: year, month, day, hour, minute, second, millisecond
 using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables

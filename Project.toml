@@ -12,15 +12,20 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [extensions]
 SolarPositionMakieExt = "Makie"
+SolarPositionModelingToolkitExt = ["ModelingToolkit", "Symbolics"]
 
 [compat]
 Aqua = "0.8"
 Dates = "1"
 DocStringExtensions = "0.8, 0.9"
 Makie = "0.24"
+ModelingToolkit = "10"
+Symbolics = "6, 7"
 StructArrays = "0.6, 0.7"
 Tables = "1"
 Test = "1"

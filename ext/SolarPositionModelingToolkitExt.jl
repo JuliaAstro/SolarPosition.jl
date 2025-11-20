@@ -26,6 +26,7 @@ Symbolics.@register_symbolic get_azimuth(pos)
 Symbolics.@register_symbolic get_elevation(pos)
 Symbolics.@register_symbolic get_zenith(pos)
 
+
 function SolarPositionBlock(; name)
     @parameters t0::DateTime [tunable = false] observer::Observer [tunable = false]
     @parameters algorithm::SolarAlgorithm = PSA() [tunable = false]

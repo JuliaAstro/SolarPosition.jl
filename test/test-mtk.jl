@@ -159,6 +159,6 @@ using CairoMakie
         @test fig isa Figure
 
         # Optionally save the plot (commented out to avoid file creation in tests)
-        save("test_solar_position_plot.png", fig)
+        # save("test_solar_position_plot.png", fig)
     end
 end

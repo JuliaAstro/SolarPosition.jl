@@ -175,7 +175,7 @@
 
 # @named room = building_room()
 # @named window = solar_window()
-# @named sun_building = SolarPositionBlock(latitude = 40.7128, longitude = -74.0060)  # NYC
+# @named sun_building = SolarPositionBlock()  # Set latitude/longitude via parameter map after compilation
 
 # # Connect the window solar gain to the room
 # @named building = compose(

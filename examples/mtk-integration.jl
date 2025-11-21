@@ -20,13 +20,13 @@
 # #
 # # Create a solar position component for a specific location
 
-# @named sun_sf = SolarPositionBlock(
-#     latitude = 37.7749,      # San Francisco
-#     longitude = -122.4194,
-#     altitude = 100.0,
-#     t0 = DateTime(2024, 6, 21, 0, 0, 0),  # Summer solstice midnight
-#     time_unit = Hour(1),      # t=1.0 means 1 hour from t0
-# )
+# @named sun_sf = SolarPositionBlock()
+# obs = Observer(37.7749, -122.4194, 100.0)  # San Francisco
+# t0 = DateTime(2024, 6, 21, 0, 0, 0)        # Summer solstice midnight
+# sys = mtkcompile(sun_sf)
+# pmap = [sys.observer => obs, sys.t0 => t0]
+#
+# # Now you can use `pmap` when simulating or evaluating the system
 
 # # The solar component has variables for azimuth, elevation, and zenith angles
 # println("Solar component unknowns: ", unknowns(sun_sf))

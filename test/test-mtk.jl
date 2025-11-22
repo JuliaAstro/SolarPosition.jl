@@ -1,8 +1,6 @@
 using Test
-using SolarPosition:
-    Observer, PSA, NoRefraction, SolarPositionBlock
-using ModelingToolkit:
-    @named, @variables, @parameters, unknowns, System, mtkcompile
+using SolarPosition: Observer, PSA, NoRefraction, SolarPositionBlock
+using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
 using Dates: DateTime
 using OrdinaryDiffEq

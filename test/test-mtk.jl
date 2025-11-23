@@ -1,10 +1,19 @@
 using Test
-using SolarPosition: Observer, PSA, NoRefraction, SolarPositionBlock
+using SolarPosition:
+    Observer, PSA, NOAA, Walraven, USNO, SPA, NoRefraction, SolarPositionBlock
+using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2
 using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
 using Dates: DateTime
 using OrdinaryDiffEq
 using CairoMakie
+
+# Include helper functions from other test files for expected values
+include("test-psa.jl")
+include("test-noaa.jl")
+include("test-walraven.jl")
+include("test-usno.jl")
+include("test-spa.jl")
 
 @testset "ModelingToolkit Extension" begin
     obs = Observer(37.7749, -122.4194, 100.0)
@@ -158,5 +167,64 @@ using CairoMakie
 
         # Optionally save the plot (commented out to avoid file creation in tests)
         # save("test_solar_position_plot.png", fig)
+    end
+
+    @testset "Algorithm Accuracy" begin
+        # Test that MTK extension produces correct results for each algorithm
+        # Test all conditions from each algorithm's test file
+        conds = test_conditions()
+
+        @testset "$alg_name" for (alg_name, alg, exp_func, refr) in [
+            ("PSA", PSA(2020), expected_2020, NoRefraction()),
+            ("Walraven", Walraven(), expected_walraven, NoRefraction()),
+            ("USNO", USNO(), expected_usno, NoRefraction()),
+            ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0)),
+            ("SPA", SPA(), expected_spa, NoRefraction()),
+        ]
+            # Get expected values for all test cases
+            df_expected = exp_func()
+
+            for (i, ((zdt, lat, lon, alt), row)) in
+                enumerate(zip(eachrow(conds), eachrow(df_expected)))
+                # Convert ZonedDateTime to UTC DateTime for ModelingToolkit
+                # astimezone converts to UTC, then DateTime extracts the DateTime part
+                dt = DateTime(astimezone(zdt, tz"UTC"))
+
+                # Create observer
+                if ismissing(alt)
+                    obs = Observer(lat, lon)
+                else
+                    obs = Observer(lat, lon, altitude = alt)
+                end
+
+                @named sun = SolarPositionBlock()
+                sys = mtkcompile(sun)
+
+                pmap = [
+                    sys.observer => obs,
+                    sys.t0 => dt,
+                    sys.algorithm => alg,
+                    sys.refraction => refr,
+                ]
+
+                prob = ODEProblem(sys, pmap, (0.0, 1.0))
+                sol = solve(prob; saveat = [0.0])
+
+                # For algorithms with refraction or SPA, use apparent_elevation/apparent_zenith
+                # Otherwise use elevation/zenith
+                if haskey(row, :apparent_elevation)
+                    @test isapprox(
+                        sol[sys.elevation][1],
+                        row.apparent_elevation,
+                        atol = 1e-6,
+                    )
+                    @test isapprox(sol[sys.zenith][1], row.apparent_zenith, atol = 1e-6)
+                else
+                    @test isapprox(sol[sys.elevation][1], row.elevation, atol = 1e-6)
+                    @test isapprox(sol[sys.zenith][1], row.zenith, atol = 1e-6)
+                end
+                @test isapprox(sol[sys.azimuth][1], row.azimuth, atol = 1e-6)
+            end
+        end
     end
 end

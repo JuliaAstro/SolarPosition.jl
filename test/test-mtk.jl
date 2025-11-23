@@ -8,13 +8,6 @@ using Dates: DateTime
 using OrdinaryDiffEq
 using CairoMakie
 
-# Include helper functions from other test files for expected values
-include("test-psa.jl")
-include("test-noaa.jl")
-include("test-walraven.jl")
-include("test-usno.jl")
-include("test-spa.jl")
-
 @testset "ModelingToolkit Extension" begin
     obs = Observer(37.7749, -122.4194, 100.0)
     t0 = DateTime(2024, 6, 21, 0, 0, 0)  # Summer solstice

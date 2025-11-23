@@ -4,6 +4,8 @@ using DataFrames
 using TimeZones
 using Dates
 
+include("expected-values.jl")
+
 function test_conditions()
     inputs = DataFrame(
         time = [

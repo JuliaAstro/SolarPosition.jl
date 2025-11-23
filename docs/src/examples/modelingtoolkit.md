@@ -27,7 +27,9 @@ using ModelingToolkit
 using ModelingToolkit: t_nounits as t
 using Dates
 using OrdinaryDiffEq
+```
 
+```@example mtk
 # Create a solar position block
 @named sun = SolarPositionBlock()
 

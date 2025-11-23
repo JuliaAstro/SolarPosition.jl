@@ -74,10 +74,10 @@ struct Observer{T<:AbstractFloat}
         # apply pole corrections to avoid numerical issues
         if lat == 90.0
             lat -= 1e-6
-            @warn "Latitude was 90°. Adjusted to $(lat)° to avoid singularities."
+            @warn "Latitude is 90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
         elseif lat == -90.0
             lat += 1e-6
-            @warn "Latitude was -90°. Adjusted to $(lat)° to avoid singularities."
+            @warn "Latitude is -90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
         end
 
         lat_rad = deg2rad(lat)
@@ -97,6 +97,7 @@ Base.show(io::IO, obs::Observer) = print(
 )
 
 abstract type AbstractSolPos end
+abstract type AbstractApparentSolPos <: AbstractSolPos end
 
 """
     $(TYPEDEF)
@@ -126,7 +127,7 @@ Also includes apparent elevation and zenith angles.
 # Fields
 $(TYPEDFIELDS)
 """
-struct ApparentSolPos{T} <: AbstractSolPos where {T<:AbstractFloat}
+struct ApparentSolPos{T} <: AbstractApparentSolPos where {T<:AbstractFloat}
     "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
     azimuth::T
     "Elevation (degrees, range [-90, 90])"
@@ -159,7 +160,7 @@ Solar position result from SPA algorithm including equation of time.
 # Fields
 $(TYPEDFIELDS)
 """
-struct SPASolPos{T} <: AbstractSolPos where {T<:AbstractFloat}
+struct SPASolPos{T} <: AbstractApparentSolPos where {T<:AbstractFloat}
     "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
     azimuth::T
     "Elevation (degrees, range [-90, 90])"

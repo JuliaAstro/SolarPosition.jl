@@ -106,7 +106,7 @@ The polynomial expressions for ΔT are from [NASADeltaT](@cite), based on the wo
 """
 function calculate_deltat(year::Real, month::Real)
     if year < -1999 || year > 3000
-        @warn "ΔT is undefined for years before -1999 or after 3000."
+        @warn "ΔT is undefined for years before -1999 or after 3000." maxlog = 1
     end
 
     y = year + (month - 0.5) / 12

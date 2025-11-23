@@ -62,7 +62,7 @@ println("  Zenith: ", round(sol[sys.zenith][1], digits=2), "°")
 
 ## SolarPositionBlock
 
-The [`SolarPositionBlock`](@ref) is a [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)  component that computes solar position angles based on time, observer location, and
+The [`SolarPositionBlock`](@ref) is a [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl) component that computes solar position angles based on time, observer location, and
 chosen positioning and refraction algorithms.
 
 ```@docs

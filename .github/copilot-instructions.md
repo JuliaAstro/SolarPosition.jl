@@ -29,12 +29,13 @@ SolarPosition.jl provides a simple, unified interface to a collection of validat
 ### Documentation
 
 1. **Use DocStringExtensions**: Leverage `TYPEDEF`, `TYPEDFIELDS`, and `TYPEDSIGNATURES` macros for automatic documentation
+
    ```julia
    """
        $(TYPEDEF)
-   
+
    Description of the type.
-   
+
    # Fields
    $(TYPEDFIELDS)
    """
@@ -124,6 +125,7 @@ pre-commit run --all-files
 ### CI/CD
 
 The project uses GitHub Actions workflows:
+
 - `Test.yml`: Runs tests on multiple Julia versions and operating systems
 - `Lint.yml`: Runs linting checks including pre-commit hooks
 - `Docs.yml`: Builds and deploys documentation

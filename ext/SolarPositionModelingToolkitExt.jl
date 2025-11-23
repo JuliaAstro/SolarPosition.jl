@@ -2,7 +2,7 @@ module SolarPositionModelingToolkitExt
 
 using SolarPosition: Observer, SolarAlgorithm, RefractionAlgorithm, PSA, NoRefraction
 using SolarPosition: SolPos, ApparentSolPos, SPASolPos, AbstractApparentSolPos
-using ModelingToolkit: @parameters, @variables, System, t_nounits
+using ModelingToolkit: @parameters, @variables, System
 using ModelingToolkit: t_nounits as t
 using Dates: DateTime, Millisecond
 import Symbolics

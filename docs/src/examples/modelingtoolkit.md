@@ -216,5 +216,4 @@ engine, so its internals cannot be symbolically simplified.
 
 - [Solar Positioning](@ref solar-positioning-algorithms) - Available positioning algorithms
 - [Refraction Correction](@ref refraction-correction) - Atmospheric refraction methods
-- [ModelingToolkit.jl Documentation](https://docs.sciml.ai/ModelingToolkit/stable/) -
-MTK framework documentation
+- [ModelingToolkit.jl Documentation](https://docs.sciml.ai/ModelingToolkit/stable/) - MTK framework documentation

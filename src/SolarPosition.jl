@@ -80,8 +80,9 @@ The simulation time `t` (accessed via `t_nounits`) is in **seconds** from the re
 
 ```julia
 using SolarPosition, ModelingToolkit
-using ModelingToolkit: t_nounits as t
+using ModelingToolkit: t_nounits as t, @named, mtkcompile
 using Dates
+using OrdinaryDiffEq: ODEProblem, solve
 
 @named sun = SolarPositionBlock()
 obs = Observer(51.5, -0.18, 15.0)

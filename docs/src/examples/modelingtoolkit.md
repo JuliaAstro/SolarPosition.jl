@@ -184,7 +184,7 @@ pmap = [
 ]
 
 prob = ODEProblem(sys_building, pmap, (0.0, 86400.0))
-sol = solve(prob, Tsit5(); saveat = 600.0)
+sol = solve(prob; saveat = 600.0)
 
 # Plot temperature evolution
 fig = Figure(size = (1200, 400))

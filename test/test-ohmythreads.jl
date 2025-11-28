@@ -1,7 +1,20 @@
 """Unit tests for SolarPositionOhMyThreadsExt.jl"""
 
 using OhMyThreads
-using StructArrays
+using SolarPosition.Positioning:
+    Observer,
+    PSA,
+    NOAA,
+    SPA,
+    SolPos,
+    ApparentSolPos,
+    SPASolPos,
+    solar_position,
+    solar_position!
+using SolarPosition.Refraction: NoRefraction, BENNETT
+using Dates: DateTime, Hour
+using TimeZones: ZonedDateTime, @tz_str
+using StructArrays: StructVector
 
 fields = (:azimuth, :elevation, :zenith)
 allfields = (:azimuth, :elevation, :zenith, :apparent_elevation, :apparent_zenith)

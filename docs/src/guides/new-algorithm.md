@@ -301,7 +301,7 @@ Before submitting your algorithm for review, ensure you've completed the followi
 | Tests | Cover basic functionality, refraction, vectors, and edge cases |
 | Test coverage | Ensure tests cover all new code paths |
 | Pre-commit | Checks pass (recommended locally, required in CI) |
-| Documentation | Updated `positioning.md`, `README.md` and `refraction.md` if needed |
+| Documentation | Add your algorithm to the list of available algorithms and update the tables in `positioning.md`, `README.md` and `refraction.md` if needed |
 | Literature | References added to `refs.bib` and cited in docstrings |
 
 ## Additional Resources

@@ -28,7 +28,6 @@ parallelize computations across the provided timestamp vector.
 
 ```@example parallel
 using SolarPosition
-using SolarPosition: BENNETT  # Import refraction algorithms
 using OhMyThreads
 using Dates
 using StructArrays

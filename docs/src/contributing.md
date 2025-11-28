@@ -24,3 +24,9 @@ the solution to the issue is clear, you can immediately create a pull request (s
 
 !!! tip
     Feel free to ping us after a few days if there are no responses.
+
+## Adding a new algorithm
+
+If you want to contribute a new solar positioning or refraction algorithm, see the
+[Adding a New Solar Position Algorithm](@ref new-algorithm) tutorial for a step-by-step
+guide.

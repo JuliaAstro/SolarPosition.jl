@@ -28,7 +28,7 @@ azimuth angles, which are essential for various applications where the sun is im
 
 SolarPosition.jl provides package extensions for advanced use cases:
 
-- **ModelingToolkit Extension**: Integrate solar position calculations into symbolic modeling workflows. Create composable solar energy system models with ModelingToolkit.jl. See the [ModelingToolkit Extension](examples/modelingtoolkit.md) guide for details.
+- **ModelingToolkit Extension**: Integrate solar position calculations into symbolic modeling workflows. Create composable solar energy system models with ModelingToolkit.jl. See the [ModelingToolkit Extension](guides/modelingtoolkit.md) guide for details.
 
 - **Makie Extension**: Plotting recipes for solar position visualization.
 

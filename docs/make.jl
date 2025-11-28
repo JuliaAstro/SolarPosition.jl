@@ -37,6 +37,7 @@ makedocs(;
         "Examples" => [
             "examples/getting-started.md",
             "examples/plotting.md",
+            "examples/parallel.md",
             "examples/modelingtoolkit.md",
         ],
         "reference.md",

@@ -107,3 +107,24 @@ end
     @test refraction(SPARefraction(101325.0, 12.0, 0.0), -0.26667) != 0.0
     @test refraction(SPARefraction(101325.0, 12.0, 0.0), -0.26668) != 1.0
 end
+
+@testset "SPARefraction constructor variants" begin
+
+    ref1 = SPARefraction()
+    @test ref1.pressure == 101325.0
+    @test ref1.temperature == 12.0
+    @test ref1.refraction_limit == -0.5667
+
+    # with pressure and temperature
+    ref2 = SPARefraction(100000.0, 15.0)
+    @test ref2.pressure == 100000.0
+    @test ref2.temperature == 15.0
+    @test ref2.refraction_limit == -0.5667
+
+    # refraction works
+    obs = Observer(45.0, 10.0, 100.0)
+    dt = DateTime(2020, 6, 21, 12, 0, 0)
+    pos = solar_position(obs, dt, SPA(), ref2)
+    @test pos isa SPASolPos
+    @test pos.apparent_elevation != pos.elevation
+end

@@ -7,9 +7,14 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 SolarPosition = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
+StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
+
+[sources]
+SolarPosition = {path = ".."}
 
 [compat]
 Documenter = "1"

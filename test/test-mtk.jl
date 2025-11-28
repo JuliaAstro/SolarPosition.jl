@@ -104,18 +104,6 @@ using CairoMakie
         azimuth_range = maximum(azimuth_vals) - minimum(azimuth_vals)
         @test azimuth_range > 180.0  # Sun should move significantly across the sky
 
-        println("Solution validation:")
-        println("  Time range: ", sol.t[1], " to ", sol.t[end], " seconds")
-        println("  Number of points: ", length(sol.t))
-        println("  Elevation range: ", min_elevation, "° to ", max_elevation, "°")
-        println(
-            "  Azimuth range: ",
-            minimum(azimuth_vals),
-            "° to ",
-            maximum(azimuth_vals),
-            "°",
-        )
-
         # Create plots
         fig = Figure(; size = (1200, 800))
 

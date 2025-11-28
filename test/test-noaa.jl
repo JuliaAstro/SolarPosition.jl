@@ -84,4 +84,22 @@
         )
         @test isapprox(res_with_refraction.zenith, res_no_refraction.zenith, atol = 1e-10)
     end
+
+    @testset "NOAA edge cases" begin
+        obs = Observer(45.0, 10.0, 100.0)
+
+        # Test time that produces negative true_solar_time / 4.0
+        # This should trigger the hour_angle < 0 branch
+        dt = DateTime(2020, 1, 1, 0, 0, 0)
+        pos = solar_position(obs, dt, NOAA(), NoRefraction())
+        @test pos isa SolPos
+        @test isfinite(pos.azimuth)
+
+        # Test time that produces positive true_solar_time / 4.0 (line 88)
+        # Solar noon should trigger the else branch
+        dt_noon = DateTime(2020, 6, 21, 12, 0, 0)
+        pos_noon = solar_position(obs, dt_noon, NOAA(), NoRefraction())
+        @test pos_noon isa SolPos
+        @test isfinite(pos_noon.azimuth)
+    end
 end

@@ -53,4 +53,10 @@
             @test res_alg isa ApparentSolPos
         end
     end
+
+    @testset "PSA coefficient error" begin
+        obs = Observer(45.0, 10.0, 100.0)
+        dt = DateTime(2020, 6, 21, 12, 0, 0)
+        @test_throws ErrorException solar_position(obs, dt, PSA(9999))
+    end
 end

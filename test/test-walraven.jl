@@ -21,4 +21,22 @@
         @test isapprox(res.zenith, exp_zen, atol = 1e-6)
         @test isapprox(res.azimuth, exp_az, atol = 1e-6)
     end
+
+    @testset "Walraven edge cases" begin
+        obs = Observer(45.0, 10.0, 100.0)
+
+        # Test leap year edge case
+        # February 29 in a leap year
+        dt_leap = DateTime(2020, 2, 29, 12, 0, 0)
+        pos = solar_position(obs, dt_leap, Walraven())
+        @test pos isa SolPos
+
+        # Test edge case with negative δ that's not leap*4 (line 33)
+        # Early in the year when δ < 0
+        dt_neg = DateTime(2020, 1, 2, 0, 0, 0)
+        pos = solar_position(obs, dt_neg, Walraven())
+        @test pos isa SolPos
+        @test isfinite(pos.azimuth)
+        @test isfinite(pos.elevation)
+    end
 end

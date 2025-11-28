@@ -21,6 +21,11 @@ Typically solar position algorithms can take the following set of inputs:
 - Date and time: in UTC or local time with timezone information
 - Optional atmospheric parameters: pressure and temperature (for refraction correction)
 
+## Example: Solar Path Plotting
+
+Solar positions can be calculated using [`solar_position`](@ref solar_position)
+and the in-place version [`solar_position!`](@ref solar_position!) functions.
+
 As an example, we plot the longest day of the year solar path for an observer located
 at the Van Gogh museum in Amsterdam (52.35888°N, 4.88185°E) on June 21, 2023:
 

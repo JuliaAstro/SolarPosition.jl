@@ -147,3 +147,25 @@ end
 
     @test deltat_values[1] < deltat_values[end]
 end
+
+@testset "ΔT edge cases" begin
+    # Test years before -1999 (should warn and return extrapolated value)
+    @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(-2500, 6, 1))
+
+    # Test years after 3000 (should warn and return extrapolated value)
+    @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(3500, 6, 1))
+
+    # Test year ranges that hit specific polynomial cases
+    # 1860-1900 range
+    dt1 = calculate_deltat(DateTime(1870, 6, 1))
+    @test dt1 isa Float64
+
+    # 1900-1920 range
+    dt2 = calculate_deltat(DateTime(1910, 6, 1))
+    @test dt2 isa Float64
+
+    # 1941-1961 range (line 50)
+    dt3 = calculate_deltat(DateTime(1950, 6, 1))
+    @test dt3 isa Float64
+    @test dt3 > 0.0
+end

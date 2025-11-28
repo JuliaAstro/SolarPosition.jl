@@ -85,4 +85,20 @@
         @test res.elevation > 85.0
         @test res.zenith < 5.0
     end
+
+    @testset "USNO with DefaultRefraction" begin
+
+        obs = Observer(45.0, 10.0, 100.0)
+        dt = DateTime(2020, 6, 21, 12, 0, 0)
+        pos = solar_position(obs, dt, USNO())
+        @test pos isa SolPos
+        @test !hasfield(typeof(pos), :apparent_elevation)
+
+        # result_type is correctly set
+        @test SolarPosition.Positioning.result_type(
+            USNO,
+            SolarPosition.Refraction.DefaultRefraction,
+            Float64,
+        ) == SolPos{Float64}
+    end
 end

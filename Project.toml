@@ -1,7 +1,10 @@
 name = "SolarPosition"
 uuid = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
-authors = ["Stefan de Lange"]
 version = "0.1.0"
+authors = ["Stefan de Lange"]
+
+[workspace]
+projects = ["test", "docs"]
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -29,10 +32,10 @@ Makie = "0.24"
 ModelingToolkit = "10.3.0 - 10.26.1"
 OhMyThreads = "0.8"
 StructArrays = "0.7"
+Symbolics = "6,7"
 Tables = "1"
 Test = "1"
 TimeZones = "1.22.0"
-Symbolics = "6,7"
 julia = "1.10"
 
 [extras]
@@ -41,6 +44,3 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Aqua", "Test"]
-
-[workspace]
-projects = ["test", "docs"]

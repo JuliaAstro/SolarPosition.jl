@@ -290,3 +290,76 @@ end
         @test isfinite(res.equation_of_time)
     end
 end
+
+@testset "Base.show methods" begin
+    @testset "Observer show" begin
+        obs = Observer(45.0, 10.0, 100.0)
+        str = sprint(show, obs)
+        @test occursin("Observer", str)
+        @test occursin("45.0", str)
+        @test occursin("10.0", str)
+        @test occursin("100.0", str)
+    end
+
+    @testset "SolPos show" begin
+        pos = SolPos(180.0, 45.0, 45.0)
+        str = sprint(show, pos)
+        @test occursin("SolPos", str)
+        @test occursin("180.0", str)
+        @test occursin("45.0", str)
+    end
+
+    @testset "ApparentSolPos show" begin
+        pos = ApparentSolPos(180.0, 45.0, 45.0, 46.0, 44.0)
+        str = sprint(show, pos)
+        @test occursin("ApparentSolPos", str)
+        @test occursin("180.0", str)
+        @test occursin("45.0", str)
+        @test occursin("46.0", str)
+        @test occursin("44.0", str)
+    end
+
+    @testset "SPASolPos show" begin
+        pos = SPASolPos(180.0, 45.0, 45.0, 46.0, 44.0, 5.0)
+        str = sprint(show, pos)
+        @test occursin("SPASolPos", str)
+        @test occursin("180.0", str)
+        @test occursin("45.0", str)
+        @test occursin("5.0", str)
+    end
+end
+
+@testset "Union{DateTime,ZonedDateTime} vector handling" begin
+    obs = Observer(45.0, 10.0, 100.0)
+    dt1 = DateTime(2020, 6, 21, 12, 0, 0)
+    dt2 = ZonedDateTime(2020, 6, 21, 13, 0, 0, tz"UTC")
+
+    # mixed vector of DateTime and ZonedDateTime
+    dts = Union{DateTime,ZonedDateTime}[dt1, dt2]
+    positions = solar_position(obs, dts, PSA())
+    @test length(positions) == 2
+    @test positions isa StructVector
+
+    # in-place version
+    pos = StructVector{SolPos{Float64}}(undef, 2)
+    solar_position!(pos, obs, dts, PSA())
+    @test length(pos) == 2
+    @test all(p -> p isa SolPos, pos)
+end
+
+@testset "Table interface with copy" begin
+    # non-mutating solar_position function for tables
+    obs = Observer(45.0, 10.0, 100.0)
+    df = DataFrame(
+        datetime = [DateTime(2020, 6, 21, 12, 0, 0), DateTime(2020, 6, 21, 13, 0, 0)],
+    )
+
+    # returns copy
+    df_result = solar_position(df, obs, PSA())
+
+    # should not be modified
+    @test !hasproperty(df, :azimuth)
+    @test hasproperty(df_result, :azimuth)
+    @test hasproperty(df_result, :elevation)
+    @test hasproperty(df_result, :zenith)
+end

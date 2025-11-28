@@ -50,8 +50,7 @@ spafields = (
         end
 
         @testset "solar_position with ZonedDateTime" begin
-            tz = tz"UTC"
-            zoned_times = [ZonedDateTime(dt, tz) for dt in times]
+            zoned_times = [ZonedDateTime(dt, tz"UTC") for dt in times]
             zoned_serial_results = solar_position(obs, zoned_times, PSA(), NoRefraction())
             results = solar_position(obs, zoned_times, PSA(), NoRefraction(), scheduler)
             @test length(results) == n

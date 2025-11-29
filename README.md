@@ -80,6 +80,17 @@ Atmospheric refraction correction algorithms available in SolarPosition.jl.
 | SG2       | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅      |
 | SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅      |
 
+## Extensions
+
+SolarPosition.jl provides optional extensions that are automatically loaded when you
+import the corresponding packages:
+
+| Extension       | Trigger Package      | Features                                          |
+| --------------- | -------------------- | ------------------------------------------------- |
+| Makie           | `Makie.jl`           | Plotting recipes for solar position visualization |
+| OhMyThreads     | `OhMyThreads.jl`     | Parallel computation of solar positions           |
+| ModelingToolkit | `ModelingToolkit.jl` | Symbolic solar position models for simulations    |
+
 ## How to Cite
 
 If you use SolarPosition.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/JuliaAstro/SolarPosition.jl/blob/main/CITATION.cff).

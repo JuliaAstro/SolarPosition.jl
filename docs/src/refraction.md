@@ -23,14 +23,14 @@ true position, especially near the horizon. Image source: [Wikimedia Commons](@c
 `SolarPosition.jl` includes several refraction correction algorithms. Below is a summary
 of the available algorithms:
 
-| Algorithm                                              | Reference      | Atmospheric Parameters | Status |
-| ------------------------------------------------------ | -------------- | ---------------------- | ------ |
-| [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)       | [Hug85](@cite) | Pressure, Temperature  | ✅     |
-| [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)       | [Arc80](@cite) | None                   | ✅     |
-| [`BENNETT`](@ref SolarPosition.Refraction.BENNETT)     | [Ben82](@cite) | Pressure, Temperature  | ✅     |
-| [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY) | [Mic88](@cite) | None                   | ✅     |
-| [`SG2`](@ref SolarPosition.Refraction.SG2)             | [BW12](@cite)  | Pressure, Temperature  | ✅     |
-| [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction)             | [RA04](@cite)  | Pressure, Temperature  | ✅     |
+| Algorithm                                                      | Reference      | Atmospheric Parameters | Status |
+| -------------------------------------------------------------- | -------------- | ---------------------- | ------ |
+| [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)               | [Hug85](@cite) | Pressure, Temperature  | ✅      |
+| [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)               | [Arc80](@cite) | None                   | ✅      |
+| [`BENNETT`](@ref SolarPosition.Refraction.BENNETT)             | [Ben82](@cite) | Pressure, Temperature  | ✅      |
+| [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         | [Mic88](@cite) | None                   | ✅      |
+| [`SG2`](@ref SolarPosition.Refraction.SG2)                     | [BW12](@cite)  | Pressure, Temperature  | ✅      |
+| [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction) | [RA04](@cite)  | Pressure, Temperature  | ✅      |
 
 To calculate refraction, we can use the [`refraction`](@ref SolarPosition.Refraction.refraction) function:
 

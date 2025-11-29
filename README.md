@@ -85,11 +85,11 @@ Atmospheric refraction correction algorithms available in SolarPosition.jl.
 SolarPosition.jl provides optional extensions that are automatically loaded when you
 import the corresponding packages:
 
-| Extension       | Trigger Package      | Features                                          |
-| --------------- | -------------------- | ------------------------------------------------- |
-| Makie           | `Makie.jl`           | Plotting recipes for solar position visualization |
-| OhMyThreads     | `OhMyThreads.jl`     | Parallel computation of solar positions           |
-| ModelingToolkit | `ModelingToolkit.jl` | Symbolic solar position models for simulations    |
+| Extension       | Trigger Package                                                       | Features                                          |
+| --------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| Makie           | [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)                    | Plotting recipes for solar position visualization |
+| OhMyThreads     | [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)     | Parallel computation of solar positions           |
+| ModelingToolkit | [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)   | Symbolic solar position models for simulations    |
 
 ## How to Cite
 

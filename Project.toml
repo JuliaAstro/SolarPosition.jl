@@ -1,6 +1,6 @@
 name = "SolarPosition"
 uuid = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
-version = "0.2.1"
+version = "0.2.3"
 authors = ["Stefan de Lange"]
 
 [workspace]

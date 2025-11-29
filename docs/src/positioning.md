@@ -56,13 +56,13 @@ fig
 
 The following solar position algorithms are currently implemented in SolarPosition.jl:
 
-| Algorithm                                             | Reference       | Accuracy      | Default Refraction | Status |
-| ----------------------------------------------------- | --------------- | ------------- | ------------------ | ------ |
-| [`PSA`](@ref SolarPosition.Positioning.PSA)           | [BALL01](@cite) | ±0.0083°      | None               | ✅     |
-| [`NOAA`](@ref SolarPosition.Positioning.NOAA)         | [NOAA](@cite)   | ±0.0167°      | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES) | ✅     |
-| [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Wal78](@cite)  | ±0.0100°      | None               | ✅     |
-| [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500°      | None               | ✅     |
-| [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003°      | Built-in           | ✅     |
+| Algorithm                                             | Reference       | Accuracy | Default Refraction                               | Status |
+| ----------------------------------------------------- | --------------- | -------- | ------------------------------------------------ | ------ |
+| [`PSA`](@ref SolarPosition.Positioning.PSA)           | [BALL01](@cite) | ±0.0083° | None                                             | ✅      |
+| [`NOAA`](@ref SolarPosition.Positioning.NOAA)         | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES) | ✅      |
+| [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Wal78](@cite)  | ±0.0100° | None                                             | ✅      |
+| [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500° | None                                             | ✅      |
+| [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003° | Built-in                                         | ✅      |
 
 ## [PSA](@id psa-algorithm)
 

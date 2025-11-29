@@ -186,12 +186,12 @@ pos = StructVector{SolPos{Float64}}(undef, length(times))
 
 On a system with 32 threads processing 527,041 timestamps (one year, minutely):
 
-| Method | Time | Speedup | Allocations |
-|--------|------|---------|-------------|
-| Serial | 87.9 ms | 1.0× | 12.06 MiB |
-| Parallel (DynamicScheduler) | 14.7 ms | **6.0×** | 66.59 MiB |
-| In-place (DynamicScheduler) | 5.53 ms | **15.9×** | 20.47 KiB |
-| In-place (StaticScheduler) | 5.84 ms | **15.0×** | 15.97 KiB |
+| Method                      | Time    | Speedup    | Allocations |
+| --------------------------- | ------- | ---------- | ----------- |
+| Serial                      | 87.9 ms | 1.0×       | 12.06 MiB   |
+| Parallel (DynamicScheduler) | 14.7 ms | **6.0×**   | 66.59 MiB   |
+| In-place (DynamicScheduler) | 5.53 ms | **15.9×**  | 20.47 KiB   |
+| In-place (StaticScheduler)  | 5.84 ms | **15.0×**  | 15.97 KiB   |
 
 !!! tip "Performance Tips"
     For the best performance:

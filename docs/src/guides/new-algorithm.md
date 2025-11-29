@@ -290,19 +290,19 @@ If any checks fail, fix the issues and run pre-commit again until all checks pas
 
 Before submitting your algorithm for review, ensure you've completed the following:
 
-| Task | Description |
-| ---- | ----------- |
-| Algorithm struct | Subtypes [`SolarAlgorithm`](@ref SolarPosition.Positioning.SolarAlgorithm) |
-| Docstring | Includes `TYPEDEF`, `TYPEDFIELDS`, accuracy, and references |
-| `_solar_position` | Function implemented with correct signature |
-| Default refraction | Handling defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction)  |
-| `result_type` | Function defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
-| Export | Algorithm exported from both modules |
-| Tests | Cover basic functionality, refraction, vectors, and edge cases |
-| Test coverage | Ensure tests cover all new code paths |
-| Pre-commit | Checks pass (recommended locally, required in CI) |
-| Documentation | Add your algorithm to the list of available algorithms and update the tables in `positioning.md`, `README.md` and `refraction.md` if needed |
-| Literature | References added to `refs.bib` and cited in docstrings |
+| Task               | Description                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| Algorithm struct   | Subtypes [`SolarAlgorithm`](@ref SolarPosition.Positioning.SolarAlgorithm)                  |
+| Docstring          | Includes `TYPEDEF`, `TYPEDFIELDS`, accuracy, and references                                 |
+| `_solar_position`  | Function implemented with correct signature                                                 |
+| Default refraction | Handling defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
+| `result_type`      | Function defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
+| Export             | Algorithm exported from both modules                                                        |
+| Tests              | Cover basic functionality, refraction, vectors, and edge cases                              |
+| Test coverage      | Ensure tests cover all new code paths                                                       |
+| Pre-commit         | Checks pass (recommended locally, required in CI)                                           |
+| Documentation      | Update algorithm lists in `positioning.md`, `README.md`, and `refraction.md`                |
+| Literature         | References added to `refs.bib` and cited in docstrings                                      |
 
 ## Additional Resources
 

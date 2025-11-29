@@ -1,5 +1,5 @@
 # Benchmark multithreaded solar position calculations
-# Run with: julia --threads=auto --project=examples examples/benchmark_threading.jl
+# Run with: julia --threads=auto --project=guides guides/benchmark_threading.jl
 
 using OhMyThreads
 using SolarPosition
@@ -63,7 +63,7 @@ println("\n🔹 SPA algorithm - Parallel (DynamicScheduler)")
 
 ## Output for times = collect(DateTime(2024, 1, 1):Second(1):DateTime(2024, 12, 31, 23))
 
-# julia> include("examples/benchmark_threading.jl")
+# julia> include("guides/benchmark_threading.jl")
 # Benchmarking solar_position with 32 threads
 # Number of timestamps: 31618801
 # ======================================================================

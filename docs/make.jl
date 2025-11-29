@@ -34,11 +34,12 @@ makedocs(;
     plugins = [bib],
     pages = [
         "index.md",
-        "Examples" => [
-            "examples/getting-started.md",
-            "examples/plotting.md",
-            "examples/parallel.md",
-            "examples/modelingtoolkit.md",
+        "Guides" => [
+            "guides/getting-started.md",
+            "guides/plotting.md",
+            "guides/parallel.md",
+            "guides/modelingtoolkit.md",
+            "guides/new-algorithm.md",
         ],
         "reference.md",
         "positioning.md",

@@ -1,0 +1,7 @@
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+SolarPosition = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
+
+[sources]
+SolarPosition = { path = ".." }

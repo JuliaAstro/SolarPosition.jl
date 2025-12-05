@@ -35,7 +35,7 @@ Symbolics.@register_symbolic get_azimuth(pos)::Real
 Symbolics.@register_symbolic get_elevation(pos)::Real
 Symbolics.@register_symbolic get_zenith(pos)::Real
 
-function SolarPositionBlock(; name; t0, observer, algorithm=PSA(), refraction=NoRefraction())
+function SolarPositionBlock(; name, t0, observer, algorithm=PSA(), refraction=NoRefraction())
     @parameters t0::DateTime = t0[tunable = false] 
     @parameters observer::Observer = observer [tunable = false]
     @parameters algorithm::SolarAlgorithm = algorithm [tunable = false]

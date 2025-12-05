@@ -1,6 +1,8 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 SolarPosition = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
 
 [sources]

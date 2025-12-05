@@ -58,7 +58,13 @@ function SolarPositionBlock(; name, t0 = Dates.now(), observer = Observer(0.0, 0
         zenith ~ get_zenith(pos),
     ]
 
-    return System(eqs, t; name = name, vars = [azimuth, elevation, zenith], params = [t0, observer, algorithm, refraction])
+    return System(
+        eqs, 
+        t,
+        #=vars=#[azimuth, elevation, zenith], 
+        #=params=#[t0, observer, algorithm, refraction]; 
+        name = name
+    )
 end
 
 end # module SolarPositionModelingToolkitExt

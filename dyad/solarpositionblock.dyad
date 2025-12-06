@@ -1,0 +1,31 @@
+type Observer = Native
+type SolarAlgorithm = Native
+type RefractionAlgorithm = Native
+
+"""
+Predict the Sun's position at a given `observer` location at the current time (in seconds)
+and output the `azimuth`, `elevation`, and `zenith` angles.
+
+### Time Convention
+
+The simulation time is assumed to be in **seconds** from the reference time `t0`. For example:
+- `t = 0` corresponds to `t0`
+- `t = 3600` corresponds to `t0 + 1 hour`
+- `t = 86400` corresponds to `t0 + 24 hours`
+"""
+external component SolarPositionBlock
+    "Solar azimuth angle in degrees (0° = North, 90° = East, 180° = South, 270° = West)"
+    azimuth = RealOutput()
+    "Solar elevation angle in degrees (angle above horizon, positive when sun is visible)"
+    elevation = RealOutput()
+    "Solar zenith angle in degrees (angle from vertical, complementary to elevation: `zenith = 90° - elevation`)"
+    zenith = RealOutput()
+
+    parameter t0::Real
+    "location (latitude, longitude, altitude).  Construct via the `SolarPosition.Observer(lat, long, alt)` constructor."
+    parameter observer::Observer
+    "Solar positioning algorithm.  Must be a subtype of `SolarPosition.SolarAlgorithm`."
+    parameter algorithm::SolarAlgorithm = PSA()
+    "Atmospheric refraction correction.  Must be a subtype of `SolarPosition.RefractionAlgorithm`."
+    parameter refraction::RefractionAlgorithm = NoRefraction()
+end

@@ -309,8 +309,8 @@ sizes, from single timestamp calculations to bulk operations with 100,000 timest
 
     # Add relative timing
     single_benchmarks.Time_μs = single_benchmarks.Time_ns ./ 1000
-    single_benchmarks.Relative_to_SPA = single_benchmarks.Time_ns ./
-        single_benchmarks[single_benchmarks.Algorithm .== "SPA", :Time_ns][1]
+    spa_time = filter(row -> row.Algorithm == "SPA", single_benchmarks).Time_ns[1]
+    single_benchmarks.Relative_to_SPA = single_benchmarks.Time_ns ./ spa_time
 
     single_benchmarks[:, [:Algorithm, :Time_μs, :Allocations, :Relative_to_SPA]]
     ```

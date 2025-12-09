@@ -121,15 +121,18 @@
         @test obs3.longitude == 10.0
 
         # Test internal helper functions directly (lines 281-290)
-        u = SolarPosition.Positioning.u_term(45.0)
+        lat_rad = deg2rad(45.0)
+        u = SolarPosition.Positioning.u_term(lat_rad)
         @test u isa Float64
         @test isfinite(u)
 
-        x = SolarPosition.Positioning.x_term(u, 45.0, 100.0)
+        (sin_u, cos_u) = sincos(u)
+        (sin_lat, cos_lat) = sincos(lat_rad)
+        x = SolarPosition.Positioning.x_term(sin_u, cos_u, 100.0, cos_lat)
         @test x isa Float64
         @test isfinite(x)
 
-        y = SolarPosition.Positioning.y_term(u, 45.0, 100.0)
+        y = SolarPosition.Positioning.y_term(sin_u, cos_u, 100.0, sin_lat)
         @test y isa Float64
         @test isfinite(y)
     end
@@ -173,5 +176,22 @@
             pos = solar_position(obs, dt, SPA())
             @test -20.0 <= pos.equation_of_time <= 20.0
         end
+    end
+
+    @testset "SPA refraction warning behavior" begin
+        obs = Observer(51.5, -0.1, 0.0)
+        dt = DateTime(2024, 6, 21, 12, 0, 0)
+
+        # no warning should be thrown for default / no refraction
+        @test_nowarn solar_position(obs, dt, SPA())
+        @test_nowarn solar_position(obs, dt, SPA(), NoRefraction())
+
+        # warning should be thrown for specific refraction algorithm
+        @test_logs (:warn, r"SPA algorithm has its own refraction correction") solar_position(
+            obs,
+            dt,
+            SPA(),
+            SolarPosition.Refraction.HUGHES(),
+        )
     end
 end

@@ -1,4 +1,4 @@
-# Parallel Computing with OhMyThreads.jl
+# [Parallel Computing with OhMyThreads.jl](@id parallel-computing)
 
 SolarPosition.jl provides a parallel computing extension using [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)
 for efficient multithreaded solar position calculations across large time series. This

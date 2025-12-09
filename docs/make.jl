@@ -39,6 +39,7 @@ makedocs(;
             "guides/plotting.md",
             "guides/parallel.md",
             "guides/modelingtoolkit.md",
+            "guides/benchmarking.md",
             "guides/new-algorithm.md",
         ],
         "reference.md",

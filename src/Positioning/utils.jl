@@ -1,12 +1,7 @@
 """Utility functions to be used across solar positioning algorithms."""
 
-# degree helpers
-deg2rad(x::Real) = float(x) * (π / 180)
-rad2deg(x::Real) = float(x) * (180 / π)
-
-# fractional hour helper
-fractional_hour(dt::DateTime) =
-    (hour(dt) + minute(dt) / 60.0 + second(dt) / 3600.0 + millisecond(dt) / 3.6e6)
+# dt.instant.value = milliseconds since epoch
+@inline fractional_hour(dt::DateTime) = (Dates.value(dt) % 86_400_000) / 3_600_000
 
 # constants
 const EMR = 6371.01  # Earth Mean Radius in km

@@ -78,13 +78,16 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     Ω = p1 + p2 * n                                                     # Eq. 3
     L = p3 + p4 * n                                                     # Eq. 4
     g = p5 + p6 * n                                                     # Eq. 5
-    λₑ = L + p7 * sin(g) + p8 * sin(2 * g) + p9 + p10 * sin(Ω)          # Eq. 6
-    ϵ = p11 + p12 * n + p13 * cos(Ω)                                    # Eq. 7
+    (sin_Ω, cos_Ω) = sincos(Ω)
+    λₑ = L + p7 * sin(g) + p8 * sin(2 * g) + p9 + p10 * sin_Ω           # Eq. 6
+    ϵ = p11 + p12 * n + p13 * cos_Ω                                     # Eq. 7
 
     # celestial right ascension (ra) and declination (d)
-    ra = atan(cos(ϵ) * sin(λₑ), cos(λₑ))                                # Eq. 8
+    (sin_ϵ, cos_ϵ) = sincos(ϵ)
+    (sin_λₑ, cos_λₑ) = sincos(λₑ)
+    ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)                                   # Eq. 8
     ra = mod(ra, 2π)
-    δ = asin(sin(ϵ) * sin(λₑ))                                          # Eq. 9
+    δ = asin(sin_ϵ * sin_λₑ)                                            # Eq. 9
 
     # computes the local coordinates: azimuth (γ) and zenith angle (θz)
     λt = rad2deg(obs.longitude_rad)
@@ -95,8 +98,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     gmst = p14 + p15 * n + hour                                         # Eq. 10
     lmst = (gmst * 15 + λt) * π / 180                                   # Eq. 11
     ω = lmst - ra                                                       # Eq. 12
-    θz = acos(cos_lat * cos(ω) * cos(δ) + sin(δ) * sin_lat)             # Eq. 13
-    γ = atan(-sin(ω), (tan(δ) * cos_lat - sin_lat * cos(ω)))            # Eq. 14
+    (sin_δ, cos_δ) = sincos(δ)
+    (sin_ω, cos_ω) = sincos(ω)
+    θz = acos(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat)                # Eq. 13
+    γ = atan(-sin_ω, (tan(δ) * cos_lat - sin_lat * cos_ω))              # Eq. 14
 
     # parallax correction
     θz = θz + (EMR / AU) * sin(θz)                                      # Eq. 15,16

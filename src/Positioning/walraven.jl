@@ -50,16 +50,17 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
 
     # obliquity of ecliptic [rad]
     ϵ = deg2rad(T(23.4420)) - deg2rad(T(3.56e-7)) * time
-    sel = sin(lon_sun)
+    (sin_lon_sun, cos_lon_sun) = sincos(lon_sun)
+    (sin_ϵ, cos_ϵ) = sincos(ϵ)
 
     # right ascension [rad]
-    ra = atan(sel * cos(ϵ), cos(lon_sun))
+    ra = atan(sin_lon_sun * cos_ϵ, cos_lon_sun)
     if ra < 0
         ra += 2 * T(π)
     end
 
     # declination [rad]
-    d = asin(sel * sin(ϵ))
+    d = asin(sin_lon_sun * sin_ϵ)
 
     # sidereal time [rad]
     side_t = 1.759335 + 2 * T(π) * (time / 365.25 - δ) + 3.694e-7 * time
@@ -75,15 +76,18 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
 
     # hour angle [rad]
     ha = ra - loc_s
+    (sin_d, cos_d) = sincos(d)
+    (sin_ha, cos_ha) = sincos(ha)
 
     # elevation [rad]
-    el = asin(obs.sin_lat * sin(d) + obs.cos_lat * cos(d) * cos(ha))
+    el = asin(obs.sin_lat * sin_d + obs.cos_lat * cos_d * cos_ha)
+    (sin_el, cos_el) = sincos(el)
 
     # azimuth [deg] - initial calculation
-    az = rad2deg(asin(cos(d) * sin(ha) / cos(el)))
+    az = rad2deg(asin(cos_d * sin_ha / cos_el))
 
     # azimuth quadrant assignment - Spencer (1989) correction for all longitudes
-    cos_az = sin(d) - sin(el) * obs.sin_lat
+    cos_az = sin_d - sin_el * obs.sin_lat
 
     if (cos_az >= 0) && (sin(deg2rad(az)) < 0)
         az = 360 + az

@@ -21,8 +21,8 @@ refraction corrections.
 """
 module Positioning
 
-using Dates: datetime2julian, DateTime, Date, daysinmonth, dayofyear
-using Dates: year, month, day, hour, minute, second, millisecond
+using Dates: Dates, datetime2julian, DateTime, Date, daysinmonth, dayofyear
+using Dates: year, month, day
 using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables
@@ -82,8 +82,7 @@ struct Observer{T<:AbstractFloat}
 
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
-        sin_lat = sin(lat_rad)
-        cos_lat = cos(lat_rad)
+        (sin_lat, cos_lat) = sincos(lat_rad)
         new{T}(lat, lon, alt, lat_rad, lon_rad, sin_lat, cos_lat)
     end
 end

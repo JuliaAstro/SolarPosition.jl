@@ -92,20 +92,21 @@ struct SPAObserver{T<:AbstractFloat}
 
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
-        sin_lat = sin(lat_rad)
-        cos_lat = cos(lat_rad)
+        (sin_lat, cos_lat) = sincos(lat_rad)
 
-        # pre-compute parallax terms
-        u = atan(0.99664719 * tan(lat_rad))
-        x = cos(u) + alt / 6378140.0 * cos_lat
-        y = 0.99664719 * sin(u) + alt / 6378140.0 * sin_lat
+        # pre-compute parallax terms using helper functions
+        u = u_term(lat_rad)
+        (sin_u, cos_u) = sincos(u)
+        x = x_term(sin_u, cos_u, alt, cos_lat)
+        y = y_term(sin_u, cos_u, alt, sin_lat)
 
         new{T}(lat, lon, alt, lat_rad, lon_rad, sin_lat, cos_lat, u, x, y)
     end
 end
 
-SPAObserver(lat::T, lon::T; altitude = 0.0) where {T} = SPAObserver{T}(lat, lon, altitude)
-SPAObserver(lat::T, lon::T, alt::T) where {T} = SPAObserver{T}(lat, lon, alt)
+SPAObserver(lat::T, lon::T; altitude = 0.0) where {T<:AbstractFloat} =
+    SPAObserver{T}(lat, lon, altitude)
+SPAObserver(lat::T, lon::T, alt::T) where {T<:AbstractFloat} = SPAObserver{T}(lat, lon, alt)
 
 
 # heliocentric longitude coefficients (L0-L5)
@@ -113,20 +114,20 @@ include("spa_coefficients.jl")
 
 
 # helper functions for SPA calculations
-@inline function julian_ephemeris_day(jd::T, δt::T) where {T}
+@inline function julian_ephemeris_day(jd, δt)
     return jd + δt / 86400.0
 end
 
-@inline function julian_ephemeris_century(jde::T) where {T}
+@inline function julian_ephemeris_century(jde)
     return (jde - 2451545.0) / 36525.0
 end
 
-@inline function julian_ephemeris_millennium(jce::T) where {T}
+@inline function julian_ephemeris_millennium(jce)
     return jce / 10.0
 end
 
 # calculate sum of A * cos(B + C*x) for coefficient array
-@inline function sum_periodic_terms(coeffs::Matrix{T}, x::T) where {T}
+@inline function sum_periodic_terms(coeffs::Matrix{T}, x) where {T<:AbstractFloat}
     s = zero(T)
     for i in axes(coeffs, 1)
         s += coeffs[i, 1] * cos(coeffs[i, 2] + coeffs[i, 3] * x)
@@ -134,7 +135,7 @@ end
     return s
 end
 
-function heliocentric_longitude(jme::T) where {T}
+function heliocentric_longitude(jme)
     l0 = sum_periodic_terms(L0, jme)
     l1 = sum_periodic_terms(L1, jme)
     l2 = sum_periodic_terms(L2, jme)
@@ -146,7 +147,7 @@ function heliocentric_longitude(jme::T) where {T}
     return mod(rad2deg(l_rad), 360.0)
 end
 
-function heliocentric_latitude(jme::T) where {T}
+function heliocentric_latitude(jme)
     b0 = sum_periodic_terms(B0, jme)
     b1 = sum_periodic_terms(B1, jme)
 
@@ -154,7 +155,7 @@ function heliocentric_latitude(jme::T) where {T}
     return rad2deg(b_rad)
 end
 
-function heliocentric_radius_vector(jme::T) where {T}
+function heliocentric_radius_vector(jme)
     r0 = sum_periodic_terms(R0, jme)
     r1 = sum_periodic_terms(R1, jme)
     r2 = sum_periodic_terms(R2, jme)
@@ -165,35 +166,35 @@ function heliocentric_radius_vector(jme::T) where {T}
 end
 
 # nutation calculations
-function mean_elongation(jce::T) where {T}
+function mean_elongation(jce)
     return 297.85036 + 445267.111480 * jce - 0.0019142 * jce^2 + jce^3 / 189474.0
 end
 
-function mean_anomaly_sun(jce::T) where {T}
+function mean_anomaly_sun(jce)
     return 357.52772 + 35999.050340 * jce - 0.0001603 * jce^2 - jce^3 / 300000.0
 end
 
-function mean_anomaly_moon(jce::T) where {T}
+function mean_anomaly_moon(jce)
     return 134.96298 + 477198.867398 * jce + 0.0086972 * jce^2 + jce^3 / 56250.0
 end
 
-function moon_argument_latitude(jce::T) where {T}
+function moon_argument_latitude(jce)
     return 93.27191 + 483202.017538 * jce - 0.0036825 * jce^2 + jce^3 / 327270.0
 end
 
-function moon_ascending_longitude(jce::T) where {T}
+function moon_ascending_longitude(jce)
     return 125.04452 - 1934.136261 * jce + 0.0020708 * jce^2 + jce^3 / 450000.0
 end
 
-function nutation_longitude_obliquity(jce::T) where {T}
+function nutation_longitude_obliquity(jce)
     x0 = mean_elongation(jce)
     x1 = mean_anomaly_sun(jce)
     x2 = mean_anomaly_moon(jce)
     x3 = moon_argument_latitude(jce)
     x4 = moon_ascending_longitude(jce)
 
-    δψ_sum = zero(T)
-    δε_sum = zero(T)
+    δψ_sum = 0.0
+    δε_sum = 0.0
 
     for i in axes(NUTATION_YTERM, 1)
         arg_deg =
@@ -204,8 +205,9 @@ function nutation_longitude_obliquity(jce::T) where {T}
             NUTATION_YTERM[i, 5] * x4
 
         arg_rad = deg2rad(arg_deg)
-        δψ_sum += (NUTATION_ABCD[i, 1] + NUTATION_ABCD[i, 2] * jce) * sin(arg_rad)
-        δε_sum += (NUTATION_ABCD[i, 3] + NUTATION_ABCD[i, 4] * jce) * cos(arg_rad)
+        (sin_arg, cos_arg) = sincos(arg_rad)
+        δψ_sum += (NUTATION_ABCD[i, 1] + NUTATION_ABCD[i, 2] * jce) * sin_arg
+        δε_sum += (NUTATION_ABCD[i, 3] + NUTATION_ABCD[i, 4] * jce) * cos_arg
     end
 
     δψ = δψ_sum / 36000000.0  # convert to degrees
@@ -214,7 +216,7 @@ function nutation_longitude_obliquity(jce::T) where {T}
     return δψ, δε
 end
 
-function mean_ecliptic_obliquity(jme::T) where {T}
+function mean_ecliptic_obliquity(jme)
     u = jme / 10.0
     ε0 = (
         84381.448 - 4680.93 * u - 1.55 * u^2 + 1999.25 * u^3 - 51.38 * u^4 - 249.67 * u^5 - 39.05 * u^6 +
@@ -226,112 +228,98 @@ function mean_ecliptic_obliquity(jme::T) where {T}
     return ε0  # arcseconds
 end
 
-@inline function true_ecliptic_obliquity(ε0::T, δε::T) where {T}
+@inline function true_ecliptic_obliquity(ε0, δε)
     return ε0 / 3600.0 + δε  # convert arcseconds to degrees
 end
 
-@inline function aberration_correction(R::T) where {T}
+@inline function aberration_correction(R)
     return -20.4898 / (3600.0 * R)  # degrees
 end
 
-@inline function apparent_sun_longitude(θ::T, δψ::T, δτ::T) where {T}
+@inline function apparent_sun_longitude(θ, δψ, δτ)
     return θ + δψ + δτ
 end
 
-function mean_sidereal_time(jd::T, jc::T) where {T}
+function mean_sidereal_time(jd, jc)
     ν0 =
         280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * jc^2 -
         jc^3 / 38710000.0
     return mod(ν0, 360.0)
 end
 
-function apparent_sidereal_time(ν0::T, δψ::T, ε::T) where {T}
+function apparent_sidereal_time(ν0, δψ, ε)
     return ν0 + δψ * cosd(ε)
 end
 
-function geocentric_sun_right_ascension(λ::T, ε::T, β::T) where {T}
-    λ_rad = deg2rad(λ)
-    ε_rad = deg2rad(ε)
-    β_rad = deg2rad(β)
+function geocentric_sun_right_ascension(λ, ε, β)
+    (sin_λ, cos_λ) = sincos(deg2rad(λ))
+    (sin_ε, cos_ε) = sincos(deg2rad(ε))
+    (sin_β, cos_β) = sincos(deg2rad(β))
 
-    num = sind(λ) * cosd(ε) - tand(β) * sind(ε)
-    α = rad2deg(atan(num, cosd(λ)))
+    num = sin_λ * cos_ε - (sin_β / cos_β) * sin_ε
+    α = rad2deg(atan(num, cos_λ))
     return mod(α, 360.0)
 end
 
-function geocentric_sun_declination(λ::T, ε::T, β::T) where {T}
-    β_rad = deg2rad(β)
-    ε_rad = deg2rad(ε)
-    λ_rad = deg2rad(λ)
+function geocentric_sun_declination(λ, ε, β)
+    (sin_β, cos_β) = sincos(deg2rad(β))
+    (sin_ε, cos_ε) = sincos(deg2rad(ε))
+    sin_λ = sin(deg2rad(λ))
 
-    δ = rad2deg(asin(sin(β_rad) * cos(ε_rad) + cos(β_rad) * sin(ε_rad) * sin(λ_rad)))
+    δ = rad2deg(asin(sin_β * cos_ε + cos_β * sin_ε * sin_λ))
     return δ
 end
 
-@inline function local_hour_angle(ν::T, lon::T, α::T) where {T}
+@inline function local_hour_angle(ν, lon, α)
     H = ν + lon - α
     return mod(H, 360.0)
 end
 
-@inline function equatorial_horizontal_parallax(R::T) where {T}
-    return 8.794 / (3600.0 * R)  # degrees
+@inline function equatorial_horizontal_parallax_rad(R)
+    return deg2rad(8.794 / (3600.0 * R))  # radians
 end
 
-# observer-dependent terms
-@inline function u_term(lat::T) where {T}
-    return atan(0.99664719 * tand(lat))
+# observer-dependent terms (used for parallax correction caching in SPAObserver)
+@inline function u_term(lat_rad)
+    return atan(0.99664719 * tan(lat_rad))
 end
 
-function x_term(u::T, lat::T, elev::T) where {T}
-    return cos(u) + elev / 6378140.0 * cosd(lat)
+@inline function x_term(sin_u, cos_u, alt, cos_lat)
+    return cos_u + alt / 6378140.0 * cos_lat
 end
 
-function y_term(u::T, lat::T, elev::T) where {T}
-    return 0.99664719 * sin(u) + elev / 6378140.0 * sind(lat)
+@inline function y_term(sin_u, cos_u, alt, sin_lat)
+    return 0.99664719 * sin_u + alt / 6378140.0 * sin_lat
 end
 
-function parallax_sun_right_ascension(x::T, ξ::T, H::T, δ::T) where {T}
-    ξ_rad = deg2rad(ξ)
-    H_rad = deg2rad(H)
-    δ_rad = deg2rad(δ)
-
-    num = -x * sin(ξ_rad) * sin(H_rad)
-    denom = cos(δ_rad) - x * sin(ξ_rad) * cos(H_rad)
-    Δα = rad2deg(atan(num, denom))
-    return Δα
+function parallax_sun_right_ascension_rad(x, sin_ξ, sin_H, cos_H, cos_δ)
+    num = -x * sin_ξ * sin_H
+    denom = cos_δ - x * sin_ξ * cos_H
+    Δα_rad = atan(num, denom)
+    return Δα_rad
 end
 
-function topocentric_sun_declination(δ::T, x::T, y::T, ξ::T, Δα::T, H::T) where {T}
-    δ_rad = deg2rad(δ)
-    ξ_rad = deg2rad(ξ)
-    Δα_rad = deg2rad(Δα)
-    H_rad = deg2rad(H)
+function topocentric_sun_declination_rad(sin_δ, cos_δ, x, y, sin_ξ, Δα_rad, cos_H)
+    cos_Δα = cos(Δα_rad)
 
-    num = (sin(δ_rad) - y * sin(ξ_rad)) * cos(Δα_rad)
-    denom = cos(δ_rad) - x * sin(ξ_rad) * cos(H_rad)
-    δ′ = rad2deg(atan(num, denom))
-    return δ′
+    num = (sin_δ - y * sin_ξ) * cos_Δα
+    denom = cos_δ - x * sin_ξ * cos_H
+    δ′_rad = atan(num, denom)
+    return δ′_rad
 end
 
-function topocentric_elevation_angle_without_atmosphere(lat::T, δ′::T, H′::T) where {T}
-    lat_rad = deg2rad(lat)
-    δ′_rad = deg2rad(δ′)
-    H′_rad = deg2rad(H′)
+function topocentric_elevation_angle_without_atmosphere(sin_lat, cos_lat, δ′_rad, H′_rad)
+    (sin_δ′, cos_δ′) = sincos(δ′_rad)
+    cos_H′ = cos(H′_rad)
 
-    e0 =
-        rad2deg(asin(sin(lat_rad) * sin(δ′_rad) + cos(lat_rad) * cos(δ′_rad) * cos(H′_rad)))
+    e0 = rad2deg(asin(sin_lat * sin_δ′ + cos_lat * cos_δ′ * cos_H′))
     return e0
 end
 
-function atmospheric_refraction_correction(
-    pressure::T,
-    temp::T,
-    e0::T,
-    atmos_refract::T,
-) where {T}
+function atmospheric_refraction_correction(pressure, temp, e0, atmos_refract)
     # only apply correction when sun is above horizon accounting for refraction
     if e0 < -(0.26667 + atmos_refract)
-        return zero(T)
+        return 0.0
     end
 
     # convert pressure from Pa to hPa/mbar
@@ -343,28 +331,27 @@ function atmospheric_refraction_correction(
     return Δe  # already in degrees
 end
 
-function topocentric_azimuth_angle(H′::T, δ′::T, lat::T) where {T}
-    H′_rad = deg2rad(H′)
-    δ′_rad = deg2rad(δ′)
-    lat_rad = deg2rad(lat)
+function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
+    (sin_H′, cos_H′) = sincos(H′_rad)
+    tan_δ′ = tan(δ′_rad)
 
-    num = sin(H′_rad)
-    denom = cos(H′_rad) * sin(lat_rad) - tan(δ′_rad) * cos(lat_rad)
+    num = sin_H′
+    denom = cos_H′ * sin_lat - tan_δ′ * cos_lat
     γ = rad2deg(atan(num, denom))
 
     # convert from astronomers azimuth (0=south) to standard (0=north)
-    ϕ = mod(γ + 180.0, 360.0)
-    return ϕ
+    φ = mod(γ + 180.0, 360.0)
+    return φ
 end
 
-function sun_mean_longitude(jme::T) where {T}
+function sun_mean_longitude(jme)
     M =
         280.4664567 + 360007.6982779 * jme + 0.03032028 * jme^2 + jme^3 / 49931.0 -
         jme^4 / 15300.0 - jme^5 / 2000000.0
     return M
 end
 
-function equation_of_time(M::T, α::T, δψ::T, ε::T) where {T}
+function equation_of_time(M, α, δψ, ε)
     E = M - 0.0057183 - α + δψ * cosd(ε)
     E = mod(E, 360.0)
     # convert to minutes
@@ -380,13 +367,17 @@ function equation_of_time(M::T, α::T, δψ::T, ε::T) where {T}
     return E
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T}
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     return _solar_position(spa_obs, dt, alg)
 end
 
-function _solar_position(obs::SPAObserver{T}, dt::DateTime, alg::SPA) where {T}
-    δt = if alg.delta_t === nothing
+function _solar_position(
+    obs::SPAObserver{T},
+    dt::DateTime,
+    alg::SPA,
+) where {T<:AbstractFloat}
+    δt::Float64 = if alg.delta_t === nothing
         calculate_deltat(dt)
     else
         alg.delta_t
@@ -433,18 +424,28 @@ function _solar_position(obs::SPAObserver{T}, dt::DateTime, alg::SPA) where {T}
 
     # observer local hour angle
     H = local_hour_angle(ν, obs.longitude, α)
+    H_rad = deg2rad(H)
 
     # parallax correction - use pre-computed values from SPAObserver
-    ξ = equatorial_horizontal_parallax(R)
-    # Note: obs.u, obs.x, obs.y are already computed in SPAObserver constructor
+    ξ_rad = equatorial_horizontal_parallax_rad(R)
+    sin_ξ = sin(ξ_rad)
 
-    # topocentric sun position
-    Δα = parallax_sun_right_ascension(obs.x, ξ, H, δ)
-    δ′ = topocentric_sun_declination(δ, obs.x, obs.y, ξ, Δα, H)
-    H′ = mod(H - Δα, 360.0)  # topocentric local hour angle
+    # topocentric sun position (work in radians internally)
+    δ_rad = deg2rad(δ)
+    (sin_δ, cos_δ) = sincos(δ_rad)
+    (sin_H, cos_H) = sincos(H_rad)
+    Δα_rad = parallax_sun_right_ascension_rad(obs.x, sin_ξ, sin_H, cos_H, cos_δ)
+    δ′_rad =
+        topocentric_sun_declination_rad(sin_δ, cos_δ, obs.x, obs.y, sin_ξ, Δα_rad, cos_H)
+    H′_rad = H_rad - Δα_rad  # topocentric local hour angle (radians)
 
     # topocentric elevation (without atmosphere)
-    e0 = topocentric_elevation_angle_without_atmosphere(obs.latitude, δ′, H′)
+    e0 = topocentric_elevation_angle_without_atmosphere(
+        obs.sin_lat,
+        obs.cos_lat,
+        δ′_rad,
+        H′_rad,
+    )
 
     # atmospheric refraction correction
     Δe = atmospheric_refraction_correction(
@@ -460,7 +461,7 @@ function _solar_position(obs::SPAObserver{T}, dt::DateTime, alg::SPA) where {T}
     θz0 = 90.0 - e0  # zenith without refraction
 
     # azimuth (same for both apparent and non-apparent)
-    az = topocentric_azimuth_angle(H′, δ′, obs.latitude)
+    az = topocentric_azimuth_angle(H′_rad, δ′_rad, obs.sin_lat, obs.cos_lat)
 
     return SPASolPos{T}(az, e0, θz0, e, θz, eot)
 end
@@ -471,18 +472,28 @@ function _solar_position(
     dt::DateTime,
     alg::SPA,
     ::Refraction.NoRefraction,
-) where {T}
+) where {T<:AbstractFloat}
     return _solar_position(obs, dt, alg)
 end
 
-# SPA has its own internal refraction handling, so when a refraction algorithm is provided,
-# we ignore it and use SPA's built-in refraction
+# SPA-specific method for DefaultRefraction - use SPA's built-in refraction silently
 function _solar_position(
     obs::Observer{T},
     dt::DateTime,
     alg::SPA,
-    refraction::Refraction.RefractionAlgorithm,
-) where {T}
+    ::Refraction.DefaultRefraction,
+) where {T<:AbstractFloat}
+    return _solar_position(obs, dt, alg)
+end
+
+# SPA has its own internal refraction handling, so when a specific refraction algorithm
+# is provided, we ignore it and use SPA's built-in refraction
+function _solar_position(
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+    ::Refraction.RefractionAlgorithm,
+) where {T<:AbstractFloat}
     @warn "SPA algorithm has its own refraction correction. The provided refraction algorithm will be ignored." maxlog =
         1
     return _solar_position(obs, dt, alg)

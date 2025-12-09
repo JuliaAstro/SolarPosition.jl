@@ -421,7 +421,6 @@ using PythonCall
 # Import Python modules
 sp = pyimport("solposx.solarposition")
 pd = pyimport("pandas")
-timeit = pyimport("timeit")
 ```
 
 ### Benchmark Configuration

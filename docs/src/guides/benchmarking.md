@@ -482,18 +482,13 @@ We benchmark both libraries across different input sizes:
             # Python benchmark
             py_func, py_kwargs = solposx_algorithms[algo_name]
 
-            # Time the Python function (5 runs, take median)
-            py_elapsed = Float64[]
-            for _ in 1:5
-                t_start = time()
-                if isempty(py_kwargs)
-                    py_func(py_times_idx, lat, lon)
-                else
-                    py_func(py_times_idx, lat, lon; py_kwargs...)
-                end
-                push!(py_elapsed, (time() - t_start) * 1000)  # Convert to ms
+            # Benchmark Python function using BenchmarkTools
+            if isempty(py_kwargs)
+                py_bench = @benchmark $py_func($py_times_idx, $lat, $lon) samples=5 evals=1
+            else
+                py_bench = @benchmark $py_func($py_times_idx, $lat, $lon; $py_kwargs...) samples=5 evals=1
             end
-            python_time_ms = median(py_elapsed)
+            python_time_ms = median(py_bench.times) / 1e6
 
             speedup = python_time_ms / julia_time_ms
 

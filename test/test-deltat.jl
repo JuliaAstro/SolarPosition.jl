@@ -169,3 +169,31 @@ end
     @test dt3 isa Float64
     @test dt3 > 0.0
 end
+
+@testset "1920-1941 range polynomial" begin
+    # Test the 1920-1941 year range which uses the polynomial:
+    # 21.20 + 0.84493 * (y - 1920) - 0.076100 * (y - 1920)^2 + 0.0020936 * (y - 1920)^3
+    # Test at start of range
+    dt_1920 = calculate_deltat(1920, 6)
+    @test isfinite(dt_1920)
+    @test dt_1920 ≈ 21.2 atol = 1.0  # At y=1920, t≈0, so ΔT ≈ 21.20
+
+    # Test in middle of range (1930)
+    dt_1930 = calculate_deltat(1930, 6)
+    @test isfinite(dt_1930)
+    @test dt_1930 > 0.0
+    # Expected value around 24 seconds based on the polynomial
+    @test dt_1930 ≈ 24.0 atol = 2.0
+
+    # Test near end of range (1940)
+    dt_1940 = calculate_deltat(1940, 6)
+    @test isfinite(dt_1940)
+    @test dt_1940 > 0.0
+    # Expected value around 24 seconds based on the polynomial
+    @test dt_1940 ≈ 24.0 atol = 3.0
+
+    # Test with DateTime interface
+    dt_1935 = calculate_deltat(DateTime(1935, 6, 15))
+    @test isfinite(dt_1935)
+    @test dt_1935 > 0.0
+end

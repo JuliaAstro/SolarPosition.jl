@@ -13,7 +13,7 @@ CurrentModule = SolarPosition
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![tested with JET.jl](https://img.shields.io/badge/%F0%9F%9B%A9%EF%B8%8F_tested_with-JET.jl-233f9a)](https://github.com/aviatesk/JET.jl)
 
-SolarPosition.jl provides a simple, unified interface to a collection of validated solar position
+`SolarPosition.jl` provides a simple, unified interface to a collection of validated solar position
 algorithms written in pure, performant julia.
 
 Solar positioning algorithms are commonly used to calculate the solar zenith and
@@ -26,11 +26,13 @@ azimuth angles, which are essential for various applications where the sun is im
 
 ## Extensions
 
-SolarPosition.jl provides package extensions for advanced use cases:
+SolarPosition.jl provides package extensions for the following use cases:
 
-- **ModelingToolkit Extension**: Integrate solar position calculations into symbolic modeling workflows. Create composable solar energy system models with ModelingToolkit.jl. See the [ModelingToolkit Extension](guides/modelingtoolkit.md) guide for details.
+- **[ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl)**: Integrate solar position calculations into symbolic modeling workflows. Create composable solar energy system models. A [Dyad](https://juliahub.com/products/dyad) component is also provided. See the [ModelingToolkit Extension](guides/modelingtoolkit.md) guide for details.
 
-- **Makie Extension**: Plotting recipes for solar position visualization.
+- **[Makie.jl](https://github.com/MakieOrg/Makie.jl)**: Plotting recipes for solar position visualization with `sunpathplot` and `sunpathpolarplot` functions. See the plotting guide in the [Makie Extension](guides/plotting.md) for details.
+
+- **[OhMyThreads.jl](https://github.com/JuliaFolds2/OhMyThreads.jl)**: Multithreaded solar position computation using task-based parallelism. Provides parallel implementations of [`solar_position!`](@ref) for efficient batch calculations across multiple timestamps. See the [OhMyThreads Extension](guides/parallel.md) guide for details.
 
 ## Acknowledgement
 

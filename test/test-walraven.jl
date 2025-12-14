@@ -17,9 +17,9 @@
         end
 
         res = solar_position(obs, dt, Walraven())
-        @test isapprox(res.elevation, exp_elev, atol = 1e-6)
-        @test isapprox(res.zenith, exp_zen, atol = 1e-6)
-        @test isapprox(res.azimuth, exp_az, atol = 1e-6)
+        @test isapprox(res.elevation, exp_elev, atol = 1e-8)
+        @test isapprox(res.zenith, exp_zen, atol = 1e-8)
+        @test isapprox(res.azimuth, exp_az, atol = 1e-8)
     end
 
     @testset "Walraven edge cases" begin

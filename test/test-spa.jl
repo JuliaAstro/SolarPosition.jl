@@ -19,12 +19,12 @@
             # SPA includes refraction correction and equation of time
             res = solar_position(obs, dt, SPA())
 
-            @test isapprox(res.elevation, row.elevation, atol = 1e-6)
-            @test isapprox(res.zenith, row.zenith, atol = 1e-6)
-            @test isapprox(res.azimuth, row.azimuth, atol = 1e-6)
-            @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1e-6)
-            @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1e-6)
-            @test isapprox(res.equation_of_time, row.equation_of_time, atol = 1e-6)
+            @test isapprox(res.elevation, row.elevation, atol = 1e-8)
+            @test isapprox(res.zenith, row.zenith, atol = 1e-8)
+            @test isapprox(res.azimuth, row.azimuth, atol = 1e-8)
+            @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1e-8)
+            @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1e-8)
+            @test isapprox(res.equation_of_time, row.equation_of_time, atol = 1e-8)
         end
     end
 
@@ -67,7 +67,7 @@
         @test !isapprox(
             res_default.apparent_elevation,
             res_custom.apparent_elevation,
-            atol = 1e-6,
+            atol = 1e-8,
         )
 
         @test isapprox(res_default.elevation, res_custom.elevation, atol = 1e-10)

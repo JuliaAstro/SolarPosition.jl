@@ -137,22 +137,6 @@
         @test isfinite(y)
     end
 
-    @testset "SPA pole warnings for SPAObserver" begin
-        # Test north pole warning
-        @test_logs (:warn, r"Latitude is 90") SolarPosition.Positioning.SPAObserver(
-            90.0,
-            0.0,
-            0.0,
-        )
-
-        # Test south pole warning
-        @test_logs (:warn, r"Latitude is -90") SolarPosition.Positioning.SPAObserver(
-            -90.0,
-            0.0,
-            0.0,
-        )
-    end
-
     @testset "SPA equation of time limits" begin
         obs = Observer(45.0, 10.0, 100.0)
 

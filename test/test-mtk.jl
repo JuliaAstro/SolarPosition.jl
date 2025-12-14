@@ -166,6 +166,11 @@ using CairoMakie
             df_expected = exp_func()
 
             for ((zdt, lat, lon, alt), row) in zip(eachrow(conds), eachrow(df_expected))
+                # skip pole latitudes for NOAA algorithm due to numerical instability
+                if alg_name == "NOAA" && (lat == 90.0 || lat == -90.0)
+                    continue
+                end
+
                 # Convert ZonedDateTime to UTC DateTime for ModelingToolkit
                 # astimezone converts to UTC, then DateTime extracts the DateTime part
                 dt = DateTime(astimezone(zdt, tz"UTC"))

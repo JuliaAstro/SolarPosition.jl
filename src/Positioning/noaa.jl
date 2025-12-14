@@ -14,6 +14,11 @@ which is in accordance with the NOAA solar position calculator.
 Claimed accuracy: ±0.0167° from years -2000 to +3000 for latitudes within ±72°.
 For latitudes outside this range, the accuracy is ±0.167°.
 
+!!! warning "Numerical Instability at Poles"
+    The NOAA algorithm experiences numerical instability at exactly ±90° latitude due to
+    domain errors in inverse trigonometric functions. Avoid using this algorithm at the
+    geographic poles.
+
 # Literature
 Based on the NOAA solar position calculator [NOAA](@cite) and the work by
 [MEEUS91](@cite).

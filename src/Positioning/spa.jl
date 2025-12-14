@@ -81,15 +81,6 @@ struct SPAObserver{T<:AbstractFloat}
     y::T
 
     function SPAObserver{T}(lat::T, lon::T, alt::T = zero(T)) where {T<:AbstractFloat}
-        # apply pole corrections to avoid numerical issues
-        if lat == 90.0
-            lat -= 1e-6
-            @warn "Latitude is 90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
-        elseif lat == -90.0
-            lat += 1e-6
-            @warn "Latitude is -90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
-        end
-
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
         (sin_lat, cos_lat) = sincos(lat_rad)

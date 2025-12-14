@@ -8,9 +8,10 @@ using OhMyThreads: tmap, tmap!
 using StructArrays: StructArrays
 using Dates: DateTime
 using TimeZones: ZonedDateTime
+using DocStringExtensions: TYPEDSIGNATURES
 
 """
-    solar_position!(pos::StructArrays.StructVector, obs::Observer, dts::AbstractVector{DateTime}, alg::SolarAlgorithm, refraction::RefractionAlgorithm, executor::OhMyThreads.Scheduler)
+    $(TYPEDSIGNATURES)
 
 In-place multithreaded computation of solar positions using OhMyThreads.jl.
 

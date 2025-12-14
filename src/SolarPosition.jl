@@ -1,9 +1,9 @@
 module SolarPosition
 
+using DocStringExtensions: TYPEDSIGNATURES
+
 include("Refraction/Refraction.jl")
 include("Positioning/Positioning.jl")
-
-using DocStringExtensions: TYPEDSIGNATURES
 
 using .Positioning:
     Observer, PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!

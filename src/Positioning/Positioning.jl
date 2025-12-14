@@ -73,10 +73,10 @@ struct Observer{T<:AbstractFloat}
     function Observer{T}(lat::T, lon::T, alt::T = zero(T)) where {T<:AbstractFloat}
         # apply pole corrections to avoid numerical issues
         if lat == 90.0
-            lat -= 1e-6
+            lat -= 1e-9
             @warn "Latitude is 90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
         elseif lat == -90.0
-            lat += 1e-6
+            lat += 1e-9
             @warn "Latitude is -90°. Adjusted to $(lat)° to avoid singularities." maxlog = 1
         end
 

@@ -28,11 +28,11 @@
             res = solar_position(obs, dt, NOAA(), HUGHES(101325.0, 10.0))
 
             # azimuth calculations have small variations
-            @test isapprox(res.elevation, exp_elev, atol = 2e-7)
-            @test isapprox(res.zenith, exp_zen, atol = 2e-7)
-            @test isapprox(res.azimuth, exp_az, atol = 3e-7)
-            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 2e-7)
-            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 2e-7)
+            @test isapprox(res.elevation, exp_elev, atol = 1e-8)
+            @test isapprox(res.zenith, exp_zen, atol = 1e-8)
+            @test isapprox(res.azimuth, exp_az, atol = 1e-8)
+            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 1e-8)
+            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 1e-8)
         end
     end
 

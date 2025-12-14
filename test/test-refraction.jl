@@ -88,14 +88,14 @@ elevations = test_elevation_angles()
     @testset "Scalar computation" begin
         for (i, elev) in enumerate(elevations)
             result = refraction(algorithm, elev)
-            @test result ≈ expected[i] atol = 1e-7
+            @test result ≈ expected[i] atol = 1e-8
         end
     end
 
     @testset "Vectorized computation" begin
         results = refraction.(Ref(algorithm), elevations)
         for (i, res) in enumerate(results)
-            @test res ≈ expected[i] atol = 1e-7
+            @test res ≈ expected[i] atol = 1e-8
         end
     end
 end

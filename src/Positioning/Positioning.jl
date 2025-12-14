@@ -5,19 +5,6 @@ This module provides the core solar position calculation algorithms, observer lo
 handling, and result types for SolarPosition.jl. It includes implementations of various
 solar position algorithms such as PSA and NOAA, with support for optional atmospheric
 refraction corrections.
-
-# Exported Types
-- [`Observer`](@ref): Geographic observer location
-- [`SolPos`](@ref): Basic solar position result
-- [`ApparentSolPos`](@ref): Solar position with atmospheric corrections
-- [`PSA`](@ref): PSA algorithm implementation
-- [`NOAA`](@ref): NOAA algorithm implementation
-- [`RefractionAlgorithm`](@ref): Base type for refraction algorithms
-- [`NoRefraction`](@ref): No refraction correction (default)
-
-# Exported Functions
-- [`solar_position`](@ref): Calculate solar positions
-- [`solar_position!`](@ref): In-place solar position calculation
 """
 module Positioning
 
@@ -47,12 +34,19 @@ abstract type SolarAlgorithm end
 """
     $(TYPEDEF)
 
-Observer location (deg  rees, meters). Accepts a type parameter `T` for the
-floating point type to use (e.g. `Float32`, `Float64`).
+Represents an observer's geographic location on Earth.
 
----
+This struct holds the latitude, longitude, and altitude of an observer, along with
+pre-calculated trigonometric values used in solar position calculations.
+
 # Fields
 $(TYPEDFIELDS)
+
+# Constructors
+```julia
+Observer(latitude, longitude, altitude=0.0)
+Observer(latitude, longitude; altitude=0.0)
+```
 """
 struct Observer{T<:AbstractFloat}
     "Geodetic latitude (+N)"
@@ -101,9 +95,11 @@ abstract type AbstractApparentSolPos <: AbstractSolPos end
 """
     $(TYPEDEF)
 
-Represents a single solar position calculated for a given observer and time.
+Represents a calculated solar position without atmospheric refraction correction.
 
----
+This struct holds the azimuth, elevation, and zenith angles of the sun for a specific
+observer and time.
+
 # Fields
 $(TYPEDFIELDS)
 """
@@ -122,7 +118,6 @@ end
 Represents a single solar position calculated for a given observer and time.
 Also includes apparent elevation and zenith angles.
 
----
 # Fields
 $(TYPEDFIELDS)
 """
@@ -155,7 +150,6 @@ Base.show(io::IO, obs::ApparentSolPos) = print(
 
 Solar position result from SPA algorithm including equation of time.
 
----
 # Fields
 $(TYPEDFIELDS)
 """
@@ -182,10 +176,7 @@ Base.show(io::IO, obs::SPASolPos) = print(
 )
 
 """
-    solar_position(obs::Observer, dt::DateTime, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction())
-    solar_position(obs::Observer, dt::ZonedDateTime, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction())
-    solar_position(obs::Observer, dts::AbstractVector{DateTime}, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction())
-    solar_position(obs::Observer, dts::AbstractVector{ZonedDateTime}, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction())
+    $(TYPEDSIGNATURES)
 
 Calculate solar position(s) for given observer location(s) and time(s).
 
@@ -206,16 +197,12 @@ automatically handles time zone conversions.
   - `ApparentSolPos` struct when a refraction algorithm is provided
 - For multiple timestamps: `StructVector` of solar position data
 
----
-
 # Angles Convention
 All returned angles are in **degrees**:
 - **Azimuth**: 0° = North, positive clockwise, range [-180°, 180°]
 - **Elevation**: angle above horizon, range [-90°, 90°]
 - **Zenith**: angle from zenith (90° - elevation), range [0°, 180°]
 - **Apparent Elevation/Zenith**: Only in `ApparentSolPos`, includes atmospheric refraction
-
----
 
 # Examples
 ## Single timestamp calculation (basic position)
@@ -269,11 +256,6 @@ pos_noaa = solar_position(obs, dt, NOAA())
 - `DateTime` inputs are assumed to be in UTC
 - `ZonedDateTime` inputs are automatically converted to UTC
 - For local solar time calculations, use appropriate time zones
-
-# Performance Notes
-- Vectorized operations are optimized for multiple timestamps
-- Type-stable implementations for both `Float32` and `Float64`
-- Broadcasting-friendly for large datasets
 
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """
@@ -395,14 +377,11 @@ end
 
 
 """
-    solar_position!(table, obs::Observer; dt_col::Symbol=:datetime, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction(), kwargs...)
-    solar_position!(table; latitude::AbstractFloat, longitude::AbstractFloat,
-                    altitude::AbstractFloat=0.0, alg::SolarAlgorithm=PSA(), refraction::RefractionAlgorithm=NoRefraction(), kwargs...)
+    $(TYPEDSIGNATURES)
 
 Compute solar positions for all times in a table and add the results as new columns.
 
-Arguments
----------
+# Arguments
 - `table` : Table-like object with datetime column (must support Tables.jl interface).
 - `obs::Observer` : Observer location (latitude, longitude, altitude).
 - `latitude, longitude, altitude` : Specify observer location directly.
@@ -411,13 +390,11 @@ Arguments
 - `refraction::RefractionAlgorithm` : Refraction correction (default: `NoRefraction()`).
 - `kwargs...` : Additional keyword arguments forwarded to the algorithm.
 
-Returns
--------
+# Returns
 - Modified table with added columns: `azimuth`, `elevation`, `zenith`.
 - If refraction is applied: also adds `apparent_elevation`, `apparent_zenith`.
 
-Notes
------
+# Notes
 The input table is modified **in-place** by adding new columns.
 """
 function solar_position!(

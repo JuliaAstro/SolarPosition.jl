@@ -5,6 +5,7 @@ using SolarPosition: SolPos, ApparentSolPos, SPASolPos, AbstractApparentSolPos
 using ModelingToolkit: @parameters, @variables, System
 using ModelingToolkit: t_nounits as t
 using Dates: Dates, DateTime, Millisecond
+using DocStringExtensions: TYPEDSIGNATURES
 import Symbolics
 
 import SolarPosition: SolarPositionBlock, solar_position
@@ -67,9 +68,9 @@ function SolarPositionBlock(;
     return System(
         eqs,
         t,
-        #=vars=#[azimuth, elevation, zenith],
-        #=params=#[t0, observer, algorithm, refraction];
-        name = name,
+        [azimuth, elevation, zenith],
+        #=vars=#[t0, observer, algorithm, refraction];
+        #=params=#name = name,
     )
 end
 

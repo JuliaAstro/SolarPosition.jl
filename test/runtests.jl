@@ -1,11 +1,4 @@
 using Test
-# using SolarPosition
-# using SolarPosition.Positioning:
-#     Observer, NOAA, PSA, Walraven, USNO, solar_position, NoRefraction
-# using SolarPosition.Refraction: HUGHES
-# using Dates, TimeZones
-# using DataFrames
-# using ModelingToolkit
 
 include("setup.jl")
 include("linting.jl")

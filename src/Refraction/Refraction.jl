@@ -3,16 +3,8 @@
 
 Atmospheric refraction models.
 
-# Exported Types
-- `HUGHES`: Hughes atmospheric refraction model
-- `ARCHER`: Archer atmospheric refraction model
-- `BENNETT`: Bennett atmospheric refraction model
-- `MICHALSKY`: Michalsky atmospheric refraction model
-- `SG2`: Saemundsson-Garfinkel atmospheric refraction model
-- `SPA`: Solar Position Algorithm refraction model
-
-# Exported Functions
-- `refraction`: Apply refraction correction to elevation angle(s)
+Refraction algorithms compute the apparent position of the sun by correcting
+for atmospheric refraction effects.
 """
 module Refraction
 
@@ -23,9 +15,6 @@ using DocStringExtensions: TYPEDFIELDS, TYPEDEF
     $(TYPEDEF)
 
 Abstract base type for atmospheric refraction correction algorithms.
-
-Refraction algorithms compute the apparent position of the sun by correcting
-for atmospheric refraction effects.
 
 # Examples
 ```julia

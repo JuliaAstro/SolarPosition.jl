@@ -44,7 +44,7 @@ function SolarPositionBlock(;
     refraction = NoRefraction(),
 )
     @parameters t0::DateTime = t0 [tunable = false]
-    @parameters observer::Observer = observer [tunable = false]
+    @parameters observer::typeof(observer) = observer [tunable = false]
     @parameters algorithm::SolarAlgorithm = algorithm [tunable = false]
     @parameters refraction::RefractionAlgorithm = refraction [tunable = false]
 
@@ -69,8 +69,8 @@ function SolarPositionBlock(;
         eqs,
         t,
         [azimuth, elevation, zenith],
-        #=vars=#[t0, observer, algorithm, refraction];
-        #=params=#name = name,
+        [t0, observer, algorithm, refraction];
+        #=vars=#name = name,#=params=#
     )
 end
 

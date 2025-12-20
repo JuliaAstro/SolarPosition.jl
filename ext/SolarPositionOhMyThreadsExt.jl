@@ -99,7 +99,6 @@ positions = solar_position(obs, times, PSA(), NoRefraction(), StaticScheduler())
 # Available Schedulers
 - `DynamicScheduler()`: Dynamic load balancing, good for variable workloads
 - `StaticScheduler()`: Static partitioning, best for uniform workloads
-- `GreedyScheduler()`: Greedy task stealing, adaptive scheduling
 
 See also: [`solar_position!`](@ref), [`OhMyThreads.Scheduler`]
 """

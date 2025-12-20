@@ -1,5 +1,5 @@
 # Benchmark multithreaded solar position calculations
-# Run with: julia --threads=auto --project=guides guides/benchmark_threading.jl
+# Run with: julia --threads=auto --project=examples examples/benchmark_threading.jl
 
 using OhMyThreads
 using SolarPosition
@@ -61,47 +61,46 @@ println("\n🔹 SPA algorithm - Serial")
 println("\n🔹 SPA algorithm - Parallel (DynamicScheduler)")
 @btime solar_position($obs, $times, SPA(), NoRefraction(), DynamicScheduler());
 
-## Output for times = collect(DateTime(2024, 1, 1):Second(1):DateTime(2024, 12, 31, 23))
-
-# julia> include("guides/benchmark_threading.jl")
+### output ###
 # Benchmarking solar_position with 32 threads
-# Number of timestamps: 31618801
+# Number of timestamps: 52699
 # ======================================================================
 
 # 🔹 Serial execution (default)
-#   5.409 s (9 allocations: 723.70 MiB)
+#   6.812 ms (9 allocations: 1.21 MiB)
 
 # 🔹 Parallel with DynamicScheduler
-#   1.334 s (461 allocations: 2.78 GiB)
+#   562.375 μs (466 allocations: 4.91 MiB)
 
 # 🔹 Parallel with StaticScheduler
-#   1.380 s (397 allocations: 2.78 GiB)
+#   492.855 μs (402 allocations: 4.91 MiB)
 
 # ======================================================================
 # In-place benchmarks (solar_position!)
 # ======================================================================
 
 # 🔹 Serial in-place
-#   5.158 s (0 allocations: 0 bytes)
+#   6.827 ms (0 allocations: 0 bytes)
 
 # 🔹 Parallel in-place with DynamicScheduler
-#   256.939 ms (284 allocations: 20.47 KiB)
+#   407.315 μs (284 allocations: 20.47 KiB)
 
 # 🔹 Parallel in-place with StaticScheduler
-#   260.609 ms (220 allocations: 15.97 KiB)
+#   361.754 μs (220 allocations: 15.97 KiB)
 
 # ======================================================================
 # Different algorithms (parallel vs serial)
 # ======================================================================
 
 # 🔹 NOAA algorithm - Serial
-#   10.148 s (9 allocations: 723.70 MiB)
+#   15.599 ms (9 allocations: 1.21 MiB)
 
 # 🔹 NOAA algorithm - Parallel (DynamicScheduler)
-#   1.635 s (461 allocations: 2.78 GiB)
+#   999.830 μs (466 allocations: 4.92 MiB)
 
 # 🔹 SPA algorithm - Serial
-#   83.363 s (31618819 allocations: 1.88 GiB)
+#   122.392 ms (18 allocations: 2.41 MiB)
 
 # 🔹 SPA algorithm - Parallel (DynamicScheduler)
-#   7.110 s (31619294 allocations: 6.04 GiB)
+#   6.899 ms (507 allocations: 9.80 MiB)
+# langestefan@fedora:~/dev/solar/SolarPosition.jl$

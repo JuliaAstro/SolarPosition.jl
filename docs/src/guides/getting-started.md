@@ -54,6 +54,10 @@ Almería) algorithm, which has a decent tradeoff between complexity and accuracy
 can choose other algorithms as described in the [Solar Positioning Algorithms](../positioning.md)
 section.
 
+!!! info "Performance and Accuracy Benchmarks"
+    For detailed performance comparisons and accuracy analysis of all available algorithms,
+    see the [Benchmarking Guide](@ref benchmarking).
+
 First, we repeat the previous calculation using the default PSA algorithm:
 
 ```@example getting-started

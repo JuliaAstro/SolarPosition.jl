@@ -14,23 +14,12 @@ using Statistics
 using BenchmarkTools
 ```
 
-## Algorithm Overview
-
-SolarPosition.jl provides several solar positioning algorithms with different
-accuracy/performance trade-offs:
-
-| Algorithm                                             | Claimed Accuracy | Complexity |
-| ----------------------------------------------------- | ---------------- | ---------- |
-| [`SPA`](@ref SolarPosition.Positioning.SPA)           | ±0.0003°         | High       |
-| [`PSA`](@ref SolarPosition.Positioning.PSA)           | ±0.0083°         | Low        |
-| [`NOAA`](@ref SolarPosition.Positioning.NOAA)         | ±0.0167°         | Low        |
-| [`Walraven`](@ref SolarPosition.Positioning.Walraven) | ±0.0100°         | Low        |
-| [`USNO`](@ref SolarPosition.Positioning.USNO)         | ±0.0500°         | Low        |
+For available solar position algorithms, see the [Positioning Guide](@ref SolarPosition.Positioning).
 
 ## Accuracy Analysis
 
-To evaluate accuracy, we compare each algorithm against SPA across a full year of
-hourly timestamps at various geographic locations.
+To evaluate accuracy, we compare each algorithm against the gold standard SPA across a
+full year of hourly timestamps at various geographic locations.
 
 ```@example benchmarks
 # Test locations representing different latitudes
@@ -43,7 +32,6 @@ locations = [
 
 # Generate hourly timestamps for a full year
 times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
-println("Testing with $(length(times)) timestamps per location")
 ```
 
 !!! details "Accuracy comparison"
@@ -129,12 +117,10 @@ println("Testing with $(length(times)) timestamps per location")
     accuracy_results
     ```
 
-### Accuracy Visualization
-
 The following plots show the mean error with 95% confidence intervals (2.5th to 97.5th
 percentile) for each algorithm compared to SPA.
 
-!!! details "Accuracy visualization"
+!!! details "Visualization"
     ```@example benchmarks
     # Aggregate results by algorithm (mean across all locations)
     algo_stats = combine(
@@ -217,7 +203,7 @@ println("  Elevation: mean=$(round(mean(abs.(elev_errors)), digits=6))°, max=$(
 println("  Azimuth: mean=$(round(mean(abs.(azim_errors)), digits=6))°, max=$(round(maximum(abs.(azim_errors)), digits=4))°")
 ```
 
-!!! details "PSA error visualization"
+!!! details "Visualization"
     ```@example benchmarks
     fig_err = Figure(size = (900, 500), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -251,7 +237,7 @@ fig_err # hide
 
 ### Error Distribution by Location
 
-!!! details "Error distribution visualization"
+!!! details "Visualization"
     ```@example benchmarks
     fig2 = Figure(size = (900, 500), backgroundcolor = :transparent, fontsize = 11, textcolor = "#f5ab35")
 
@@ -280,10 +266,13 @@ fig_err # hide
 fig2 # hide
 ```
 
+As we can see the error distribution is relatively consistent across different geographic
+locations, with PSA consistently providing the lowest mean error compared to SPA.
+
 ## Performance Benchmarks
 
 We benchmark the computational performance of each algorithm across different input
-sizes, from single timestamp calculations to bulk operations with 100,000 timestamps.
+sizes, from single timestamp calculations to bulk operations with 10,000 timestamps.
 
 !!! details "Single benchmark"
     ```@example benchmarks
@@ -318,7 +307,7 @@ sizes, from single timestamp calculations to bulk operations with 100,000 timest
 !!! details "Vector benchmark"
     ```@example benchmarks
     # Vector benchmarks for different sizes
-    sizes = [100, 1_000, 10_000, 100_000]
+    sizes = [100, 1_000, 10_000]
 
     vector_benchmarks = DataFrame(
         Algorithm = String[],
@@ -348,9 +337,7 @@ sizes, from single timestamp calculations to bulk operations with 100,000 timest
     vector_pivot
     ```
 
-### Performance Visualization
-
-!!! details "Performance visualization"
+!!! details "Visualization"
     ```@example benchmarks
     fig3 = Figure(size = (900, 400), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -376,15 +363,15 @@ sizes, from single timestamp calculations to bulk operations with 100,000 timest
 
     # Throughput plot
     ax2 = Axis(fig3[1, 2],
-        title = "Throughput at N=100,000",
+        title = "Throughput at N=10,000",
         xlabel = "Algorithm",
         ylabel = "Positions per Second",
         xticks = (1:5, algo_names),
         backgroundcolor = :transparent,
     )
 
-    throughput_100k = filter(r -> r.N == 100_000, vector_benchmarks)
-    barplot!(ax2, 1:5, throughput_100k.Throughput ./ 1e6, color = colors)
+    throughput_10k = filter(r -> r.N == 10_000, vector_benchmarks)
+    barplot!(ax2, 1:5, throughput_10k.Throughput ./ 1e6, color = colors)
     ax2.ylabel = "Million Positions / Second"
 
     nothing # hide
@@ -423,7 +410,7 @@ sp = pyimport("solposx.solarposition")
 pd = pyimport("pandas")
 ```
 
-### Benchmark Configuration
+### Configuration
 
 For fair comparison, we use the same test conditions for both libraries:
 
@@ -432,12 +419,10 @@ For fair comparison, we use the same test conditions for both libraries:
 - **Algorithms**: PSA, NOAA, Walraven, USNO, SPA
 
 ```@example benchmarks
-# Helper function to create pandas DatetimeIndex
 function create_pandas_times(n::Int)
     pd.date_range(start="2024-01-01 00:00:00", periods=n, freq="h", tz="UTC")
 end
 
-# solposx algorithm mapping - use Symbol keys for kwargs
 solposx_algorithms = Dict(
     "PSA" => (sp.psa, (coefficients = 2020,)),
     "NOAA" => (sp.noaa, NamedTuple()),
@@ -504,7 +489,7 @@ We benchmark both libraries across different input sizes:
     comparison_results
     ```
 
-!!! details "Performance comparison visualization"
+!!! details "Visualization"
     ```@example benchmarks
     fig5 = Figure(size = (600, 750), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -575,7 +560,144 @@ We benchmark both libraries across different input sizes:
 fig5 # hide
 ```
 
-### Summary
+## Accuracy vs Performance Trade-off
+
+When selecting a solar position algorithm, there is often a trade-off between accuracy
+and computational performance. The following Pareto plot visualizes this trade-off by
+plotting mean elevation error against computation time at N=1,000 timestamps, comparing
+both Julia and Python implementations.
+
+!!! details "Pareto Analysis"
+    ```@example benchmarks
+    # Combine accuracy and performance data for Pareto analysis at N=1000
+    # Get mean elevation error across all locations for each algorithm
+    pareto_data = combine(
+        groupby(accuracy_results, :Algorithm),
+        :Elevation_Mean_Error => mean => :Mean_Error
+    )
+
+    # Add SPA as reference (error = 0)
+    push!(pareto_data, (Algorithm = "SPA", Mean_Error = 0.0))
+
+    # Get Julia timing at N=1000
+    julia_times_1k = filter(r -> r.N == 1_000, comparison_results)
+    pareto_julia = leftjoin(pareto_data,
+        select(julia_times_1k, :Algorithm, :Julia_ms),
+        on = :Algorithm)
+    pareto_julia.Library = fill("Julia", nrow(pareto_julia))
+
+    # Get Python timing at N=1000
+    pareto_python = leftjoin(pareto_data,
+        select(julia_times_1k, :Algorithm, :Python_ms),
+        on = :Algorithm)
+    rename!(pareto_python, :Python_ms => :Julia_ms)  # Reuse column name for convenience
+    pareto_python.Library = fill("Python", nrow(pareto_python))
+
+    # Combine both
+    pareto_combined = vcat(pareto_julia, pareto_python)
+    rename!(pareto_combined, :Julia_ms => :Time_ms)
+
+    # Sort by error then time
+    sort!(pareto_combined, [:Mean_Error, :Time_ms])
+
+    pareto_combined
+    ```
+
+!!! details "Visualization"
+    ```@example benchmarks
+    fig_pareto = Figure(size = (700, 550), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
+
+    ax = Axis(fig_pareto[1, 1],
+        title = "Algorithm Selection: Accuracy vs Performance (N=1,000)",
+        xlabel = "Computation Time (ms)",
+        ylabel = "Mean Elevation Error vs SPA (°)",
+        backgroundcolor = :transparent,
+    )
+
+    # Color scheme for algorithms
+    colors_pareto = Dict(
+        "PSA" => :steelblue,
+        "NOAA" => :orange,
+        "Walraven" => :green,
+        "USNO" => :purple,
+        "SPA" => :red
+    )
+
+    # Marker scheme for library
+    markers_lib = Dict(
+        "Julia" => :circle,
+        "Python" => :utriangle
+    )
+
+    # Plot points
+    julia_points = []
+    python_points = []
+
+    for row in eachrow(pareto_combined)
+        marker = markers_lib[row.Library]
+        color = colors_pareto[row.Algorithm]
+
+        s = scatter!(ax, [row.Time_ms], [row.Mean_Error],
+                color = color,
+                marker = marker,
+                markersize = 15)
+
+        if row.Library == "Julia"
+            push!(julia_points, s)
+        else
+            push!(python_points, s)
+        end
+    end
+
+    # Add algorithm labels for Julia implementations
+    for row in eachrow(filter(r -> r.Library == "Julia", pareto_combined))
+        text!(ax, row.Time_ms, row.Mean_Error,
+              text = "  " * row.Algorithm,
+              align = (:left, :center),
+              fontsize = 10)
+    end
+
+    # Add algorithm labels for Python implementations
+    for row in eachrow(filter(r -> r.Library == "Python", pareto_combined))
+        text!(ax, row.Time_ms, row.Mean_Error,
+              text = "  " * row.Algorithm,
+              align = (:left, :center),
+              fontsize = 9,
+              color = (:gray40, 0.8))
+    end
+
+    # Connect Julia points to show the trade-off curve
+    julia_data = sort(filter(r -> r.Library == "Julia", pareto_combined), :Time_ms)
+    lines!(ax, julia_data.Time_ms, julia_data.Mean_Error,
+           color = (:steelblue, 0.3), linestyle = :dash, linewidth = 1.5, label = "Julia Frontier")
+
+    # Connect Python points
+    python_data = sort(filter(r -> r.Library == "Python", pareto_combined), :Time_ms)
+    lines!(ax, python_data.Time_ms, python_data.Mean_Error,
+           color = (:coral, 0.3), linestyle = :dot, linewidth = 1.5, label = "Python Frontier")
+
+    # Set y-axis limits for better discrimination
+    ylims!(ax, nothing, 0.005)
+
+    # Add guidelines for accuracy levels
+    hlines!(ax, [0.001, 0.002], color = (:gray, 0.2), linestyle = :dot, linewidth = 1)
+
+    # Create legend for library types
+    library_elements = [
+        MarkerElement(marker = :circle, color = :gray, markersize = 12),
+        MarkerElement(marker = :utriangle, color = :gray, markersize = 12)
+    ]
+    Legend(fig_pareto[1, 2], library_elements, ["Julia", "Python"], "Library",
+           framevisible = true, backgroundcolor = :transparent, labelsize = 10)
+
+    nothing # hide
+    ```
+
+```@example benchmarks
+fig_pareto # hide
+```
+
+## Summary
 
 The benchmarks demonstrate that SolarPosition.jl offers significant performance
 advantages over the solposx Python library across all tested algorithms and input sizes.
@@ -586,8 +708,3 @@ advantages over the solposx Python library across all tested algorithms and inpu
     on large datasets. The benchmarks above were conducted using a single thread for
     fair comparison with `solposx`, but enabling multi-threading can yield even greater
     speedups in practical applications.
-
-```@example benchmarks
-speedup_table = unstack(comparison_results[:, [:Algorithm, :N, :Speedup]], :Algorithm, :N, :Speedup)
-speedup_table
-```

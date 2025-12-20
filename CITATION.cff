@@ -1,4 +1,3 @@
-# Go to https://citation-file-format.github.io/cff-initializer-javascript/#/ to finish this
 cff-version: 1.2.0
 title: SolarPosition.jl
 message: >-
@@ -6,4 +5,18 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Stefan de Lange
+  - given-names: Stefan
+    family-names: de Lange
+repository-code: https://github.com/JuliaAstro/SolarPosition.jl
+url: https://juliaastro.github.io/SolarPosition.jl/
+license: MIT
+version: 0.3.2
+date-released: 2025-12-20
+abstract: >-
+  SolarPosition.jl provides a simple, unified interface to a collection
+  of validated solar position algorithms written in pure Julia.
+keywords:
+  - solar-position
+  - solar-astronomy
+  - julia
+  - solar-energy

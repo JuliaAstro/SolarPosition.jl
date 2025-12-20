@@ -489,7 +489,7 @@ We benchmark both libraries across different input sizes:
     comparison_results
     ```
 
-!!! details "Performance comparison visualization"
+!!! details "Visualization"
     ```@example benchmarks
     fig5 = Figure(size = (600, 750), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -657,6 +657,15 @@ both Julia and Python implementations.
               fontsize = 10)
     end
 
+    # Add algorithm labels for Python implementations
+    for row in eachrow(filter(r -> r.Library == "Python", pareto_combined))
+        text!(ax, row.Time_ms, row.Mean_Error,
+              text = "  " * row.Algorithm,
+              align = (:left, :center),
+              fontsize = 9,
+              color = (:gray40, 0.8))
+    end
+
     # Connect Julia points to show the trade-off curve
     julia_data = sort(filter(r -> r.Library == "Julia", pareto_combined), :Time_ms)
     lines!(ax, julia_data.Time_ms, julia_data.Mean_Error,
@@ -667,8 +676,11 @@ both Julia and Python implementations.
     lines!(ax, python_data.Time_ms, python_data.Mean_Error,
            color = (:coral, 0.3), linestyle = :dot, linewidth = 1.5, label = "Python Frontier")
 
+    # Set y-axis limits for better discrimination
+    ylims!(ax, nothing, 0.005)
+
     # Add guidelines for accuracy levels
-    hlines!(ax, [0.01, 0.02], color = (:gray, 0.2), linestyle = :dot, linewidth = 1)
+    hlines!(ax, [0.001, 0.002], color = (:gray, 0.2), linestyle = :dot, linewidth = 1)
 
     # Create legend for library types
     library_elements = [

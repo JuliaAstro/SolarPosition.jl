@@ -209,9 +209,22 @@ end
 
 function mean_ecliptic_obliquity(jme)
     u = jme / 10.0
-    ε0 = let p = (84381.448, -4680.93, -1.55, 1999.25, -51.38, -249.67, -39.05, 7.12, 27.87, 5.79, 2.45)
-        evalpoly(u, p)
-    end
+    ε0 =
+        let p = (
+                84381.448,
+                -4680.93,
+                -1.55,
+                1999.25,
+                -51.38,
+                -249.67,
+                -39.05,
+                7.12,
+                27.87,
+                5.79,
+                2.45,
+            )
+            evalpoly(u, p)
+        end
     return ε0  # arcseconds
 end
 
@@ -332,9 +345,17 @@ function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
 end
 
 function sun_mean_longitude(jme)
-    M = let p = (280.4664567, 360007.6982779, 0.03032028, inv(49931), inv(-15300), inv(-2000000))
-        evalpoly(jme, p)
-    end
+    M =
+        let p = (
+                280.4664567,
+                360007.6982779,
+                0.03032028,
+                inv(49931),
+                inv(-15300),
+                inv(-2000000),
+            )
+            evalpoly(jme, p)
+        end
     return M
 end
 

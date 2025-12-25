@@ -158,23 +158,23 @@ end
 
 # nutation calculations
 function mean_elongation(jce)
-    return evalpoly(jce, (297.85036, 445267.111480, -0.0019142, inv(189474)))
+    return 297.85036 + 445267.111480 * jce - 0.0019142 * jce^2 + jce^3 / 189474.0
 end
 
 function mean_anomaly_sun(jce)
-    return evalpoly(jce, (357.52772, 35999.050340, -0.0001603, inv(-300000)))
+    return 357.52772 + 35999.050340 * jce - 0.0001603 * jce^2 - jce^3 / 300000.0
 end
 
 function mean_anomaly_moon(jce)
-    return evalpoly(jce, (134.96298, 477198.867398, 0.0086972, inv(56250)))
+    return 134.96298 + 477198.867398 * jce + 0.0086972 * jce^2 + jce^3 / 56250.0
 end
 
 function moon_argument_latitude(jce)
-    return evalpoly(jce, (93.27191, 483202.017538, -0.0036825, inv(327270)))
+    return 93.27191 + 483202.017538 * jce - 0.0036825 * jce^2 + jce^3 / 327270.0
 end
 
 function moon_ascending_longitude(jce)
-    return evalpoly(jce, (125.04452, -1934.136261, 0.0020708, inv(450000)))
+    return 125.04452 - 1934.136261 * jce + 0.0020708 * jce^2 + jce^3 / 450000.0
 end
 
 function nutation_longitude_obliquity(jce)
@@ -346,16 +346,8 @@ end
 
 function sun_mean_longitude(jme)
     M =
-        let p = (
-                280.4664567,
-                360007.6982779,
-                0.03032028,
-                inv(49931),
-                inv(-15300),
-                inv(-2000000),
-            )
-            evalpoly(jme, p)
-        end
+        280.4664567 + 360007.6982779 * jme + 0.03032028 * jme^2 + jme^3 / 49931.0 -
+        jme^4 / 15300.0 - jme^5 / 2000000.0
     return M
 end
 

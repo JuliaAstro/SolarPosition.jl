@@ -47,9 +47,14 @@ struct MICHALSKY <: RefractionAlgorithm end
 
 function _refraction(::MICHALSKY, elevation_deg::T) where {T<:AbstractFloat}
     # ref = 3.51561 * (0.1594 + 0.0196 * el + 0.00002 * el^2) / (1 + 0.505 * el + 0.0845 * el^2)
-    numerator =
-        T(3.51561) * (T(0.1594) + T(0.0196) * elevation_deg + T(0.00002) * elevation_deg^2)
-    denominator = T(1.0) + T(0.505) * elevation_deg + T(0.0845) * elevation_deg^2
+    numerator = let p = (0.1594, 0.0196, 0.00002),
+        q = map(T, p)
+        T(3.51561) * evalpoly(elevation_deg, q)
+    end
+    denominator = let p = (1.0, 0.505, 0.0845),
+        q = map(T, p)
+        evalpoly(elevation_deg, q)
+    end
 
     refraction_correction = numerator / denominator
 

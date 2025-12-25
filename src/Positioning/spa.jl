@@ -134,7 +134,7 @@ function heliocentric_longitude(jme)
     l4 = sum_periodic_terms(L4, jme)
     l5 = sum_periodic_terms(L5, jme)
 
-    l_rad = (l0 + l1 * jme + l2 * jme^2 + l3 * jme^3 + l4 * jme^4 + l5 * jme^5) / 1e8
+    l_rad = evalpoly(jme, (l0, l1, l2, l3, l4, l5)) / 1e8
     return mod(rad2deg(l_rad), 360.0)
 end
 
@@ -153,28 +153,28 @@ function heliocentric_radius_vector(jme)
     r3 = sum_periodic_terms(R3, jme)
     r4 = sum_periodic_terms(R4, jme)
 
-    return (r0 + r1 * jme + r2 * jme^2 + r3 * jme^3 + r4 * jme^4) / 1e8
+    return evalpoly(jme, (r0, r1, r2, r3, r4)) / 1e8
 end
 
 # nutation calculations
 function mean_elongation(jce)
-    return 297.85036 + 445267.111480 * jce - 0.0019142 * jce^2 + jce^3 / 189474.0
+    return evalpoly(jce, (297.85036, 445267.111480, -0.0019142, inv(189474)))
 end
 
 function mean_anomaly_sun(jce)
-    return 357.52772 + 35999.050340 * jce - 0.0001603 * jce^2 - jce^3 / 300000.0
+    return evalpoly(jce, (357.52772, 35999.050340, -0.0001603, inv(-300000)))
 end
 
 function mean_anomaly_moon(jce)
-    return 134.96298 + 477198.867398 * jce + 0.0086972 * jce^2 + jce^3 / 56250.0
+    return evalpoly(jce, (134.96298, 477198.867398, 0.0086972, inv(56250)))
 end
 
 function moon_argument_latitude(jce)
-    return 93.27191 + 483202.017538 * jce - 0.0036825 * jce^2 + jce^3 / 327270.0
+    return evalpoly(jce, (93.27191, 483202.017538, -0.0036825, inv(327270)))
 end
 
 function moon_ascending_longitude(jce)
-    return 125.04452 - 1934.136261 * jce + 0.0020708 * jce^2 + jce^3 / 450000.0
+    return evalpoly(jce, (125.04452, -1934.136261, 0.0020708, inv(450000)))
 end
 
 function nutation_longitude_obliquity(jce)
@@ -209,13 +209,9 @@ end
 
 function mean_ecliptic_obliquity(jme)
     u = jme / 10.0
-    ε0 = (
-        84381.448 - 4680.93 * u - 1.55 * u^2 + 1999.25 * u^3 - 51.38 * u^4 - 249.67 * u^5 - 39.05 * u^6 +
-        7.12 * u^7 +
-        27.87 * u^8 +
-        5.79 * u^9 +
-        2.45 * u^10
-    )
+    ε0 = let p = (84381.448, -4680.93, -1.55, 1999.25, -51.38, -249.67, -39.05, 7.12, 27.87, 5.79, 2.45)
+        evalpoly(u, p)
+    end
     return ε0  # arcseconds
 end
 
@@ -336,9 +332,9 @@ function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
 end
 
 function sun_mean_longitude(jme)
-    M =
-        280.4664567 + 360007.6982779 * jme + 0.03032028 * jme^2 + jme^3 / 49931.0 -
-        jme^4 / 15300.0 - jme^5 / 2000000.0
+    M = let p = (280.4664567, 360007.6982779, 0.03032028, inv(49931), inv(-15300), inv(-2000000))
+        evalpoly(jme, p)
+    end
     return M
 end
 

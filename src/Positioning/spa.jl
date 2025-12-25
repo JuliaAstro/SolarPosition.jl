@@ -158,22 +158,27 @@ end
 
 # nutation calculations
 function mean_elongation(jce)
+    # TODO: use `evalpoly`/Horner's scheme instead!
     return 297.85036 + 445267.111480 * jce - 0.0019142 * jce^2 + jce^3 / 189474.0
 end
 
 function mean_anomaly_sun(jce)
+    # TODO: use `evalpoly`/Horner's scheme instead!
     return 357.52772 + 35999.050340 * jce - 0.0001603 * jce^2 - jce^3 / 300000.0
 end
 
 function mean_anomaly_moon(jce)
+    # TODO: use `evalpoly`/Horner's scheme instead!
     return 134.96298 + 477198.867398 * jce + 0.0086972 * jce^2 + jce^3 / 56250.0
 end
 
 function moon_argument_latitude(jce)
+    # TODO: use `evalpoly`/Horner's scheme instead!
     return 93.27191 + 483202.017538 * jce - 0.0036825 * jce^2 + jce^3 / 327270.0
 end
 
 function moon_ascending_longitude(jce)
+    # TODO: use `evalpoly`/Horner's scheme instead!
     return 125.04452 - 1934.136261 * jce + 0.0020708 * jce^2 + jce^3 / 450000.0
 end
 
@@ -346,6 +351,7 @@ end
 
 function sun_mean_longitude(jme)
     M =
+        # TODO: use `evalpoly`/Horner's scheme instead!
         280.4664567 + 360007.6982779 * jme + 0.03032028 * jme^2 + jme^3 / 49931.0 -
         jme^4 / 15300.0 - jme^5 / 2000000.0
     return M

@@ -84,6 +84,7 @@ function _refraction(model::HUGHES{T}, elevation_deg::T) where {T<:AbstractFloat
 
     # calculate refraction correction in arcseconds based on elevation angle
     if elevation_deg > T(5.0)
+        # TODO: use `evalpoly`/Horner's scheme instead!
         refract = T(58.1) / tan_el - T(0.07) / (tan_el^3) + T(8.6e-5) / (tan_el^5)
     elseif elevation_deg > T(-0.575)
         refract = let p = (1735.0, -518.2, 103.4, -12.79, 0.711), q = map(T, p)

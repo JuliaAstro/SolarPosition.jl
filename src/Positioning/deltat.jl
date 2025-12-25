@@ -43,6 +43,7 @@ const DELTAT_TABLE = (
     ),
     (1600.0, 1700.0, y -> begin
         t = y - 1600.0
+        # TODO: use `evalpoly`/Horner's scheme instead!
         120.0 - 0.9808 * t - 0.01532 * t^2 + t^3 / 7129.0
     end),
     (
@@ -50,6 +51,7 @@ const DELTAT_TABLE = (
         1800.0,
         y -> begin
             t = y - 1700.0
+            # TODO: use `evalpoly`/Horner's scheme instead!
             8.83 + 0.1603 * t - 0.0059285 * t^2 + 0.00013336 * t^3 - t^4 / 1174000.0
         end,
     ),
@@ -76,6 +78,7 @@ const DELTAT_TABLE = (
         1900.0,
         y -> begin
             t = y - 1860.0
+            # TODO: use `evalpoly`/Horner's scheme instead!
             7.62 + 0.5737 * t - 0.251754 * t^2 + 0.01680668 * t^3 - 0.0004473624 * t^4 + t^5 / 233174.0
         end,
     ),
@@ -91,10 +94,12 @@ const DELTAT_TABLE = (
     end),
     (1941.0, 1961.0, y -> begin
         t = y - 1950.0
+        # TODO: use `evalpoly`/Horner's scheme instead!
         29.07 + 0.407 * t - t^2 / 233.0 + t^3 / 2547.0
     end),
     (1961.0, 1986.0, y -> begin
         t = y - 1975.0
+        # TODO: use `evalpoly`/Horner's scheme instead!
         45.45 + 1.067 * t - t^2 / 260.0 - t^3 / 718.0
     end),
     (

@@ -148,7 +148,7 @@ Earth's rotation rate caused by tidal braking and other factors.
 - `Float64`: ΔT in seconds
 
 # Examples
-```jldoctest
+```julia-repl
 julia> using SolarPosition.Positioning: calculate_deltat
 
 julia> calculate_deltat(2020, 6)

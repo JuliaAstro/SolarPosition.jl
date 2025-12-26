@@ -155,12 +155,12 @@ using CairoMakie
         # Test all conditions from each algorithm's test file
         conds = test_conditions()
 
-        @testset "$alg_name" for (alg_name, alg, exp_func, refr) in [
-            ("PSA", PSA(2020), expected_2020, NoRefraction()),
-            ("Walraven", Walraven(), expected_walraven, NoRefraction()),
-            ("USNO", USNO(), expected_usno, NoRefraction()),
-            ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0)),
-            ("SPA", SPA(), expected_spa, NoRefraction()),
+        @testset "$alg_name" for (alg_name, alg, exp_func, refr, apparent) in [
+            ("PSA", PSA(2020), expected_2020, NoRefraction(), false),
+            ("Walraven", Walraven(), expected_walraven, NoRefraction(), false),
+            ("USNO", USNO(), expected_usno, NoRefraction(), false),
+            ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0), true),
+            ("SPA", SPA(), expected_spa, NoRefraction(), true),
         ]
             # Get expected values for all test cases
             df_expected = exp_func()
@@ -175,12 +175,8 @@ using CairoMakie
                 # astimezone converts to UTC, then DateTime extracts the DateTime part
                 dt = DateTime(astimezone(zdt, tz"UTC"))
 
-                # Create observer
-                if ismissing(alt)
-                    obs = Observer(lat, lon)
-                else
-                    obs = Observer(lat, lon, altitude = alt)
-                end
+                obs =
+                    ismissing(alt) ? Observer(lat, lon) : Observer(lat, lon, altitude = alt)
 
                 @named sun = SolarPositionBlock()
                 sys = mtkcompile(sun)
@@ -195,9 +191,7 @@ using CairoMakie
                 prob = ODEProblem(sys, pmap, (0.0, 1.0))
                 sol = solve(prob; saveat = [0.0])
 
-                # For algorithms with refraction or SPA, use apparent_elevation/apparent_zenith
-                # Otherwise use elevation/zenith
-                if haskey(row, :apparent_elevation)
+                if apparent
                     @test isapprox(
                         sol[sys.elevation][1],
                         row.apparent_elevation,

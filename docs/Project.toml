@@ -1,5 +1,7 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+BibParser = "13533e5b-e1c2-4e57-8cef-cac5e52f6474"
+Bibliography = "f1be7e48-bf82-45af-a471-ae754a193061"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -19,6 +21,8 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [sources]
 SolarPosition = { path = ".." }
+Bibliography = { url = "https://github.com/cgarling/Bibliography.jl", rev = "patch-1" }
+BibParser = { url = "https://github.com/cgarling/BibParser.jl", rev = "patch-1" }
 
 [compat]
 Documenter = "1"

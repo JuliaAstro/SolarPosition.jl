@@ -4,6 +4,7 @@ using DocStringExtensions: TYPEDSIGNATURES
 
 include("Refraction/Refraction.jl")
 include("Positioning/Positioning.jl")
+include("Utilities/Utilities.jl")
 
 using .Positioning:
     Observer, PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!

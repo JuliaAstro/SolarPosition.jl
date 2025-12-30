@@ -41,8 +41,15 @@ struct SPA <: SolarAlgorithm
     end
 end
 
-# default constructor with typical values
-SPA() = SPA(67.0, 101325.0, 12.0, 0.5667)
+# keyword argument constructor with default values
+function SPA(;
+    delta_t::Union{Float64,Nothing} = 67.0,
+    pressure::Float64 = 101325.0,
+    temperature::Float64 = 12.0,
+    atmos_refract::Float64 = 0.5667,
+)
+    return SPA(delta_t, pressure, temperature, atmos_refract)
+end
 
 
 """

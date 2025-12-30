@@ -96,7 +96,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
 
     hour = fractional_hour(dt)
     gmst = p14 + p15 * n + hour                                         # Eq. 10
-    lmst = (gmst * 15 + λt) * π / 180                                   # Eq. 11
+    lmst = deg2rad(gmst * 15 + λt)                                      # Eq. 11
     ω = lmst - ra                                                       # Eq. 12
     (sin_δ, cos_δ) = sincos(δ)
     (sin_ω, cos_ω) = sincos(ω)

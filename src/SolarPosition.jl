@@ -21,11 +21,18 @@ using .Refraction: HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
 export solar_position, solar_position!, SolarAlgorithm, Observer
 export PSA, NOAA, Walraven, USNO, SPA
 
+# refraction algorithms
 export RefractionAlgorithm, NoRefraction
 export HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
 
 export SolPos, ApparentSolPos, SPASolPos
 export AbstractSolPos, AbstractApparentSolPos
+
+# utilities
+using .Utilities:
+    TransitSunriseSunset, transit_sunrise_sunset, next_sunrise, next_sunset, solar_noon
+
+export TransitSunriseSunset, transit_sunrise_sunset, next_sunrise, next_sunset, solar_noon
 
 # to make the makie extension work
 export sunpathplot

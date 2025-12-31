@@ -8,4 +8,6 @@ using TimeZones: @tz_str
 include("spa.jl")
 include("srt.jl")
 
+export TransitSunriseSunset, transit_sunrise_sunset, next_sunrise, next_sunset, solar_noon
+
 end # module Utilities

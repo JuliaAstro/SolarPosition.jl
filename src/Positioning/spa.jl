@@ -380,23 +380,20 @@ function equation_of_time(M, α, δψ, ε)
     return E
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
-end
+"""
+Helper function to compute sidereal time, right ascension, declination, and related
+parameters for SPA calculations at a given datetime.
 
-function _solar_position(
-    obs::SPAObserver{T},
-    dt::DateTime,
-    alg::SPA,
-) where {T<:AbstractFloat}
-    δt::Float64 = if alg.delta_t === nothing
-        calculate_deltat(dt)
-    else
-        alg.delta_t
-    end
-
-    # julian date calculations
+Returns a named tuple with:
+- `ν`: apparent sidereal time at Greenwich (degrees)
+- `α`: geocentric right ascension (degrees)
+- `δ`: geocentric declination (degrees)
+- `R`: heliocentric radius vector (AU)
+- `ε`: true ecliptic obliquity (degrees)
+- `δψ`: nutation in longitude (degrees)
+- `jme`: Julian Ephemeris Millennium
+"""
+function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     jd = datetime2julian(dt)
     jde = julian_ephemeris_day(jd, δt)
     jc = (jd - 2451545.0) / 36525.0
@@ -423,13 +420,35 @@ function _solar_position(
     # apparent sun longitude
     λ = apparent_sun_longitude(θ, δψ, δτ)
 
-    # sidereal time
+    # sidereal time at Greenwich
     ν0 = mean_sidereal_time(jd, jc)
     ν = apparent_sidereal_time(ν0, δψ, ε)
 
     # geocentric sun position
     α = geocentric_sun_right_ascension(λ, ε, β)
     δ = geocentric_sun_declination(λ, ε, β)
+
+    return (; ν, α, δ, R, ε, δψ, jme)
+end
+
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    return _solar_position(spa_obs, dt, alg)
+end
+
+function _solar_position(
+    obs::SPAObserver{T},
+    dt::DateTime,
+    alg::SPA,
+) where {T<:AbstractFloat}
+    δt::Float64 = if alg.delta_t === nothing
+        calculate_deltat(dt)
+    else
+        alg.delta_t
+    end
+
+    # Compute sidereal time, right ascension, declination, and related parameters
+    ν, α, δ, R, ε, δψ, jme = _compute_spa_srt_parameters(dt, δt)
 
     # equation of time
     M = sun_mean_longitude(jme)

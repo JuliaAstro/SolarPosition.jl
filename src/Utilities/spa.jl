@@ -1,15 +1,9 @@
 """SPA sunrise/sunset calculations."""
 
 using Dates: Dates
+using TimeZones: TimeZone
 
-# Import necessary functions from Positioning.spa module
-using ..Positioning: datetime2julian, julian_ephemeris_day, julian_ephemeris_century
-using ..Positioning: julian_ephemeris_millennium, heliocentric_longitude
-using ..Positioning: heliocentric_latitude, heliocentric_radius_vector
-using ..Positioning: nutation_longitude_obliquity, mean_ecliptic_obliquity
-using ..Positioning: true_ecliptic_obliquity, aberration_correction
-using ..Positioning: apparent_sun_longitude, mean_sidereal_time, apparent_sidereal_time
-using ..Positioning: geocentric_sun_right_ascension, geocentric_sun_declination
+using ..Positioning: _compute_spa_srt_parameters
 
 """
 Helper function to compute sidereal time, right ascension, and declination
@@ -18,49 +12,36 @@ Returns (ν, α, δ) where ν is apparent sidereal time at Greenwich,
 α is geocentric right ascension, δ is geocentric declination (all in degrees).
 """
 function _compute_srt_parameters(dt::DateTime, δt::Float64)
-    jd = datetime2julian(dt)
-    jde = julian_ephemeris_day(jd, δt)
-    jc = (jd - 2451545.0) / 36525.0
-    jce = julian_ephemeris_century(jde)
-    jme = julian_ephemeris_millennium(jce)
-
-    # heliocentric position of Earth
-    L = heliocentric_longitude(jme)
-    B = heliocentric_latitude(jme)
-    R = heliocentric_radius_vector(jme)
-
-    # geocentric position (sun as seen from Earth center)
-    θ = mod(L + 180.0, 360.0)  # geocentric longitude
-    β = -B  # geocentric latitude
-
-    # nutation and obliquity
-    δψ, δε = nutation_longitude_obliquity(jce)
-    ε0 = mean_ecliptic_obliquity(jme)
-    ε = true_ecliptic_obliquity(ε0, δε)
-
-    # aberration correction
-    δτ = aberration_correction(R)
-
-    # apparent sun longitude
-    λ = apparent_sun_longitude(θ, δψ, δτ)
-
-    # sidereal time at Greenwich
-    ν0 = mean_sidereal_time(jd, jc)
-    ν = apparent_sidereal_time(ν0, δψ, ε)
-
-    # geocentric sun position
-    α = geocentric_sun_right_ascension(λ, ε, β)
-    δ = geocentric_sun_declination(λ, ε, β)
-
-    return (ν, α, δ)
+    srt = _compute_spa_srt_parameters(dt, δt)
+    return (srt.ν, srt.α, srt.δ)
 end
 
 # function transit_sunrise_sunset(dates, lat, lon, delta_t, numthreads):
 function _transit_sunrise_sunset(
+    ::Type{R},
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+) where {T<:AbstractFloat,R<:DateTime}
+    return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
+end
+
+function _transit_sunrise_sunset(
+    tz::TimeZone,
     obs::Observer{T},
     dt::DateTime,
     alg::SPA,
 ) where {T<:AbstractFloat}
+    return _transit_sunrise_sunset_impl(ZonedDateTime, obs, dt, alg, tz)
+end
+
+function _transit_sunrise_sunset_impl(
+    ::Type{R},
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+    tz::Union{Nothing,TimeZone},
+) where {T<:AbstractFloat,R<:Union{DateTime,ZonedDateTime}}
     """Calculate the sun transit, sunrise, and sunset
     for a given date at an Observer location using the SPA algorithm.
 
@@ -108,12 +89,15 @@ function _transit_sunrise_sunset(
 
     cos_H0_arg = (sin_h0 - sin_lat * sin_δ0) / (cos_lat * cos_δ0)
 
-    # Check if sun rises/sets on this day
+    # check if sun rises/sets on this day
     if abs(cos_H0_arg) > 1.0
-        # Sun doesn't rise or set - return NaN times
-        # TODO: Handle polar day/night cases properly
-        zdt = ZonedDateTime(dt, tz"UTC")
-        return TransitSunriseSunset(zdt, zdt, zdt)
+        polar_condition =
+            cos_H0_arg > 1.0 ? "polar night (sun below horizon)" :
+            "polar day (sun above horizon)"
+        @warn "Sun does not rise or set on this date at the given location: $polar_condition. Returning input datetime for all events." _group =
+            :polar_day_night maxlog = 1
+        result = _convert_to_return_type(R, dt, tz)
+        return TransitSunriseSunset{R}(result, result, result)
     end
 
     H0 = acosd(cos_H0_arg)
@@ -152,8 +136,8 @@ function _transit_sunrise_sunset(
     c_p = b_p - a_p
 
     # Interpolated right ascension and declination at each event
-    α_prime = α0 .+ (n .* (a + b .+ c .* n)) ./ 2.0
-    δ_prime = δ0 .+ (n .* (a_p + b_p .+ c_p .* n)) ./ 2.0
+    α_prime = α0 .+ (n .* (a .+ b .+ c .* n)) ./ 2.0
+    δ_prime = δ0 .+ (n .* (a_p .+ b_p .+ c_p .* n)) ./ 2.0
 
     # Local hour angle for each event
     H_p = mod.(ν_s .+ lon .- α_prime, 360.0)
@@ -192,10 +176,18 @@ function _transit_sunrise_sunset(
     sunrise_dt = dt + Dates.Second(round(Int, R_frac * 86400.0))
     sunset_dt = dt + Dates.Second(round(Int, S_frac * 86400.0))
 
-    # Convert to ZonedDateTime with UTC
-    transit_zdt = ZonedDateTime(transit_dt, tz"UTC")
-    sunrise_zdt = ZonedDateTime(sunrise_dt, tz"UTC")
-    sunset_zdt = ZonedDateTime(sunset_dt, tz"UTC")
+    # Return in the requested type/timezone
+    transit = _convert_to_return_type(R, transit_dt, tz)
+    sunrise = _convert_to_return_type(R, sunrise_dt, tz)
+    sunset = _convert_to_return_type(R, sunset_dt, tz)
+    return TransitSunriseSunset{R}(transit, sunrise, sunset)
+end
 
-    return TransitSunriseSunset(transit_zdt, sunrise_zdt, sunset_zdt)
+# Helper function to convert DateTime to the requested return type
+function _convert_to_return_type(::Type{DateTime}, dt::DateTime, ::Union{Nothing,TimeZone})
+    return dt
+end
+
+function _convert_to_return_type(::Type{ZonedDateTime}, dt::DateTime, tz::TimeZone)
+    return ZonedDateTime(dt, tz; from_utc = true)
 end

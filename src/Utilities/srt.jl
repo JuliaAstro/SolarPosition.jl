@@ -13,15 +13,15 @@ function transit_sunrise_sunset(
     obs::Observer{T},
     dt::DateTime,
     alg::SolarAlgorithm = SPA(),
-)::TransitSunriseSunset where {T<:AbstractFloat}
-    _transit_sunrise_sunset(obs, dt, alg)
+)::TransitSunriseSunset{DateTime} where {T<:AbstractFloat}
+    _transit_sunrise_sunset(DateTime, obs, dt, alg)
 end
 
 function transit_sunrise_sunset(
     obs::Observer{T},
     dt::Date,
     alg::SolarAlgorithm = SPA(),
-) where {T<:AbstractFloat}
+)::TransitSunriseSunset{DateTime} where {T<:AbstractFloat}
     transit_sunrise_sunset(obs, DateTime(dt), alg)
 end
 
@@ -29,8 +29,8 @@ function transit_sunrise_sunset(
     obs::Observer{T},
     zdt::ZonedDateTime,
     alg::SolarAlgorithm = SPA(),
-) where {T<:AbstractFloat}
-    transit_sunrise_sunset(obs, DateTime(zdt), alg)
+)::TransitSunriseSunset{ZonedDateTime} where {T<:AbstractFloat}
+    _transit_sunrise_sunset(timezone(zdt), obs, DateTime(zdt, UTC), alg)
 end
 
 """Calculate the next sunrise after a given DateTime at an Observer location."""

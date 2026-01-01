@@ -30,9 +30,23 @@ export AbstractSolPos, AbstractApparentSolPos
 
 # utilities
 using .Utilities:
-    TransitSunriseSunset, transit_sunrise_sunset, next_sunrise, next_sunset, solar_noon
+    TransitSunriseSunset,
+    transit_sunrise_sunset,
+    next_sunrise,
+    next_sunset,
+    solar_noon,
+    previous_sunrise,
+    previous_sunset,
+    previous_solar_noon
 
-export TransitSunriseSunset, transit_sunrise_sunset, next_sunrise, next_sunset, solar_noon
+export TransitSunriseSunset,
+    transit_sunrise_sunset,
+    next_sunrise,
+    next_sunset,
+    solar_noon,
+    previous_sunrise,
+    previous_sunset,
+    previous_solar_noon
 
 # to make the makie extension work
 export sunpathplot

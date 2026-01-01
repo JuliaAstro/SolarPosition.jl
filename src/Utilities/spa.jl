@@ -16,7 +16,6 @@ function _compute_srt_parameters(dt::DateTime, δt::Float64)
     return (srt.ν, srt.α, srt.δ)
 end
 
-# function transit_sunrise_sunset(dates, lat, lon, delta_t, numthreads):
 function _transit_sunrise_sunset(
     ::Type{R},
     obs::Observer{T},
@@ -46,10 +45,16 @@ function _transit_sunrise_sunset_impl(
     for a given date at an Observer location using the SPA algorithm.
 
     Based on the NREL SPA algorithm for sunrise/sunset/transit calculation.
-    The input DateTime should be at midnight UTC (00:00+00:00) on the day of interest.
+    The input DateTime is automatically normalized to midnight UTC (00:00+00:00)
+    for the day of interest.
     """
+    # Normalize the input datetime to midnight UTC
+    # Extract just the date and create a new DateTime at midnight
+    date_only = Date(dt)
+    dt_midnight = DateTime(date_only)
+
     δt = if alg.delta_t === nothing
-        calculate_deltat(dt)
+        calculate_deltat(dt_midnight)
     else
         alg.delta_t
     end
@@ -61,8 +66,8 @@ function _transit_sunrise_sunset_impl(
     # δt is in seconds, convert to a time offset
     δt_seconds = Dates.Second(round(Int, δt))
 
-    dt_utday = dt
-    dt_ttday0 = dt - δt_seconds
+    dt_utday = dt_midnight
+    dt_ttday0 = dt_midnight - δt_seconds
     dt_ttdayn1 = dt_ttday0 - Dates.Day(1)
     dt_ttdayp1 = dt_ttday0 + Dates.Day(1)
 
@@ -94,9 +99,9 @@ function _transit_sunrise_sunset_impl(
         polar_condition =
             cos_H0_arg > 1.0 ? "polar night (sun below horizon)" :
             "polar day (sun above horizon)"
-        @warn "Sun does not rise or set on this date at the given location: $polar_condition. Returning input datetime for all events." _group =
+        @warn "Sun does not rise or set on this date at the given location: $polar_condition. Returning midnight UTC for all events." _group =
             :polar_day_night maxlog = 1
-        result = _convert_to_return_type(R, dt, tz)
+        result = _convert_to_return_type(R, dt_midnight, tz)
         return TransitSunriseSunset{R}(result, result, result)
     end
 
@@ -172,9 +177,9 @@ function _transit_sunrise_sunset_impl(
 
     # Convert fractions of day to DateTime
     # Each fraction represents seconds into the day from midnight UTC
-    transit_dt = dt + Dates.Second(round(Int, T_frac * 86400.0))
-    sunrise_dt = dt + Dates.Second(round(Int, R_frac * 86400.0))
-    sunset_dt = dt + Dates.Second(round(Int, S_frac * 86400.0))
+    transit_dt = dt_midnight + Dates.Second(round(Int, T_frac * 86400.0))
+    sunrise_dt = dt_midnight + Dates.Second(round(Int, R_frac * 86400.0))
+    sunset_dt = dt_midnight + Dates.Second(round(Int, S_frac * 86400.0))
 
     # Return in the requested type/timezone
     transit = _convert_to_return_type(R, transit_dt, tz)

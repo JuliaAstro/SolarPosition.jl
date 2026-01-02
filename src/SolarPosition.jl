@@ -9,23 +9,18 @@ include("Utilities/Utilities.jl")
 using .Positioning:
     Observer, PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!
 using .Positioning:
-    SolPos,
-    ApparentSolPos,
-    SPASolPos,
-    SolarAlgorithm,
-    AbstractApparentSolPos,
-    AbstractSolPos
-using .Refraction: RefractionAlgorithm, NoRefraction
+    SolPos, ApparentSolPos, SolarAlgorithm, AbstractApparentSolPos, AbstractSolPos
+using .Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
 using .Refraction: HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
 
 export solar_position, solar_position!, SolarAlgorithm, Observer
 export PSA, NOAA, Walraven, USNO, SPA
 
 # refraction algorithms
-export RefractionAlgorithm, NoRefraction
+export RefractionAlgorithm, NoRefraction, DefaultRefraction
 export HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
 
-export SolPos, ApparentSolPos, SPASolPos
+export SolPos, ApparentSolPos
 export AbstractSolPos, AbstractApparentSolPos
 
 # utilities

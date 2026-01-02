@@ -162,36 +162,6 @@ Base.show(io::IO, obs::ApparentSolPos) = print(
 )
 
 """
-    $(TYPEDEF)
-
-Solar position result from SPA algorithm including equation of time.
-
-# Fields
-$(TYPEDFIELDS)
-"""
-struct SPASolPos{T} <: AbstractApparentSolPos where {T<:AbstractFloat}
-    "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
-    azimuth::T
-    "Elevation (degrees, range [-90, 90])"
-    elevation::T
-    "Zenith = 90 - elevation (degrees, range [0, 180])"
-    zenith::T
-    "Apparent elevation (degrees, range [-90, 90])"
-    apparent_elevation::T
-    "Apparent zenith (degrees, range [0, 180])"
-    apparent_zenith::T
-    "Equation of time (minutes)"
-    equation_of_time::T
-end
-
-Base.show(io::IO, obs::SPASolPos) = print(
-    io,
-    "SPASolPos(azimuth=$(obs.azimuth)°, elevation=$(obs.elevation)°, zenith=$(obs.zenith)°,
-    apparent_elevation=$(obs.apparent_elevation)°, apparent_zenith=$(obs.apparent_zenith)°,
-    equation_of_time=$(obs.equation_of_time)min",
-)
-
-"""
     $(TYPEDSIGNATURES)
 
 Calculate solar position(s) for given observer location(s) and time(s).
@@ -467,16 +437,7 @@ include("usno.jl")
 include("spa.jl")
 
 export Observer,
-    PSA,
-    NOAA,
-    Walraven,
-    USNO,
-    SPA,
-    solar_position,
-    solar_position!,
-    SolPos,
-    ApparentSolPos,
-    SPASolPos
+    PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
 export calculate_deltat
 
 end

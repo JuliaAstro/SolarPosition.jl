@@ -9,7 +9,6 @@ using SolarPosition.Positioning:
     SPA,
     SolPos,
     ApparentSolPos,
-    SPASolPos,
     solar_position,
     solar_position!
 using Dates, TimeZones, Tables, DataFrames
@@ -55,14 +54,13 @@ using Dates: Hour, @dateformat_str
 
         @testset "In place" begin
             if alg isa SPA
-                PosType = SPASolPos{Float64}
-                pos = StructVector{SPASolPos{Float64}}((
+                PosType = ApparentSolPos{Float64}
+                pos = StructVector{ApparentSolPos{Float64}}((
                     azimuth = zeros(n_dts),
                     elevation = zeros(n_dts),
                     zenith = zeros(n_dts),
                     apparent_elevation = zeros(n_dts),
                     apparent_zenith = zeros(n_dts),
-                    equation_of_time = zeros(n_dts),
                 ))
             elseif alg isa NOAA
                 PosType = ApparentSolPos{Float64}
@@ -100,7 +98,7 @@ using Dates: Hour, @dateformat_str
         @testset "Return new" begin
             # Determine result type based on algorithm
             PosType = if alg isa SPA
-                SPASolPos{Float64}
+                ApparentSolPos{Float64}
             elseif alg isa NOAA
                 ApparentSolPos{Float64}
             else
@@ -147,10 +145,8 @@ using Dates: Hour, @dateformat_str
             if alg isa SPA
                 @test "apparent_elevation" in names(df)
                 @test "apparent_zenith" in names(df)
-                @test "equation_of_time" in names(df)
                 @test all(isfinite, df.apparent_elevation)
                 @test all(isfinite, df.apparent_zenith)
-                @test all(isfinite, df.equation_of_time)
             end
 
             direct_result = solar_position(obs, dt_vector, alg)
@@ -161,7 +157,6 @@ using Dates: Hour, @dateformat_str
             if alg isa SPA
                 @test df.apparent_elevation == direct_result.apparent_elevation
                 @test df.apparent_zenith == direct_result.apparent_zenith
-                @test df.equation_of_time == direct_result.equation_of_time
             end
         end
 
@@ -179,7 +174,6 @@ using Dates: Hour, @dateformat_str
             if alg isa SPA
                 @test "apparent_elevation" in names(df_empty)
                 @test "apparent_zenith" in names(df_empty)
-                @test "equation_of_time" in names(df_empty)
                 @test length(df_empty.apparent_elevation) == 0
             end
         end
@@ -201,7 +195,6 @@ using Dates: Hour, @dateformat_str
             if alg isa SPA
                 @test df.apparent_elevation == direct_result.apparent_elevation
                 @test df.apparent_zenith == direct_result.apparent_zenith
-                @test df.equation_of_time == direct_result.equation_of_time
             end
         end
 
@@ -225,10 +218,8 @@ using Dates: Hour, @dateformat_str
             if alg isa SPA
                 @test "apparent_elevation" in names(result_table)
                 @test "apparent_zenith" in names(result_table)
-                @test "equation_of_time" in names(result_table)
                 @test result_table.apparent_elevation == direct_result.apparent_elevation
                 @test result_table.apparent_zenith == direct_result.apparent_zenith
-                @test result_table.equation_of_time == direct_result.equation_of_time
             end
         end
     end
@@ -270,8 +261,8 @@ end
         end
     end
 
-    @testset "SPA with refraction returns SPASolPos" begin
-        # SPA has its own refraction handling, so it always returns SPASolPos
+    @testset "SPA with refraction returns ApparentSolPos" begin
+        # SPA has its own refraction handling, so it always returns ApparentSolPos
         # and ignores external refraction algorithms
         res = @test_logs (:warn, r"SPA algorithm has its own refraction") solar_position(
             obs,
@@ -279,15 +270,12 @@ end
             SPA(),
             BENNETT(),
         )
-        @test res isa SPASolPos
+        @test res isa ApparentSolPos
         @test hasfield(typeof(res), :azimuth)
         @test hasfield(typeof(res), :elevation)
         @test hasfield(typeof(res), :zenith)
         @test hasfield(typeof(res), :apparent_elevation)
         @test hasfield(typeof(res), :apparent_zenith)
-        @test hasfield(typeof(res), :equation_of_time)
-
-        @test isfinite(res.equation_of_time)
     end
 end
 
@@ -317,15 +305,6 @@ end
         @test occursin("45.0", str)
         @test occursin("46.0", str)
         @test occursin("44.0", str)
-    end
-
-    @testset "SPASolPos show" begin
-        pos = SPASolPos(180.0, 45.0, 45.0, 46.0, 44.0, 5.0)
-        str = sprint(show, pos)
-        @test occursin("SPASolPos", str)
-        @test occursin("180.0", str)
-        @test occursin("45.0", str)
-        @test occursin("5.0", str)
     end
 end
 

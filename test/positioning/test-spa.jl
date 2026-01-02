@@ -16,7 +16,7 @@
                 obs = Observer(lat, lon, altitude = alt)
             end
 
-            # SPA includes refraction correction and equation of time
+            # SPA includes refraction correction
             res = solar_position(obs, dt, SPA())
 
             @test isapprox(res.elevation, row.elevation, atol = 1e-8)
@@ -24,7 +24,6 @@
             @test isapprox(res.azimuth, row.azimuth, atol = 1e-8)
             @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1e-8)
             @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1e-8)
-            @test isapprox(res.equation_of_time, row.equation_of_time, atol = 1e-8)
         end
     end
 
@@ -95,12 +94,7 @@
         obs_pole = Observer(89.99, 10.0, 100.0)
         dt = DateTime(2020, 6, 21, 12, 0, 0)
         pos = solar_position(obs_pole, dt, SPA())
-        @test pos isa SPASolPos
-
-        # Test equation of time limits
-        dt_eot = DateTime(2020, 11, 3, 6, 0, 0)
-        pos_eot = solar_position(obs, dt_eot, SPA())
-        @test -20.0 <= pos_eot.equation_of_time <= 20.0
+        @test pos isa ApparentSolPos
     end
 
     @testset "SPA x_term and y_term functions" begin

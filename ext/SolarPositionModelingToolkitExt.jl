@@ -1,7 +1,7 @@
 module SolarPositionModelingToolkitExt
 
 using SolarPosition: Observer, SolarAlgorithm, RefractionAlgorithm, PSA, NoRefraction
-using SolarPosition: SolPos, ApparentSolPos, SPASolPos, AbstractApparentSolPos
+using SolarPosition: SolPos, ApparentSolPos, AbstractApparentSolPos
 using ModelingToolkit: @parameters, @variables, System
 using ModelingToolkit: t_nounits as t
 using Dates: Dates, DateTime, Millisecond
@@ -20,7 +20,7 @@ get_azimuth(pos) = pos.azimuth
 get_elevation(pos::SolPos) = pos.elevation
 get_zenith(pos::SolPos) = pos.zenith
 
-# for ApparentSolPos and SPASolPos: use apparent_elevation and apparent_zenith
+# for ApparentSolPos: use apparent_elevation and apparent_zenith
 get_elevation(pos::AbstractApparentSolPos) = pos.apparent_elevation
 get_zenith(pos::AbstractApparentSolPos) = pos.apparent_zenith
 

@@ -84,8 +84,8 @@ end
     @test_logs (:warn, r"ΔT is undefined") calculate_deltat(-2000, 6)
     @test_logs (:warn, r"ΔT is undefined") calculate_deltat(3001, 6)
 
-    result_ancient = calculate_deltat(-2000, 6)
-    result_future = calculate_deltat(3001, 6)
+    result_ancient = @test_logs (:warn, r"ΔT is undefined") calculate_deltat(-2000, 6)
+    result_future = @test_logs (:warn, r"ΔT is undefined") calculate_deltat(3001, 6)
     @test isfinite(result_ancient)
     @test isfinite(result_future)
 end
@@ -150,10 +150,14 @@ end
 
 @testset "ΔT edge cases" begin
     # Test years before -1999 (should warn and return extrapolated value)
-    @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(-2500, 6, 1))
+    result_ancient =
+        @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(-2500, 6, 1))
+    @test isfinite(result_ancient)
 
     # Test years after 3000 (should warn and return extrapolated value)
-    @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(3500, 6, 1))
+    result_future =
+        @test_logs (:warn, r"ΔT is undefined") calculate_deltat(DateTime(3500, 6, 1))
+    @test isfinite(result_future)
 
     # Test year ranges that hit specific polynomial cases
     # 1860-1900 range

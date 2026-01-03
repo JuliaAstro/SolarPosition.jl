@@ -14,6 +14,7 @@ using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
+using Reexport: @reexport
 import ..Refraction
 using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
 
@@ -45,8 +46,18 @@ $(TYPEDFIELDS)
 # Constructors
 ```julia
 Observer(latitude, longitude, altitude=0.0)
-Observer(latitude, longitude; altitude=0.0)
+Observer(latitude, longitude; altitude=0.0, horizon=0.0)
+Observer(latitude, longitude; altitude=0.0, horizon=0=>34)  # 34 arcminutes
 ```
+
+The `horizon` parameter represents the angular depression/elevation of the horizon in
+degrees. It is commonly used for sunrise/sunset calculations to account for atmospheric
+refraction (typically 0=>34 or ~0.5667°) or local terrain elevation that affects the
+visible horizon.
+
+The `horizon` parameter can be specified as:
+- A number in degrees (e.g., `0.5667`)
+- A `degrees=>arcminutes` pair (e.g., `0=>34` for 34 arcminutes = 0.5667°)
 """
 struct Observer{T<:AbstractFloat}
     "Geodetic latitude (+N)"
@@ -55,6 +66,8 @@ struct Observer{T<:AbstractFloat}
     longitude::T        # longitude (+E)
     "Altitude above mean sea level (meters)"
     altitude::T         # altitude above MSL
+    "Horizon angle in degrees (e.g., for refraction or sunrise/sunset calculations)"
+    horizon::T
     "Latitude in radians"
     latitude_rad::T
     "Longitude in radians"
@@ -64,20 +77,33 @@ struct Observer{T<:AbstractFloat}
     "cos(latitude)"
     cos_lat::T
 
-    function Observer{T}(lat::T, lon::T, alt::T = zero(T)) where {T<:AbstractFloat}
+    function Observer{T}(
+        lat::T,
+        lon::T,
+        alt::T = zero(T),
+        horiz::T = zero(T),
+    ) where {T<:AbstractFloat}
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
         (sin_lat, cos_lat) = sincos(lat_rad)
-        new{T}(lat, lon, alt, lat_rad, lon_rad, sin_lat, cos_lat)
+        new{T}(lat, lon, alt, horiz, lat_rad, lon_rad, sin_lat, cos_lat)
     end
 end
 
-Observer(lat::T, lon::T; altitude = 0.0) where {T} = Observer{T}(lat, lon, altitude)
+# helper to convert horizon from different formats to degrees
+_horizon_to_degrees(h::Pair{<:Real,<:Real}) = h.first + h.second / 60.0
+_horizon_to_degrees(h::AbstractFloat) = h
+
+Observer(lat::T, lon::T; altitude = 0.0, horizon = 0.0) where {T} =
+    Observer{T}(lat, lon, T(altitude), T(_horizon_to_degrees(horizon)))
 Observer(lat::T, lon::T, alt::T) where {T} = Observer{T}(lat, lon, alt)
+Observer(lat::T, lon::T, alt::T, horiz::T) where {T} = Observer{T}(lat, lon, alt, horiz)
+Observer(lat::T, lon::T, alt::T, horiz::Pair{<:Real,<:Real}) where {T} =
+    Observer{T}(lat, lon, alt, T(_horizon_to_degrees(horiz)))
 
 Base.show(io::IO, obs::Observer) = print(
     io,
-    "Observer(latitude=$(obs.latitude)°, longitude=$(obs.longitude)°, altitude=$(obs.altitude)m)",
+    "Observer(latitude=$(obs.latitude)°, longitude=$(obs.longitude)°, altitude=$(obs.altitude)m, horizon=$(obs.horizon)°)",
 )
 
 abstract type AbstractSolPos end
@@ -134,36 +160,6 @@ Base.show(io::IO, obs::ApparentSolPos) = print(
     io,
     "ApparentSolPos(azimuth=$(obs.azimuth)°, elevation=$(obs.elevation)°, zenith=$(obs.zenith)°,
     apparent_elevation=$(obs.apparent_elevation)°, apparent_zenith=$(obs.apparent_zenith)°",
-)
-
-"""
-    $(TYPEDEF)
-
-Solar position result from SPA algorithm including equation of time.
-
-# Fields
-$(TYPEDFIELDS)
-"""
-struct SPASolPos{T} <: AbstractApparentSolPos where {T<:AbstractFloat}
-    "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
-    azimuth::T
-    "Elevation (degrees, range [-90, 90])"
-    elevation::T
-    "Zenith = 90 - elevation (degrees, range [0, 180])"
-    zenith::T
-    "Apparent elevation (degrees, range [-90, 90])"
-    apparent_elevation::T
-    "Apparent zenith (degrees, range [0, 180])"
-    apparent_zenith::T
-    "Equation of time (minutes)"
-    equation_of_time::T
-end
-
-Base.show(io::IO, obs::SPASolPos) = print(
-    io,
-    "SPASolPos(azimuth=$(obs.azimuth)°, elevation=$(obs.elevation)°, zenith=$(obs.zenith)°,
-    apparent_elevation=$(obs.apparent_elevation)°, apparent_zenith=$(obs.apparent_zenith)°,
-    equation_of_time=$(obs.equation_of_time)min",
 )
 
 """
@@ -442,16 +438,8 @@ include("usno.jl")
 include("spa.jl")
 
 export Observer,
-    PSA,
-    NOAA,
-    Walraven,
-    USNO,
-    SPA,
-    solar_position,
-    solar_position!,
-    SolPos,
-    ApparentSolPos,
-    SPASolPos
+    PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
+export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos
 export calculate_deltat
 
 end

@@ -125,6 +125,6 @@ end
     obs = Observer(45.0, 10.0, 100.0)
     dt = DateTime(2020, 6, 21, 12, 0, 0)
     pos = solar_position(obs, dt, SPA(), ref2)
-    @test pos isa SPASolPos
+    @test pos isa ApparentSolPos
     @test pos.apparent_elevation != pos.elevation
 end

@@ -2,30 +2,15 @@
 
 using OhMyThreads
 using SolarPosition.Positioning:
-    Observer,
-    PSA,
-    NOAA,
-    SPA,
-    SolPos,
-    ApparentSolPos,
-    SPASolPos,
-    solar_position,
-    solar_position!
-using SolarPosition.Refraction: NoRefraction, BENNETT
+    Observer, PSA, NOAA, SPA, SolPos, ApparentSolPos, solar_position, solar_position!
+using SolarPosition.Refraction: NoRefraction, DefaultRefraction, BENNETT
 using Dates: DateTime, Hour
 using TimeZones: ZonedDateTime, @tz_str
 using StructArrays: StructVector
 
 fields = (:azimuth, :elevation, :zenith)
 allfields = (:azimuth, :elevation, :zenith, :apparent_elevation, :apparent_zenith)
-spafields = (
-    :azimuth,
-    :elevation,
-    :zenith,
-    :apparent_elevation,
-    :apparent_zenith,
-    :equation_of_time,
-)
+spafields = (:azimuth, :elevation, :zenith, :apparent_elevation, :apparent_zenith)
 
 @testset "OhMyThreads Extension" begin
 
@@ -133,10 +118,10 @@ spafields = (
         end
 
         @testset "SPA algorithm" begin
-            serial_spa = solar_position(obs, times, SPA(), NoRefraction())
-            parallel_spa = solar_position(obs, times, SPA(), NoRefraction(), scheduler)
+            serial_spa = solar_position(obs, times, SPA(), DefaultRefraction())
+            parallel_spa = solar_position(obs, times, SPA(), DefaultRefraction(), scheduler)
 
-            @test parallel_spa isa StructVector{SPASolPos{Float64}}
+            @test parallel_spa isa StructVector{ApparentSolPos{Float64}}
 
             @testset "$field" for field in spafields
                 @test all(getfield.(parallel_spa, field) .== getfield.(serial_spa, field))

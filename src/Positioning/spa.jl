@@ -41,8 +41,15 @@ struct SPA <: SolarAlgorithm
     end
 end
 
-# default constructor with typical values
-SPA() = SPA(67.0, 101325.0, 12.0, 0.5667)
+# keyword argument constructor with default values
+function SPA(;
+    delta_t::Union{Float64,Nothing} = 67.0,
+    pressure::Float64 = 101325.0,
+    temperature::Float64 = 12.0,
+    atmos_refract::Float64 = 0.5667,
+)
+    return SPA(delta_t, pressure, temperature, atmos_refract)
+end
 
 
 """
@@ -373,23 +380,20 @@ function equation_of_time(M, α, δψ, ε)
     return E
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
-end
+"""
+Helper function to compute sidereal time, right ascension, declination, and related
+parameters for SPA calculations at a given datetime.
 
-function _solar_position(
-    obs::SPAObserver{T},
-    dt::DateTime,
-    alg::SPA,
-) where {T<:AbstractFloat}
-    δt::Float64 = if alg.delta_t === nothing
-        calculate_deltat(dt)
-    else
-        alg.delta_t
-    end
-
-    # julian date calculations
+Returns a named tuple with:
+- `ν`: apparent sidereal time at Greenwich (degrees)
+- `α`: geocentric right ascension (degrees)
+- `δ`: geocentric declination (degrees)
+- `R`: heliocentric radius vector (AU)
+- `ε`: true ecliptic obliquity (degrees)
+- `δψ`: nutation in longitude (degrees)
+- `jme`: Julian Ephemeris Millennium
+"""
+function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     jd = datetime2julian(dt)
     jde = julian_ephemeris_day(jd, δt)
     jc = (jd - 2451545.0) / 36525.0
@@ -416,7 +420,7 @@ function _solar_position(
     # apparent sun longitude
     λ = apparent_sun_longitude(θ, δψ, δτ)
 
-    # sidereal time
+    # sidereal time at Greenwich
     ν0 = mean_sidereal_time(jd, jc)
     ν = apparent_sidereal_time(ν0, δψ, ε)
 
@@ -424,9 +428,27 @@ function _solar_position(
     α = geocentric_sun_right_ascension(λ, ε, β)
     δ = geocentric_sun_declination(λ, ε, β)
 
-    # equation of time
-    M = sun_mean_longitude(jme)
-    eot = equation_of_time(M, α, δψ, ε)
+    return (; ν, α, δ, R, ε, δψ, jme)
+end
+
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    return _solar_position(spa_obs, dt, alg)
+end
+
+function _solar_position(
+    obs::SPAObserver{T},
+    dt::DateTime,
+    alg::SPA,
+) where {T<:AbstractFloat}
+    δt::Float64 = if alg.delta_t === nothing
+        calculate_deltat(dt)
+    else
+        alg.delta_t
+    end
+
+    # Compute sidereal time, right ascension, declination, and related parameters
+    ν, α, δ, R, ε, δψ, jme = _compute_spa_srt_parameters(dt, δt)
 
     # observer local hour angle
     H = local_hour_angle(ν, obs.longitude, α)
@@ -453,58 +475,81 @@ function _solar_position(
         H′_rad,
     )
 
-    # atmospheric refraction correction
-    Δe = atmospheric_refraction_correction(
-        alg.pressure,
-        alg.temperature,
-        e0,
-        alg.atmos_refract,
-    )
-
-    # final positions
-    e = e0 + Δe  # apparent elevation
-    θz = 90.0 - e  # apparent zenith
-    θz0 = 90.0 - e0  # zenith without refraction
+    # zenith without refraction
+    θz0 = 90.0 - e0
 
     # azimuth (same for both apparent and non-apparent)
     az = topocentric_azimuth_angle(H′_rad, δ′_rad, obs.sin_lat, obs.cos_lat)
 
-    return SPASolPos{T}(az, e0, θz0, e, θz, eot)
+    return SolPos{T}(az, e0, θz0)
 end
 
-# SPA-specific method for NoRefraction to avoid ambiguity
-function _solar_position(
-    obs::Observer{T},
-    dt::DateTime,
-    alg::SPA,
-    ::Refraction.NoRefraction,
-) where {T<:AbstractFloat}
-    return _solar_position(obs, dt, alg)
-end
-
-# SPA-specific method for DefaultRefraction - use SPA's built-in refraction silently
+# SPA with DefaultRefraction applies SPA's built-in atmospheric refraction model
 function _solar_position(
     obs::Observer{T},
     dt::DateTime,
     alg::SPA,
     ::Refraction.DefaultRefraction,
 ) where {T<:AbstractFloat}
-    return _solar_position(obs, dt, alg)
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+
+    # Get base position without refraction
+    base_pos = _solar_position(spa_obs, dt, alg)
+
+    # Apply SPA's atmospheric refraction correction
+    Δe = atmospheric_refraction_correction(
+        alg.pressure,
+        alg.temperature,
+        base_pos.elevation,
+        alg.atmos_refract,
+    )
+
+    # Calculate apparent positions
+    e = base_pos.elevation + Δe  # apparent elevation
+    θz = 90.0 - e  # apparent zenith
+
+    return ApparentSolPos{T}(base_pos.azimuth, base_pos.elevation, base_pos.zenith, e, θz)
 end
 
-# SPA has its own internal refraction handling, so when a specific refraction algorithm
-# is provided, we ignore it and use SPA's built-in refraction
+# SPA with NoRefraction returns SolPos (no refraction applied)
 function _solar_position(
     obs::Observer{T},
     dt::DateTime,
     alg::SPA,
-    ::Refraction.RefractionAlgorithm,
+    ::Refraction.NoRefraction,
 ) where {T<:AbstractFloat}
-    @warn "SPA algorithm has its own refraction correction. The provided refraction algorithm will be ignored." maxlog =
-        1
-    return _solar_position(obs, dt, alg)
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    return _solar_position(spa_obs, dt, alg)
 end
 
-# SPA always returns SPASolPos (includes equation of time)
-result_type(::Type{SPA}, ::Type{NoRefraction}, ::Type{T}) where {T} = SPASolPos{T}
-result_type(::Type{SPA}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} = SPASolPos{T}
+# SPA with external refraction algorithm: apply the external refraction to base position
+function _solar_position(
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+    refraction::Refraction.RefractionAlgorithm,
+) where {T<:AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+
+    # Get base position without refraction
+    base_pos = _solar_position(spa_obs, dt, alg)
+
+    # Apply external refraction correction
+    refraction_correction_deg = Refraction.refraction(refraction, base_pos.elevation)
+    apparent_elevation_deg = base_pos.elevation + refraction_correction_deg
+    apparent_zenith_deg = 90.0 - apparent_elevation_deg
+
+    return ApparentSolPos{T}(
+        base_pos.azimuth,
+        base_pos.elevation,
+        base_pos.zenith,
+        apparent_elevation_deg,
+        apparent_zenith_deg,
+    )
+end
+
+# SPA returns SolPos with NoRefraction, ApparentSolPos with any refraction
+result_type(::Type{SPA}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
+result_type(::Type{SPA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = ApparentSolPos{T}
+result_type(::Type{SPA}, ::Type{<:Refraction.RefractionAlgorithm}, ::Type{T}) where {T} =
+    ApparentSolPos{T}

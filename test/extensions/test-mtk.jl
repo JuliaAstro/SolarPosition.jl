@@ -1,6 +1,15 @@
 using Test
 using SolarPosition:
-    Observer, PSA, NOAA, Walraven, USNO, SPA, NoRefraction, SolarPositionBlock
+    Observer,
+    PSA,
+    NOAA,
+    Walraven,
+    USNO,
+    SPA,
+    NoRefraction,
+    DefaultRefraction,
+    SolarPositionBlock
+
 using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2
 using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
@@ -160,7 +169,7 @@ using CairoMakie
             ("Walraven", Walraven(), expected_walraven, NoRefraction(), false),
             ("USNO", USNO(), expected_usno, NoRefraction(), false),
             ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0), true),
-            ("SPA", SPA(), expected_spa, NoRefraction(), true),
+            ("SPA", SPA(), expected_spa, DefaultRefraction(), true),
         ]
             # Get expected values for all test cases
             df_expected = exp_func()

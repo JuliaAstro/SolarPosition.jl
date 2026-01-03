@@ -158,28 +158,10 @@ Edit `src/Positioning/Positioning.jl` to include your new file:
 
 ```julia
 # Near the bottom of the file, with other includes
-include("utils.jl")
-include("deltat.jl")
-include("psa.jl")
-include("noaa.jl")
-include("walraven.jl")
-include("usno.jl")
-include("spa.jl")
 include("simple.jl")  # Add your new file
 
-# Add to the export list
-export Observer,
-    PSA,
-    NOAA,
-    Walraven,
-    USNO,
-    SPA,
-    SimpleAlgorithm,  # Add your algorithm
-    solar_position,
-    solar_position!,
-    SolPos,
-    ApparentSolPos,
-    SPASolPos
+# Add your algorithm to the export list
+export SimpleAlgorithm
 ```
 
 ### 4.2 Export from Main Module

@@ -262,14 +262,8 @@ end
     end
 
     @testset "SPA with refraction returns ApparentSolPos" begin
-        # SPA has its own refraction handling, so it always returns ApparentSolPos
-        # and ignores external refraction algorithms
-        res = @test_logs (:warn, r"SPA algorithm has its own refraction") solar_position(
-            obs,
-            dt,
-            SPA(),
-            BENNETT(),
-        )
+        # SPA returns ApparentSolPos when refraction is applied
+        res = solar_position(obs, dt, SPA(), BENNETT())
         @test res isa ApparentSolPos
         @test hasfield(typeof(res), :azimuth)
         @test hasfield(typeof(res), :elevation)

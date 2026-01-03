@@ -134,42 +134,44 @@
     @testset "SPA equation of time limits" begin
         obs = Observer(45.0, 10.0, 100.0)
 
-        # Test time that produces E > 20.0 (should subtract 1440)
-        # This is rare but can happen at specific dates/times
+        # Test that SPA calculations complete successfully at various dates
+        # equation_of_time is an internal calculation, not exposed in result
         dt1 = DateTime(2020, 1, 1, 0, 0, 0)
         pos1 = solar_position(obs, dt1, SPA())
-        @test pos1 isa SPASolPos
-        @test -20.0 <= pos1.equation_of_time <= 20.0
+        @test pos1 isa ApparentSolPos
+        @test isfinite(pos1.azimuth)
+        @test isfinite(pos1.elevation)
 
-        # Test multiple dates to increase chance of hitting edge cases (line 377)
-        # Try dates near perihelion and aphelion when equation of time extremes occur
+        # Test multiple dates to ensure SPA handles edge cases (line 377)
+        # Try dates near perihelion and aphelion
         test_dates = [
             DateTime(2020, 1, 3, 0, 0, 0),   # Near perihelion
             DateTime(2020, 7, 4, 0, 0, 0),   # Near aphelion
-            DateTime(2020, 2, 12, 0, 0, 0),  # E might be positive extreme
-            DateTime(2020, 11, 3, 0, 0, 0),  # E might be negative extreme
+            DateTime(2020, 2, 12, 0, 0, 0),  # Another date
+            DateTime(2020, 11, 3, 0, 0, 0),  # Another date
         ]
 
         for dt in test_dates
             pos = solar_position(obs, dt, SPA())
-            @test -20.0 <= pos.equation_of_time <= 20.0
+            @test isfinite(pos.azimuth)
+            @test isfinite(pos.elevation)
         end
     end
 
-    @testset "SPA refraction warning behavior" begin
+    @testset "SPA refraction behavior" begin
         obs = Observer(51.5, -0.1, 0.0)
         dt = DateTime(2024, 6, 21, 12, 0, 0)
 
-        # no warning should be thrown for default / no refraction
-        @test_nowarn solar_position(obs, dt, SPA())
-        @test_nowarn solar_position(obs, dt, SPA(), NoRefraction())
+        # DefaultRefraction uses SPA's built-in atmospheric refraction
+        pos_default = solar_position(obs, dt, SPA())
+        @test pos_default isa ApparentSolPos
 
-        # warning should be thrown for specific refraction algorithm
-        @test_logs (:warn, r"SPA algorithm has its own refraction correction") solar_position(
-            obs,
-            dt,
-            SPA(),
-            SolarPosition.Refraction.HUGHES(),
-        )
+        # NoRefraction returns SolPos without apparent fields
+        pos_no_refr = solar_position(obs, dt, SPA(), NoRefraction())
+        @test pos_no_refr isa SolPos
+
+        # External refraction algorithm should work and return ApparentSolPos
+        pos_ext_refr = solar_position(obs, dt, SPA(), SolarPosition.Refraction.HUGHES())
+        @test pos_ext_refr isa ApparentSolPos
     end
 end

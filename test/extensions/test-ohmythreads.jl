@@ -3,7 +3,7 @@
 using OhMyThreads
 using SolarPosition.Positioning:
     Observer, PSA, NOAA, SPA, SolPos, ApparentSolPos, solar_position, solar_position!
-using SolarPosition.Refraction: NoRefraction, BENNETT
+using SolarPosition.Refraction: NoRefraction, DefaultRefraction, BENNETT
 using Dates: DateTime, Hour
 using TimeZones: ZonedDateTime, @tz_str
 using StructArrays: StructVector
@@ -118,8 +118,8 @@ spafields = (:azimuth, :elevation, :zenith, :apparent_elevation, :apparent_zenit
         end
 
         @testset "SPA algorithm" begin
-            serial_spa = solar_position(obs, times, SPA(), NoRefraction())
-            parallel_spa = solar_position(obs, times, SPA(), NoRefraction(), scheduler)
+            serial_spa = solar_position(obs, times, SPA(), DefaultRefraction())
+            parallel_spa = solar_position(obs, times, SPA(), DefaultRefraction(), scheduler)
 
             @test parallel_spa isa StructVector{ApparentSolPos{Float64}}
 

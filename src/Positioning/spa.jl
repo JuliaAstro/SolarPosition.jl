@@ -511,5 +511,45 @@ function _solar_position(
     return ApparentSolPos{T}(base_pos.azimuth, base_pos.elevation, base_pos.zenith, e, θz)
 end
 
-# SPA with DefaultRefraction returns ApparentSolPos (uses SPA's built-in refraction)
+# SPA with NoRefraction returns SolPos (no refraction applied)
+function _solar_position(
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+    ::Refraction.NoRefraction,
+) where {T<:AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    return _solar_position(spa_obs, dt, alg)
+end
+
+# SPA with external refraction algorithm: apply the external refraction to base position
+function _solar_position(
+    obs::Observer{T},
+    dt::DateTime,
+    alg::SPA,
+    refraction::Refraction.RefractionAlgorithm,
+) where {T<:AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+
+    # Get base position without refraction
+    base_pos = _solar_position(spa_obs, dt, alg)
+
+    # Apply external refraction correction
+    refraction_correction_deg = Refraction.refraction(refraction, base_pos.elevation)
+    apparent_elevation_deg = base_pos.elevation + refraction_correction_deg
+    apparent_zenith_deg = 90.0 - apparent_elevation_deg
+
+    return ApparentSolPos{T}(
+        base_pos.azimuth,
+        base_pos.elevation,
+        base_pos.zenith,
+        apparent_elevation_deg,
+        apparent_zenith_deg,
+    )
+end
+
+# SPA returns SolPos with NoRefraction, ApparentSolPos with any refraction
+result_type(::Type{SPA}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
 result_type(::Type{SPA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = ApparentSolPos{T}
+result_type(::Type{SPA}, ::Type{<:Refraction.RefractionAlgorithm}, ::Type{T}) where {T} =
+    ApparentSolPos{T}

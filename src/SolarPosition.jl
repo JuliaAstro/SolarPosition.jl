@@ -1,47 +1,15 @@
 module SolarPosition
 
 using DocStringExtensions: TYPEDSIGNATURES
+using Reexport: @reexport
 
 include("Refraction/Refraction.jl")
 include("Positioning/Positioning.jl")
 include("Utilities/Utilities.jl")
 
-using .Positioning:
-    Observer, PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!
-using .Positioning:
-    SolPos, ApparentSolPos, SolarAlgorithm, AbstractApparentSolPos, AbstractSolPos
-using .Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
-using .Refraction: HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
-
-export solar_position, solar_position!, SolarAlgorithm, Observer
-export PSA, NOAA, Walraven, USNO, SPA
-
-# refraction algorithms
-export RefractionAlgorithm, NoRefraction, DefaultRefraction
-export HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction
-
-export SolPos, ApparentSolPos
-export AbstractSolPos, AbstractApparentSolPos
-
-# utilities
-using .Utilities:
-    TransitSunriseSunset,
-    transit_sunrise_sunset,
-    next_sunrise,
-    next_sunset,
-    solar_noon,
-    previous_sunrise,
-    previous_sunset,
-    previous_solar_noon
-
-export TransitSunriseSunset,
-    transit_sunrise_sunset,
-    next_sunrise,
-    next_sunset,
-    solar_noon,
-    previous_sunrise,
-    previous_sunset,
-    previous_solar_noon
+@reexport using .Positioning
+@reexport using .Refraction
+@reexport using .Utilities
 
 # to make the makie extension work
 export sunpathplot

@@ -14,6 +14,7 @@ using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
+using Reexport: @reexport
 import ..Refraction
 using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
 
@@ -438,6 +439,7 @@ include("spa.jl")
 
 export Observer,
     PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
+export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos
 export calculate_deltat
 
 end

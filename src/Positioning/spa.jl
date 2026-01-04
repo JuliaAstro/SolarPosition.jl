@@ -356,30 +356,6 @@ function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
     return φ
 end
 
-function sun_mean_longitude(jme)
-    M =
-    # TODO: use `evalpoly`/Horner's scheme instead!
-        280.4664567 + 360007.6982779 * jme + 0.03032028 * jme^2 + jme^3 / 49931.0 -
-        jme^4 / 15300.0 - jme^5 / 2000000.0
-    return M
-end
-
-function equation_of_time(M, α, δψ, ε)
-    E = M - 0.0057183 - α + δψ * cosd(ε)
-    E = mod(E, 360.0)
-    # convert to minutes
-    E *= 4.0
-
-    # limit to ±20 minutes
-    if E > 20.0
-        E -= 1440.0
-    elseif E < -20.0
-        E += 1440.0
-    end
-
-    return E
-end
-
 """
 Helper function to compute sidereal time, right ascension, declination, and related
 parameters for SPA calculations at a given datetime.

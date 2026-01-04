@@ -10,12 +10,10 @@ const SECONDS_PER_DAY = 86400.0
 _frac_to_dt(dt_midnight, frac) =
     dt_midnight + Dates.Second(round(Int, frac * SECONDS_PER_DAY))
 
-"""
-Helper function to compute sidereal time, right ascension, and declination
-for sunrise/sunset calculations at a given datetime.
-Returns (ν, α, δ) where ν is apparent sidereal time at Greenwich,
-α is geocentric right ascension, δ is geocentric declination (all in degrees).
-"""
+# Helper function to compute sidereal time, right ascension, and declination
+# for sunrise/sunset calculations at a given datetime.
+# Returns (ν, α, δ) where ν is apparent sidereal time at Greenwich,
+# α is geocentric right ascension, δ is geocentric declination (all in degrees).
 function _compute_srt_parameters(dt::DateTime, δt::Float64)
     srt = _compute_spa_srt_parameters(dt, δt)
     return (srt.ν, srt.α, srt.δ)

@@ -6,7 +6,7 @@ using SolarPosition.Utilities:
     transit_sunrise_sunset,
     next_sunrise,
     next_sunset,
-    solar_noon,
+    next_solar_noon,
     previous_sunrise,
     previous_sunset,
     previous_solar_noon
@@ -157,7 +157,7 @@ end
         ) < 300
     end
 
-    @testset "next_sunrise, next_sunset, solar_noon" begin
+    @testset "next_sunrise, next_sunset, next_solar_noon" begin
         result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE, SPA())
         next_day_result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE + Day(1), SPA())
         london_result = transit_sunrise_sunset(OBS_LONDON, TEST_DATE, SPA())
@@ -166,7 +166,7 @@ end
         test_cases = [
             (next_sunrise, :sunrise, result.sunrise - Hour(1), result.sunrise + Hour(1)),
             (next_sunset, :sunset, result.sunset - Hour(1), result.sunset + Hour(1)),
-            (solar_noon, :transit, result.transit - Hour(1), result.transit + Hour(1)),
+            (next_solar_noon, :transit, result.transit - Hour(1), result.transit + Hour(1)),
         ]
 
         for (func, field, before_time, after_time) in test_cases
@@ -258,7 +258,7 @@ end
             symmetry_cases = [
                 (next_sunrise, previous_sunrise),
                 (next_sunset, previous_sunset),
-                (solar_noon, previous_solar_noon),
+                (next_solar_noon, previous_solar_noon),
             ]
 
             for (next_func, prev_func) in symmetry_cases

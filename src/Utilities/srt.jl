@@ -200,17 +200,17 @@ If the solar noon for the current day has already passed, returns the solar noon
 # Returns
 - DateTime of the next solar noon (transit) after `dt`
 """
-function solar_noon(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+function next_solar_noon(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
     return _next_event(obs, dt, alg, :transit)
 end
 
-function solar_noon(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
-    return solar_noon(obs, DateTime(dt), alg)
+function next_solar_noon(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
+    return next_solar_noon(obs, DateTime(dt), alg)
 end
 
-function solar_noon(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
+function next_solar_noon(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
     dt_utc = DateTime(zdt, UTC)
-    result_utc = solar_noon(obs, dt_utc, alg)
+    result_utc = next_solar_noon(obs, dt_utc, alg)
     return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
 end
 

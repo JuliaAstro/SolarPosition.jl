@@ -351,19 +351,17 @@ function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
     return φ
 end
 
-"""
-Helper function to compute sidereal time, right ascension, declination, and related
-parameters for SPA calculations at a given datetime.
-
-Returns a named tuple with:
-- `ν`: apparent sidereal time at Greenwich (degrees)
-- `α`: geocentric right ascension (degrees)
-- `δ`: geocentric declination (degrees)
-- `R`: heliocentric radius vector (AU)
-- `ε`: true ecliptic obliquity (degrees)
-- `δψ`: nutation in longitude (degrees)
-- `jme`: Julian Ephemeris Millennium
-"""
+# Helper function to compute sidereal time, right ascension, declination, and related
+# parameters for SPA calculations at a given datetime.
+#
+# Returns a named tuple with:
+# - ν: apparent sidereal time at Greenwich (degrees)
+# - α: geocentric right ascension (degrees)
+# - δ: geocentric declination (degrees)
+# - R: heliocentric radius vector (AU)
+# - ε: true ecliptic obliquity (degrees)
+# - δψ: nutation in longitude (degrees)
+# - jme: Julian Ephemeris Millennium
 function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     jd = datetime2julian(dt)
     jde = julian_ephemeris_day(jd, δt)

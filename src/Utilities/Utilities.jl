@@ -14,7 +14,7 @@ export TransitSunriseSunset,
     transit_sunrise_sunset,
     next_sunrise,
     next_sunset,
-    solar_noon,
+    next_solar_noon,
     previous_sunrise,
     previous_sunset,
     previous_solar_noon

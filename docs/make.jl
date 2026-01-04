@@ -30,6 +30,7 @@ makedocs(;
     format = Documenter.HTML(;
         canonical = "https://juliaastro.org/SolarPosition/stable/",
         size_threshold = 2^20, # 1 MB
+        assets = String["assets/citations.css"],
     ),
     plugins = [bib],
     pages = [
@@ -45,6 +46,7 @@ makedocs(;
         "reference.md",
         "positioning.md",
         "refraction.md",
+        "utilities.md",
         "deltat.md",
         "literature.md",
         "contributing.md",

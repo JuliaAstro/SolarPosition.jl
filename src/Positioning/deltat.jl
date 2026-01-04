@@ -120,10 +120,6 @@ const DELTAT_TABLE = (
     (2150.0, Inf, y -> -20.0 + 32.0 * ((y - 1820.0) / 100.0)^2),
 )
 
-# Recursive lookup for type-stable iteration over heterogeneous tuple
-@inline _deltat_lookup(::Tuple{}, year::Real, y::Float64) =
-    error("No ΔT function defined for year = $year")
-
 @inline function _deltat_lookup(table::Tuple, year::Real, y::Float64)
     (lower, upper, f) = first(table)
     if lower <= year < upper

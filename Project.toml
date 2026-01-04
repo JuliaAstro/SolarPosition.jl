@@ -1,6 +1,6 @@
 name = "SolarPosition"
 uuid = "5b9d1343-a731-5a90-8730-7bf8d89bf3eb"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["Stefan de Lange"]
 
 [workspace]
@@ -9,6 +9,7 @@ projects = ["test", "docs", "benchmark", "examples"]
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
@@ -31,6 +32,7 @@ DocStringExtensions = "0.8, 0.9"
 Makie = "0.24"
 ModelingToolkit = "11"
 OhMyThreads = "0.8"
+Reexport = "1"
 StructArrays = "0.7"
 Symbolics = "6,7"
 Tables = "1"

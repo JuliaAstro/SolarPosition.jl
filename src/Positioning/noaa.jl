@@ -89,11 +89,9 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
     true_solar_time = mod(minutes + eot + 4.0 * obs.longitude, 1440.0)
 
     # hour angle [degrees]
-    hour_angle = if true_solar_time / 4.0 < 0.0
-        true_solar_time / 4.0 + 180.0
-    else
-        true_solar_time / 4.0 - 180.0
-    end
+    # true_solar_time is in [0, 1440) minutes, so true_solar_time/4 is in [0, 360) degrees
+    # Convert to standard hour angle range (-180, 180] where 0 is solar noon
+    hour_angle = true_solar_time / 4.0 - 180.0
 
     # zenith angle [degrees]
     zenith = acosd(

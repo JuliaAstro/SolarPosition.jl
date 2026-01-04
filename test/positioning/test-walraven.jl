@@ -31,10 +31,17 @@
         pos = solar_position(obs, dt_leap, Walraven())
         @test pos isa SolPos
 
-        # Test edge case with negative δ that's not leap*4 (line 33)
-        # Early in the year when δ < 0
-        dt_neg = DateTime(2020, 1, 2, 0, 0, 0)
-        pos = solar_position(obs, dt_neg, Walraven())
+        # Test year before 1980 (negative δ) that is NOT a leap year
+        # This covers: if (δ < 0) && (δ != (leap * 4))
+        dt_before_1980 = DateTime(1979, 6, 15, 12, 0, 0)
+        pos = solar_position(obs, dt_before_1980, Walraven())
+        @test pos isa SolPos
+        @test isfinite(pos.azimuth)
+        @test isfinite(pos.elevation)
+
+        # Test year before 1980 that IS a leap year (δ == leap * 4)
+        dt_leap_before_1980 = DateTime(1976, 6, 15, 12, 0, 0)
+        pos = solar_position(obs, dt_leap_before_1980, Walraven())
         @test pos isa SolPos
         @test isfinite(pos.azimuth)
         @test isfinite(pos.elevation)

@@ -407,11 +407,6 @@ function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     return (; ν, α, δ, R, ε, δψ, jme)
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
-end
-
 function _solar_position(
     obs::SPAObserver{T},
     dt::DateTime,
@@ -526,6 +521,5 @@ end
 
 # SPA returns SolPos with NoRefraction, ApparentSolPos with any refraction
 result_type(::Type{SPA}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
-result_type(::Type{SPA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = ApparentSolPos{T}
 result_type(::Type{SPA}, ::Type{<:Refraction.RefractionAlgorithm}, ::Type{T}) where {T} =
     ApparentSolPos{T}

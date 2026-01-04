@@ -160,83 +160,46 @@ end
     @testset "next_sunrise, next_sunset, solar_noon" begin
         result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE, SPA())
         next_day_result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE + Day(1), SPA())
+        london_result = transit_sunrise_sunset(OBS_LONDON, TEST_DATE, SPA())
 
-        before_sunrise = result.sunrise - Hour(1)
-        after_sunrise = result.sunrise + Hour(1)
-        before_sunset = result.sunset - Hour(1)
-        after_sunset = result.sunset + Hour(1)
-        before_noon = result.transit - Hour(1)
-        after_noon = result.transit + Hour(1)
+        # Define test cases: (function, field, before_time, after_time)
+        test_cases = [
+            (next_sunrise, :sunrise, result.sunrise - Hour(1), result.sunrise + Hour(1)),
+            (next_sunset, :sunset, result.sunset - Hour(1), result.sunset + Hour(1)),
+            (solar_noon, :transit, result.transit - Hour(1), result.transit + Hour(1)),
+        ]
 
-        @testset "next_sunrise before/after sunrise" begin
-            @test next_sunrise(OBS_NEW_YORK, before_sunrise, SPA()) == result.sunrise
-            @test next_sunrise(OBS_NEW_YORK, after_sunrise, SPA()) ==
-                  next_day_result.sunrise
-            @test next_sunrise(OBS_NEW_YORK, result.sunrise, SPA()) ==
-                  next_day_result.sunrise
-        end
+        for (func, field, before_time, after_time) in test_cases
+            @testset "$(func) before/after event" begin
+                @test func(OBS_NEW_YORK, before_time, SPA()) == getfield(result, field)
+                @test func(OBS_NEW_YORK, after_time, SPA()) ==
+                      getfield(next_day_result, field)
+                @test func(OBS_NEW_YORK, getfield(result, field), SPA()) ==
+                      getfield(next_day_result, field)
+            end
 
-        @testset "next_sunset before/after sunset" begin
-            @test next_sunset(OBS_NEW_YORK, before_sunset, SPA()) == result.sunset
-            @test next_sunset(OBS_NEW_YORK, after_sunset, SPA()) == next_day_result.sunset
-            @test next_sunset(OBS_NEW_YORK, result.sunset, SPA()) == next_day_result.sunset
-        end
+            @testset "$(func) Date input" begin
+                @test func(OBS_NEW_YORK, TEST_DATE, SPA()) == getfield(result, field)
+            end
 
-        @testset "solar_noon before/after noon" begin
-            @test solar_noon(OBS_NEW_YORK, before_noon, SPA()) == result.transit
-            @test solar_noon(OBS_NEW_YORK, after_noon, SPA()) == next_day_result.transit
-            @test solar_noon(OBS_NEW_YORK, result.transit, SPA()) == next_day_result.transit
-        end
+            @testset "$(func) different location" begin
+                @test func(OBS_LONDON, DateTime(TEST_DATE), SPA()) ==
+                      getfield(london_result, field)
+            end
 
-        @testset "Date input" begin
-            @test next_sunrise(OBS_NEW_YORK, TEST_DATE, SPA()) == result.sunrise
-            @test next_sunset(OBS_NEW_YORK, TEST_DATE, SPA()) == result.sunset
-            @test solar_noon(OBS_NEW_YORK, TEST_DATE, SPA()) == result.transit
-        end
+            @testset "$(func) ZonedDateTime input" begin
+                zdt_before = ZonedDateTime(before_time, TZ_NY; from_utc = true)
+                zdt_result = func(OBS_NEW_YORK, zdt_before, SPA())
+                @test zdt_result isa ZonedDateTime
+                @test timezone(zdt_result) == TZ_NY
+                @test DateTime(zdt_result, UTC) == getfield(result, field)
 
-        @testset "Different location" begin
-            london_result = transit_sunrise_sunset(OBS_LONDON, TEST_DATE, SPA())
-            midnight_london = DateTime(TEST_DATE)
-
-            @test next_sunrise(OBS_LONDON, midnight_london, SPA()) == london_result.sunrise
-            @test next_sunset(OBS_LONDON, midnight_london, SPA()) == london_result.sunset
-            @test solar_noon(OBS_LONDON, midnight_london, SPA()) == london_result.transit
-        end
-
-        @testset "ZonedDateTime input for next_sunrise" begin
-            zdt_before_sunrise = ZonedDateTime(before_sunrise, TZ_NY; from_utc = true)
-            zdt_result = next_sunrise(OBS_NEW_YORK, zdt_before_sunrise, SPA())
-            @test zdt_result isa ZonedDateTime
-            @test timezone(zdt_result) == TZ_NY
-            @test DateTime(zdt_result, UTC) == result.sunrise
-        end
-
-        @testset "ZonedDateTime input for next_sunset" begin
-            zdt_before_sunset = ZonedDateTime(before_sunset, TZ_NY; from_utc = true)
-            zdt_sunset_result = next_sunset(OBS_NEW_YORK, zdt_before_sunset, SPA())
-            @test zdt_sunset_result isa ZonedDateTime
-            @test timezone(zdt_sunset_result) == TZ_NY
-            @test DateTime(zdt_sunset_result, UTC) == result.sunset
-
-            zdt_after_sunset = ZonedDateTime(after_sunset, TZ_NY; from_utc = true)
-            zdt_next_sunset_result = next_sunset(OBS_NEW_YORK, zdt_after_sunset, SPA())
-            @test zdt_next_sunset_result isa ZonedDateTime
-            @test timezone(zdt_next_sunset_result) == TZ_NY
-            @test DateTime(zdt_next_sunset_result, UTC) == next_day_result.sunset
-        end
-
-        @testset "ZonedDateTime input for solar_noon" begin
-            zdt_before_noon = ZonedDateTime(before_noon, TZ_NY; from_utc = true)
-            zdt_noon_result = solar_noon(OBS_NEW_YORK, zdt_before_noon, SPA())
-            @test zdt_noon_result isa ZonedDateTime
-            @test timezone(zdt_noon_result) == TZ_NY
-            @test DateTime(zdt_noon_result, UTC) == result.transit
-
-            zdt_after_noon = ZonedDateTime(after_noon, TZ_NY; from_utc = true)
-            zdt_next_noon_result = solar_noon(OBS_NEW_YORK, zdt_after_noon, SPA())
-            @test zdt_next_noon_result isa ZonedDateTime
-            @test timezone(zdt_next_noon_result) == TZ_NY
-            @test DateTime(zdt_next_noon_result, UTC) == next_day_result.transit
+                zdt_after = ZonedDateTime(after_time, TZ_NY; from_utc = true)
+                zdt_next_result = func(OBS_NEW_YORK, zdt_after, SPA())
+                @test zdt_next_result isa ZonedDateTime
+                @test timezone(zdt_next_result) == TZ_NY
+                @test DateTime(zdt_next_result, UTC) == getfield(next_day_result, field)
+            end
         end
     end
 
@@ -244,95 +207,65 @@ end
         result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE, SPA())
         prev_day_result = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATE - Day(1), SPA())
 
-        after_sunrise = result.sunrise + Hour(1)
-        before_sunrise = result.sunrise - Hour(1)
-        after_sunset = result.sunset + Hour(1)
-        before_sunset = result.sunset - Hour(1)
-        after_noon = result.transit + Hour(1)
-        before_noon = result.transit - Hour(1)
+        # Define test cases: (function, field, before_time, after_time)
+        test_cases = [
+            (
+                previous_sunrise,
+                :sunrise,
+                result.sunrise - Hour(1),
+                result.sunrise + Hour(1),
+            ),
+            (previous_sunset, :sunset, result.sunset - Hour(1), result.sunset + Hour(1)),
+            (
+                previous_solar_noon,
+                :transit,
+                result.transit - Hour(1),
+                result.transit + Hour(1),
+            ),
+        ]
 
-        @testset "previous_sunrise before/after sunrise" begin
-            @test previous_sunrise(OBS_NEW_YORK, after_sunrise, SPA()) == result.sunrise
-            @test previous_sunrise(OBS_NEW_YORK, before_sunrise, SPA()) ==
-                  prev_day_result.sunrise
-            @test previous_sunrise(OBS_NEW_YORK, result.sunrise, SPA()) ==
-                  prev_day_result.sunrise
-        end
+        for (func, field, before_time, after_time) in test_cases
+            @testset "$(func) before/after event" begin
+                @test func(OBS_NEW_YORK, after_time, SPA()) == getfield(result, field)
+                @test func(OBS_NEW_YORK, before_time, SPA()) ==
+                      getfield(prev_day_result, field)
+                @test func(OBS_NEW_YORK, getfield(result, field), SPA()) ==
+                      getfield(prev_day_result, field)
+            end
 
-        @testset "previous_sunset before/after sunset" begin
-            @test previous_sunset(OBS_NEW_YORK, after_sunset, SPA()) == result.sunset
-            @test previous_sunset(OBS_NEW_YORK, before_sunset, SPA()) ==
-                  prev_day_result.sunset
-            @test previous_sunset(OBS_NEW_YORK, result.sunset, SPA()) ==
-                  prev_day_result.sunset
-        end
+            @testset "$(func) Date input at midnight" begin
+                @test func(OBS_NEW_YORK, TEST_DATE, SPA()) ==
+                      getfield(prev_day_result, field)
+            end
 
-        @testset "previous_solar_noon before/after noon" begin
-            @test previous_solar_noon(OBS_NEW_YORK, after_noon, SPA()) == result.transit
-            @test previous_solar_noon(OBS_NEW_YORK, before_noon, SPA()) ==
-                  prev_day_result.transit
-            @test previous_solar_noon(OBS_NEW_YORK, result.transit, SPA()) ==
-                  prev_day_result.transit
-        end
+            @testset "$(func) ZonedDateTime input" begin
+                zdt_after = ZonedDateTime(after_time, TZ_NY; from_utc = true)
+                zdt_result = func(OBS_NEW_YORK, zdt_after, SPA())
+                @test zdt_result isa ZonedDateTime
+                @test timezone(zdt_result) == TZ_NY
+                @test DateTime(zdt_result, UTC) == getfield(result, field)
 
-        @testset "Date input at midnight" begin
-            @test previous_sunrise(OBS_NEW_YORK, TEST_DATE, SPA()) ==
-                  prev_day_result.sunrise
-            @test previous_sunset(OBS_NEW_YORK, TEST_DATE, SPA()) == prev_day_result.sunset
-            @test previous_solar_noon(OBS_NEW_YORK, TEST_DATE, SPA()) ==
-                  prev_day_result.transit
-        end
-
-        @testset "ZonedDateTime input for previous_sunrise" begin
-            zdt_after_sunrise = ZonedDateTime(after_sunrise, TZ_NY; from_utc = true)
-            zdt_result = previous_sunrise(OBS_NEW_YORK, zdt_after_sunrise, SPA())
-            @test zdt_result isa ZonedDateTime
-            @test timezone(zdt_result) == TZ_NY
-            @test DateTime(zdt_result, UTC) == result.sunrise
-        end
-
-        @testset "ZonedDateTime input for previous_sunset" begin
-            zdt_after_sunset = ZonedDateTime(after_sunset, TZ_NY; from_utc = true)
-            zdt_sunset_result = previous_sunset(OBS_NEW_YORK, zdt_after_sunset, SPA())
-            @test zdt_sunset_result isa ZonedDateTime
-            @test timezone(zdt_sunset_result) == TZ_NY
-            @test DateTime(zdt_sunset_result, UTC) == result.sunset
-
-            zdt_before_sunset = ZonedDateTime(before_sunset, TZ_NY; from_utc = true)
-            zdt_prev_sunset_result = previous_sunset(OBS_NEW_YORK, zdt_before_sunset, SPA())
-            @test zdt_prev_sunset_result isa ZonedDateTime
-            @test timezone(zdt_prev_sunset_result) == TZ_NY
-            @test DateTime(zdt_prev_sunset_result, UTC) == prev_day_result.sunset
-        end
-
-        @testset "ZonedDateTime input for previous_solar_noon" begin
-            zdt_after_noon = ZonedDateTime(after_noon, TZ_NY; from_utc = true)
-            zdt_noon_result = previous_solar_noon(OBS_NEW_YORK, zdt_after_noon, SPA())
-            @test zdt_noon_result isa ZonedDateTime
-            @test timezone(zdt_noon_result) == TZ_NY
-            @test DateTime(zdt_noon_result, UTC) == result.transit
-
-            zdt_before_noon = ZonedDateTime(before_noon, TZ_NY; from_utc = true)
-            zdt_prev_noon_result = previous_solar_noon(OBS_NEW_YORK, zdt_before_noon, SPA())
-            @test zdt_prev_noon_result isa ZonedDateTime
-            @test timezone(zdt_prev_noon_result) == TZ_NY
-            @test DateTime(zdt_prev_noon_result, UTC) == prev_day_result.transit
+                zdt_before = ZonedDateTime(before_time, TZ_NY; from_utc = true)
+                zdt_prev_result = func(OBS_NEW_YORK, zdt_before, SPA())
+                @test zdt_prev_result isa ZonedDateTime
+                @test timezone(zdt_prev_result) == TZ_NY
+                @test DateTime(zdt_prev_result, UTC) == getfield(prev_day_result, field)
+            end
         end
 
         @testset "Symmetry with next functions" begin
             current_time = result.transit + Hour(3)
+            symmetry_cases = [
+                (next_sunrise, previous_sunrise),
+                (next_sunset, previous_sunset),
+                (solar_noon, previous_solar_noon),
+            ]
 
-            next_sr = next_sunrise(OBS_NEW_YORK, current_time, SPA())
-            prev_sr = previous_sunrise(OBS_NEW_YORK, current_time, SPA())
-            @test prev_sr < current_time < next_sr
-
-            next_ss = next_sunset(OBS_NEW_YORK, current_time, SPA())
-            prev_ss = previous_sunset(OBS_NEW_YORK, current_time, SPA())
-            @test prev_ss < current_time < next_ss
-
-            next_noon = solar_noon(OBS_NEW_YORK, current_time, SPA())
-            prev_noon = previous_solar_noon(OBS_NEW_YORK, current_time, SPA())
-            @test prev_noon < current_time < next_noon
+            for (next_func, prev_func) in symmetry_cases
+                next_event = next_func(OBS_NEW_YORK, current_time, SPA())
+                prev_event = prev_func(OBS_NEW_YORK, current_time, SPA())
+                @test prev_event < current_time < next_event
+            end
         end
     end
 

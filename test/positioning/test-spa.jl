@@ -174,4 +174,31 @@
         pos_ext_refr = solar_position(obs, dt, SPA(), SolarPosition.Refraction.HUGHES())
         @test pos_ext_refr isa ApparentSolPos
     end
+
+    @testset "SPA Observer conversion dispatch" begin
+        # Test that Observer{T} -> SPAObserver{T} conversion works
+        obs_f64 = Observer(45.0, 10.0, 100.0)
+        pos_f64 = solar_position(obs_f64, DateTime(2024, 6, 21, 12, 0, 0), SPA())
+        @test pos_f64 isa ApparentSolPos
+        @test eltype(obs_f64.latitude) == Float64
+
+        # Test with Float32
+        obs_f32 = Observer(Float32(45.0), Float32(10.0), altitude = Float32(100.0))
+        pos_f32 = solar_position(obs_f32, DateTime(2024, 6, 21, 12, 0, 0), SPA())
+        @test pos_f32 isa ApparentSolPos
+        @test eltype(obs_f32.latitude) == Float32
+    end
+
+    @testset "SPA result_type with NoRefraction" begin
+        # Explicitly test the result_type dispatch
+        @test SolarPosition.Positioning.result_type(SPA, NoRefraction, Float64) ==
+              SolPos{Float64}
+        @test SolarPosition.Positioning.result_type(SPA, DefaultRefraction, Float64) ==
+              ApparentSolPos{Float64}
+        @test SolarPosition.Positioning.result_type(
+            SPA,
+            SolarPosition.Refraction.HUGHES,
+            Float64,
+        ) == ApparentSolPos{Float64}
+    end
 end

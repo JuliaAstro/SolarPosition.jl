@@ -7,7 +7,8 @@ using ..Positioning: _compute_spa_srt_parameters
 
 const SECONDS_PER_DAY = 86400.0
 
-_frac_to_dt(frac) = dt_midnight + Dates.Second(round(Int, frac * SECONDS_PER_DAY))
+_frac_to_dt(dt_midnight, frac) =
+    dt_midnight + Dates.Second(round(Int, frac * SECONDS_PER_DAY))
 
 """
 Helper function to compute sidereal time, right ascension, and declination
@@ -187,9 +188,9 @@ function _transit_sunrise_sunset_impl(
     # Convert fractions of day to DateTime
     # Each fraction represents seconds into the day from midnight UTC
     return TransitSunriseSunset{R}(
-        _frac_to_dt(T_frac),
-        _frac_to_dt(R_frac),
-        _frac_to_dt(S_frac),
+        _frac_to_dt(dt_midnight, T_frac),
+        _frac_to_dt(dt_midnight, R_frac),
+        _frac_to_dt(dt_midnight, S_frac),
         tz,
     )
 end

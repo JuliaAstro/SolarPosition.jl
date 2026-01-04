@@ -123,14 +123,24 @@ end
 
     @testset "delta_t parameter" begin
         result_auto = transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATETIME, SPA())
+        result_nothing =
+            transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATETIME, SPA(delta_t = nothing))
         result_zero =
             transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATETIME, SPA(delta_t = 0.0))
         result_custom =
             transit_sunrise_sunset(OBS_NEW_YORK, TEST_DATETIME, SPA(delta_t = 69.0))
 
         @test result_auto.transit isa DateTime
+        @test result_nothing.transit isa DateTime
         @test result_zero.sunrise isa DateTime
         @test result_custom.sunset isa DateTime
+
+        # delta_t = nothing should use automatic calculation (calculate_deltat)
+        # This should give the same result as the default (which is delta_t = 67.0)
+        # but different from delta_t = 0.0
+        @test result_nothing.transit != result_zero.transit ||
+              result_nothing.sunrise != result_zero.sunrise ||
+              result_nothing.sunset != result_zero.sunset
 
         @test result_auto.transit != result_zero.transit ||
               result_auto.sunrise != result_zero.sunrise ||

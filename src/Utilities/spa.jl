@@ -5,6 +5,10 @@ using TimeZones: TimeZone
 
 using ..Positioning: _compute_spa_srt_parameters
 
+const SECONDS_PER_DAY = 86400.0
+
+_frac_to_dt(frac) = dt_midnight + Dates.Second(round(Int, frac * SECONDS_PER_DAY))
+
 """
 Helper function to compute sidereal time, right ascension, and declination
 for sunrise/sunset calculations at a given datetime.
@@ -49,9 +53,8 @@ function _transit_sunrise_sunset_impl(
     for the day of interest.
     """
     # Normalize the input datetime to midnight UTC
-    # Extract just the date and create a new DateTime at midnight
-    date_only = Date(dt)
-    dt_midnight = DateTime(date_only)
+    # This creates a new DateTime at midnight
+    dt_midnight = DateTime(Date(dt))
 
     δt = if alg.delta_t === nothing
         calculate_deltat(dt_midnight)
@@ -59,7 +62,6 @@ function _transit_sunrise_sunset_impl(
         alg.delta_t
     end
 
-    lat = obs.latitude
     lon = obs.longitude
 
     # Calculate corresponding terrestrial times
@@ -87,10 +89,9 @@ function _transit_sunrise_sunset_impl(
     # -0.8333 degrees is the standard altitude for sunrise/sunset
     h0 = -0.8333
     sin_h0 = sind(h0)
-    sin_lat = sind(lat)
-    cos_lat = cosd(lat)
-    sin_δ0 = sind(δ0)
-    cos_δ0 = cosd(δ0)
+    sin_lat = obs.sin_lat
+    cos_lat = obs.cos_lat
+    sin_δ0, cos_δ0 = sincosd(δ0)
 
     cos_H0_arg = (sin_h0 - sin_lat * sin_δ0) / (cos_lat * cos_δ0)
 
@@ -101,8 +102,7 @@ function _transit_sunrise_sunset_impl(
             "polar day (sun above horizon)"
         @warn "Sun does not rise or set on this date at the given location: $polar_condition. Returning midnight UTC for all events." _group =
             :polar_day_night maxlog = 1
-        result = _convert_to_return_type(R, dt_midnight, tz)
-        return TransitSunriseSunset{R}(result, result, result)
+        return TransitSunriseSunset{R}(dt_midnight, dt_midnight, dt_midnight, tz)
     end
 
     H0 = acosd(cos_H0_arg)
@@ -149,18 +149,27 @@ function _transit_sunrise_sunset_impl(
     # Normalize to [-180, 180]
     H_p[H_p .>= 180.0] .-= 360.0
 
+    # Precompute sin/cos for reuse using sincosd for efficiency
+    sincos_δ_prime = sincosd.(δ_prime)
+    sin_δ_prime = first.(sincos_δ_prime)
+    cos_δ_prime = last.(sincos_δ_prime)
+
+    sincos_H_p = sincosd.(H_p)
+    sin_H_p = first.(sincos_H_p)
+    cos_H_p = last.(sincos_H_p)
+
     # Altitude for each event
-    h = asind.(sin_lat .* sind.(δ_prime) .+ cos_lat .* cosd.(δ_prime) .* cosd.(H_p))
+    h = asind.(sin_lat .* sin_δ_prime .+ cos_lat .* cos_δ_prime .* cos_H_p)
 
     # Corrections to times (in fraction of day)
     # Transit correction
     ΔT = -H_p[1] / 360.0
 
     # Sunrise correction
-    ΔR = (h[2] + 0.8333) / (360.0 * cosd(δ_prime[2]) * cos_lat * sind(H_p[2]))
+    ΔR = (h[2] + 0.8333) / (360.0 * cos_δ_prime[2] * cos_lat * sin_H_p[2])
 
     # Sunset correction
-    ΔS = (h[3] + 0.8333) / (360.0 * cosd(δ_prime[3]) * cos_lat * sind(H_p[3]))
+    ΔS = (h[3] + 0.8333) / (360.0 * cos_δ_prime[3] * cos_lat * sin_H_p[3])
 
     # Final times (in fraction of day)
     T_frac = m[1] + ΔT
@@ -177,22 +186,10 @@ function _transit_sunrise_sunset_impl(
 
     # Convert fractions of day to DateTime
     # Each fraction represents seconds into the day from midnight UTC
-    transit_dt = dt_midnight + Dates.Second(round(Int, T_frac * 86400.0))
-    sunrise_dt = dt_midnight + Dates.Second(round(Int, R_frac * 86400.0))
-    sunset_dt = dt_midnight + Dates.Second(round(Int, S_frac * 86400.0))
-
-    # Return in the requested type/timezone
-    transit = _convert_to_return_type(R, transit_dt, tz)
-    sunrise = _convert_to_return_type(R, sunrise_dt, tz)
-    sunset = _convert_to_return_type(R, sunset_dt, tz)
-    return TransitSunriseSunset{R}(transit, sunrise, sunset)
-end
-
-# Helper function to convert DateTime to the requested return type
-function _convert_to_return_type(::Type{DateTime}, dt::DateTime, ::Union{Nothing,TimeZone})
-    return dt
-end
-
-function _convert_to_return_type(::Type{ZonedDateTime}, dt::DateTime, tz::TimeZone)
-    return ZonedDateTime(dt, tz; from_utc = true)
+    return TransitSunriseSunset{R}(
+        _frac_to_dt(T_frac),
+        _frac_to_dt(R_frac),
+        _frac_to_dt(S_frac),
+        tz,
+    )
 end

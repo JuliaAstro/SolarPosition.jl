@@ -1,9 +1,60 @@
 """Sunset, sunrise, transit, and twilight calculations."""
 
+"""
+    $(TYPEDEF)
+
+Struct to hold the results of sun transit, sunrise, and sunset calculations.
+
+The datetime fields are in UTC unless a TimeZone is provided, in which case they are
+converted to that timezone assuming the input DateTime was in UTC.
+
+# Constructors
+```julia
+TransitSunriseSunset{DateTime}(
+    transit::DateTime,
+    sunrise::DateTime,
+    sunset::DateTime,
+    ::Nothing,
+)
+TransitSunriseSunset{ZonedDateTime}(
+    transit::DateTime,
+    sunrise::DateTime,
+    sunset::DateTime,
+    tz::TimeZone,
+)
+```
+
+# Fields
+$(TYPEDFIELDS)
+"""
 struct TransitSunriseSunset{T<:Union{DateTime,ZonedDateTime}}
     transit::T
     sunrise::T
     sunset::T
+end
+
+# Constructor for DateTime (no timezone conversion)
+function TransitSunriseSunset{DateTime}(
+    transit::DateTime,
+    sunrise::DateTime,
+    sunset::DateTime,
+    ::Nothing,
+)
+    return TransitSunriseSunset{DateTime}(transit, sunrise, sunset)
+end
+
+# Constructor for ZonedDateTime (with timezone conversion)
+function TransitSunriseSunset{ZonedDateTime}(
+    transit::DateTime,
+    sunrise::DateTime,
+    sunset::DateTime,
+    tz::TimeZone,
+)
+    return TransitSunriseSunset{ZonedDateTime}(
+        ZonedDateTime(transit, tz; from_utc = true),
+        ZonedDateTime(sunrise, tz; from_utc = true),
+        ZonedDateTime(sunset, tz; from_utc = true),
+    )
 end
 
 """Calculate the sun transit, sunrise, and sunset
@@ -82,7 +133,7 @@ function _previous_event(
 end
 
 """
-    next_sunrise(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the next sunrise after a given DateTime at an Observer location.
 
@@ -109,7 +160,7 @@ function next_sunrise(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = S
 end
 
 """
-    next_sunset(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the next sunset after a given DateTime at an Observer location.
 
@@ -136,7 +187,7 @@ function next_sunset(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SP
 end
 
 """
-    solar_noon(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the solar noon (transit) time for a given DateTime at an Observer location.
 If the solar noon for the current day has already passed, returns the solar noon for the next day.
@@ -164,7 +215,7 @@ function solar_noon(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA
 end
 
 """
-    previous_sunrise(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the previous sunrise before a given DateTime at an Observer location.
 
@@ -191,7 +242,7 @@ function previous_sunrise(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm
 end
 
 """
-    previous_sunset(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the previous sunset before a given DateTime at an Observer location.
 
@@ -218,7 +269,7 @@ function previous_sunset(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm 
 end
 
 """
-    previous_solar_noon(obs::Observer, dt::DateTime, alg::SolarAlgorithm = SPA())
+    $(TYPEDSIGNATURES)
 
 Calculate the previous solar noon (transit) before a given DateTime at an Observer location.
 

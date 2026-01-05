@@ -6,6 +6,9 @@ CurrentModule = SolarPosition
 
 ## SolarPosition.jl
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaastro.org/SolarPosition/stable/)
+[![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaastro.org/SolarPosition.jl/dev/)
+
 [![Test workflow status](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml/badge.svg?branch=main)](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Test.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaAstro/SolarPosition.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaAstro/SolarPosition.jl)
 [![Lint workflow Status](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Lint.yml/badge.svg?branch=main)](https://github.com/JuliaAstro/SolarPosition.jl/actions/workflows/Lint.yml?query=branch%3Amain)
@@ -13,7 +16,7 @@ CurrentModule = SolarPosition
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![tested with JET.jl](https://img.shields.io/badge/%F0%9F%9B%A9%EF%B8%8F_tested_with-JET.jl-233f9a)](https://github.com/aviatesk/JET.jl)
 
-`SolarPosition.jl` provides a simple, unified interface to a collection of validated solar position
+SolarPosition.jl provides a simple, unified interface to a collection of validated solar position
 algorithms written in pure, performant julia.
 
 Solar positioning algorithms are commonly used to calculate the solar zenith and
@@ -24,38 +27,49 @@ azimuth angles, which are essential for various applications where the sun is im
 - Climate studies
 - Astronomy
 
-## Extensions
-
-SolarPosition.jl provides package extensions for the following use cases:
-
-- **[ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl)**: Integrate solar position calculations into symbolic modeling workflows. Create composable solar energy system models. A [Dyad](https://juliahub.com/products/dyad) component is also provided. See the [ModelingToolkit Extension](guides/modelingtoolkit.md) guide for details.
-
-- **[Makie.jl](https://github.com/MakieOrg/Makie.jl)**: Plotting recipes for solar position visualization with `sunpathplot` and `sunpathpolarplot` functions. See the plotting guide in the [Makie Extension](guides/plotting.md) for details.
-
-- **[OhMyThreads.jl](https://github.com/JuliaFolds2/OhMyThreads.jl)**: Multithreaded solar position computation using task-based parallelism. Provides parallel implementations of [`solar_position!`](@ref) for efficient batch calculations across multiple timestamps. See the [OhMyThreads Extension](guides/parallel.md) guide for details.
-
 ## Acknowledgement
 
-This package is based on the work done by readers in the field of solar photovoltaics
+This package is based on the work done by researchers in the field of solar photovoltaics
 in the packages [solposx](https://github.com/assessingsolar/solposx) and
 [pvlib-python](https://github.com/pvlib/pvlib-python). In particular the positioning and
-refraction methods have been adapted from [solposx](https://github.com/assessingsolar/solposx), while
-the SPA algorithm and the deltat calculation are ported from [pvlib-python](https://github.com/pvlib/pvlib-python). These packages also provide validation data necessary to ensure
+refraction methods have been adapted from [solposx](https://github.com/assessingsolar/solposx),
+while the SPA algorithm and the deltat calculation are ported from [pvlib-python](https://github.com/pvlib/pvlib-python). These packages also provide validation data necessary to ensure
 correctness of the algorithm implementations.
 
 ## Example Usage
 
-```@example
-using SolarPosition, Dates
+```@example srt
+using SolarPosition, Dates, TimeZones
 
 # define observer location (latitude, longitude, altitude in meters)
 obs = Observer(52.35888, 4.88185, 100.0)  # Van Gogh Museum, Amsterdam
+tz = TimeZone("Europe/Brussels")
 
 # a few hours of timestamps
 times = collect(DateTime(2023, 6, 21, 10):Hour(1):DateTime(2023, 6, 21, 15));
 
 # compute solar positions for all timestamps
 positions = solar_position(obs, times)
+```
+
+### Sunrise and Sunset Calculations
+
+Calculate sunrise, sunset, and solar noon for a specific date with timezone:
+
+```@example srt
+result = transit_sunrise_sunset(obs, ZonedDateTime(2023, 6, 21, tz))
+```
+
+Find the next sunrise from a specific time in UTC:
+
+```@example srt
+next_sunrise(obs, DateTime(2023, 6, 21, 12, 30))
+```
+
+Find the next sunset in UTC:
+
+```@example srt
+next_sunset(obs, DateTime(2023, 6, 21, 12, 30))
 ```
 
 ## Solar positioning algorithms
@@ -84,6 +98,23 @@ Atmospheric refraction correction algorithms available in SolarPosition.jl.
 | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)             | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                                  | None                   | ✅     |
 | [`SG2`](@ref SolarPosition.Refraction.SG2)                         | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
 | [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction)     | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅     |
+
+## Extensions
+
+SolarPosition.jl provides optional extensions that are automatically loaded when you
+import the corresponding packages:
+
+| Extension       | Trigger Package                                                       | Features                                          |
+| --------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| Makie           | [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)                    | Plotting recipes for solar position visualization |
+| OhMyThreads     | [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)     | Parallel computation of solar positions           |
+| ModelingToolkit | [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)   | Symbolic solar position models for simulations    |
+
+!!! note
+    For more details on the extensions, see:
+    - [ModelingToolkit Extension](guides/modelingtoolkit.md)
+    - [Makie Extension](guides/plotting.md)
+    - [OhMyThreads Extension](guides/parallel.md)
 
 ## How to Cite
 

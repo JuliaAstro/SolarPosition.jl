@@ -33,11 +33,14 @@ correctness of the algorithm implementations.
 ## Example Usage
 
 ```julia
-julia> using SolarPosition, Dates
+julia> using SolarPosition, Dates, TimeZones
 
 # define observer location (latitude, longitude, altitude in meters)
 julia> obs = Observer(52.35888, 4.88185, 100.0)  # Van Gogh Museum, Amsterdam
 Observer(latitude=52.35888°, longitude=4.88185°, altitude=100.0m)
+
+julia> tz = TimeZone("Europe/Brussels")
+Europe/Brussels (UTC+1/UTC+2)
 
 # a few hours of timestamps
 julia> times = collect(DateTime(2023, 6, 21, 10):Hour(1):DateTime(2023, 6, 21, 15));
@@ -51,6 +54,33 @@ julia> positions = solar_position(obs, times)
  SolPos(azimuth=214.62987222053295°, elevation=57.493462259959394°, zenith=32.5065377400406°)
  SolPos(azimuth=235.5258846451899°, elevation=50.992647293443966°, zenith=39.007352706556034°)
  SolPos(azimuth=251.77304757136397°, elevation=42.790197455865076°, zenith=47.209802544134924°)
+```
+
+### Sunrise and Sunset Calculations
+
+Calculate sunrise, sunset, and solar noon for a specific date with timezone:
+
+```julia
+julia> result = transit_sunrise_sunset(obs, ZonedDateTime(2023, 6, 21, tz))
+TransitSunriseSunset{ZonedDateTime}(
+    transit=2023-06-21T13:42:15+02:00,
+    sunrise=2023-06-21T05:18:05+02:00,
+    sunset=2023-06-21T22:06:24+02:00
+)
+```
+
+Find the next sunrise from a specific time in UTC:
+
+```julia
+julia> next_sunrise(obs, DateTime(2023, 6, 21, 12, 30))
+2023-06-22T03:18:19
+```
+
+Find the next sunset in UTC:
+
+```julia
+julia> next_sunset(obs, DateTime(2023, 6, 21, 12, 30))
+2023-06-21T20:06:24
 ```
 
 ## Solar positioning algorithms

@@ -33,7 +33,7 @@ Gogh museum in Amsterdam on June 21, 2023:
 ```@example utilities
 using SolarPosition, Dates, TimeZones
 
-tz_amsterdam = TimeZone("Europe/Amsterdam", TimeZones.Class(:LEGACY))
+tz_amsterdam = TimeZone("Europe/Brussels")
 obs = Observer(52.35888, 4.88185, 100.0)
 
 # Summer solstice
@@ -62,7 +62,7 @@ println("Next Sunset:  ", next_sunset_time)
 
 ## Plotting the Solar Altitude
 
-To visualize the solar altitude throughout the day, we can use the `solar_position`
+To visualize the solar altitude throughout the day, we can use the [`solar_position`](@ref)
 function to compute the solar positions at regular intervals and plot the results. We
 will make use of [`next_sunrise`](@ref) and [`next_sunset`](@ref) to mark the sunrise
 and sunset times on the plot.
@@ -246,11 +246,6 @@ The utility functions accept three different time input types:
 Here's an example showing the different input types:
 
 ```@example utilities
-using SolarPosition, Dates, TimeZones
-
-obs = Observer(52.35888, 4.88185, 100.0)  # Amsterdam
-tz_amsterdam = TimeZone("Europe/Amsterdam", TimeZones.Class(:LEGACY))
-
 # Using ZonedDateTime (recommended - timezone aware)
 zdt = ZonedDateTime(2023, 6, 21, 12, 0, tz_amsterdam)
 events_zdt = transit_sunrise_sunset(obs, zdt)

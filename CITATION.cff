@@ -10,8 +10,8 @@ authors:
 repository-code: https://github.com/JuliaAstro/SolarPosition.jl
 url: https://juliaastro.github.io/SolarPosition.jl/
 license: MIT
-version: 0.3.2
-date-released: 2025-12-20
+version: 0.4.0
+date-released: 2026-01-05
 abstract: >-
   SolarPosition.jl provides a simple, unified interface to a collection
   of validated solar position algorithms written in pure Julia.

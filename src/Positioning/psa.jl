@@ -80,7 +80,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     g = p5 + p6 * n                                                     # Eq. 5
     (sin_Ω, cos_Ω) = sincos(Ω)
     (sin_g, cos_g) = sincos(g)
-    λₑ = L + sin_g * (p7+ (p8 * 2) * cos_g) + p9 + p10 * sin_Ω          # Eq. 6
+    λₑ = L + sin_g * (p7+(p8 * 2) * cos_g) + p9 + p10 * sin_Ω           # Eq. 6
     ϵ = p11 + p12 * n + p13 * cos_Ω                                     # Eq. 7
 
     # celestial right ascension (ra) and declination (d)

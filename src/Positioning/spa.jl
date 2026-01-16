@@ -463,7 +463,11 @@ function _solar_position(
         obs,
         dt,
         alg,
-        SPARefraction{T}(T(alg.pressure), T(alg.temperature), T(alg.atmos_refract)),
+        SPARefraction{T}(
+            pressure = T(alg.pressure),
+            temperature = T(alg.temperature),
+            atmos_refract = T(alg.atmos_refract),
+        ),
     )
 end
 

@@ -113,13 +113,13 @@ end
     ref1 = SPARefraction()
     @test ref1.pressure == 101325.0
     @test ref1.temperature == 12.0
-    @test ref1.refraction_limit == -0.5667
+    @test ref1.atmos_refract == -0.5667
 
     # with pressure and temperature
     ref2 = SPARefraction(100000.0, 15.0)
     @test ref2.pressure == 100000.0
     @test ref2.temperature == 15.0
-    @test ref2.refraction_limit == -0.5667
+    @test ref2.atmos_refract == -0.5667
 
     # refraction works
     obs = Observer(45.0, 10.0, 100.0)

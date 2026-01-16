@@ -13,9 +13,9 @@ Solar Position Algorithm (SPA).
 $(TYPEDFIELDS)
 
 # Constructor
-- `SPARefraction()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C, refraction_limit = -0.5667°
-- `SPARefraction(pressure, temperature)`: Specify custom pressure [Pa] and temperature [°C], uses default refraction_limit
-- `SPARefraction(pressure, temperature, refraction_limit)`: Also specify refraction limit [degrees]
+- `SPARefraction()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C, atmos_refract = -0.5667°
+- `SPARefraction(pressure, temperature)`: Specify custom pressure [Pa] and temperature [°C], uses default atmos_refract
+- `SPARefraction(pressure, temperature, atmos_refract)`: Also specify refraction limit [degrees]
 
 # Notes
 The equation to calculate the refraction correction is given by:
@@ -53,16 +53,16 @@ refraction_correction = refraction(spa, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-struct SPARefraction{T} <: RefractionAlgorithm where {T<:AbstractFloat}
+@kwdef struct SPARefraction{T<:AbstractFloat} <: RefractionAlgorithm
     "Annual average atmospheric pressure [Pascal]"
-    pressure::T
+    pressure::T = 101325.0
     "Annual average temperature [°C]"
-    temperature::T
+    temperature::T = 12.0
     "Minimum elevation angle for refraction correction [degrees]"
-    refraction_limit::T
+    atmos_refract::T = -0.5667
 end
 
-SPARefraction() = SPARefraction{Float64}(101325.0, 12.0, -0.5667)
+# Positional constructor for 2 arguments (3-argument constructor is already created by @kwdef)
 SPARefraction(pressure::T, temperature::T) where {T<:AbstractFloat} =
     SPARefraction{T}(pressure, temperature, T(-0.5667))
 
@@ -70,11 +70,8 @@ function _refraction(model::SPARefraction{T}, elevation_deg::T) where {T<:Abstra
     # Convert pressure from Pascal to hPa/mbar
     pressure_hPa = model.pressure / T(100.0)
 
-    # Check if sun is above horizon (elevation >= -0.26667 + refraction_limit)
-    # The sun diameter of 0.26667 degrees is added to the refraction limit
-    above_horizon = elevation_deg >= (T(-0.26667) + model.refraction_limit)
-
-    if !above_horizon
+    # Only apply correction when sun is above horizon accounting for refraction
+    if elevation_deg < model.atmos_refract - T(0.26667)
         return T(0.0)
     end
 

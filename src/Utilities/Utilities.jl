@@ -4,7 +4,6 @@ using DocStringExtensions: TYPEDEF, TYPEDFIELDS, TYPEDSIGNATURES
 using ..Positioning: Observer, SPA, SolarAlgorithm, calculate_deltat
 import Dates: DateTime, Date, Day
 import TimeZones: ZonedDateTime, timezone, UTC
-using TimeZones: @tz_str
 
 include("spa.jl")
 include("srt.jl")

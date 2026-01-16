@@ -273,7 +273,7 @@ function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlg
     # apply refraction correction
     refraction_correction_deg = Refraction.refraction(refraction, pos.elevation)
     apparent_elevation_deg = pos.elevation + refraction_correction_deg
-    apparent_zenith_deg = 90.0 - apparent_elevation_deg
+    apparent_zenith_deg = 90 - apparent_elevation_deg
 
     return ApparentSolPos(
         pos.azimuth,

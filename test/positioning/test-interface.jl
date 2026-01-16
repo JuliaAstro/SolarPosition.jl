@@ -88,7 +88,8 @@ using Dates: Hour, @dateformat_str
 
             # test a second time to ensure there are minimal allocations
             alloc_limit = alg isa SPA ? 300 : 48
-            @test @allocated(solar_position!(pos, obs, dts, alg)) ≤ alloc_limit
+            @test @allocated(solar_position!(pos, obs, dts, alg)) ≤ alloc_limit broken =
+                (VERSION == v"1.12.4")
             @test all(pos.azimuth .!= 0.0)
             @test pos[1] == single_result
             @test pos isa StructVector{PosType}

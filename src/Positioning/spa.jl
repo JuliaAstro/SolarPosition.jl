@@ -453,8 +453,18 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:Abs
     return _solar_position(spa_obs, dt, alg)
 end
 
-function _solar_position(obs, dt, alg::SPA, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, SPARefraction())
+function _solar_position(
+    obs::AbstractObserver{T},
+    dt,
+    alg::SPA,
+    ::DefaultRefraction,
+) where {T<:AbstractFloat}
+    return _solar_position(
+        obs,
+        dt,
+        alg,
+        SPARefraction{T}(T(alg.pressure), T(alg.temperature), T(alg.atmos_refract)),
+    )
 end
 
 function solar_position!(

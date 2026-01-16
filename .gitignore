@@ -16,3 +16,4 @@ node_modules
 **.old
 play/Project.toml
 docs/.CondaPkg/meta
+*.mem

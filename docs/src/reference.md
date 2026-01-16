@@ -24,6 +24,7 @@ SolarPosition.Positioning.solar_position!
 ## Observer and Position Types
 
 ```@docs
+SolarPosition.Positioning.AbstractObserver
 SolarPosition.Positioning.Observer
 SolarPosition.Positioning.SolPos
 SolarPosition.Positioning.ApparentSolPos

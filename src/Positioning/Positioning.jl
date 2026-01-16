@@ -14,9 +14,8 @@ using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
-using Reexport: @reexport
 import ..Refraction
-using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
+using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction, SPARefraction
 
 """
     $(TYPEDEF)
@@ -31,6 +30,22 @@ struct MyAlgorithm <: SolarAlgorithm end
 ```
 """
 abstract type SolarAlgorithm end
+
+"""
+    $(TYPEDEF)
+
+Abstract base type for Observers.
+
+All concrete observer types must inherit from this type. Most algorithms will use the
+default `Observer` struct defined in this module. More specialized observer types can be
+defined by inheriting from this abstract type, see for example [`SPAObserver`](@ref).
+
+# Examples
+```julia
+struct MyObserver <: AbstractObserver{Float64} end
+```
+"""
+abstract type AbstractObserver{T<:AbstractFloat} end
 
 """
     $(TYPEDEF)
@@ -59,7 +74,7 @@ The `horizon` parameter can be specified as:
 - A number in degrees (e.g., `0.5667`)
 - A `degrees=>arcminutes` pair (e.g., `0=>34` for 34 arcminutes = 0.5667°)
 """
-struct Observer{T<:AbstractFloat}
+struct Observer{T<:AbstractFloat} <: AbstractObserver{T}
     "Geodetic latitude (+N)"
     latitude::T
     "Longitude (+E)"
@@ -172,7 +187,7 @@ an observer's geographic location and timestamp(s). It supports multiple input f
 automatically handles time zone conversions.
 
 # Arguments
-- `obs::Observer`: Observer location with latitude, longitude, and altitude
+- `obs::AbstractObserver`: Observer location with latitude, longitude, and altitude
 - `dt::DateTime` or `dt::ZonedDateTime`: Single timestamp
 - `dts::AbstractVector`: Vector of timestamps (DateTime or ZonedDateTime)
 - `alg::SolarAlgorithm`: Solar positioning algorithm (default: `PSA()`)
@@ -258,7 +273,7 @@ function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlg
     # apply refraction correction
     refraction_correction_deg = Refraction.refraction(refraction, pos.elevation)
     apparent_elevation_deg = pos.elevation + refraction_correction_deg
-    apparent_zenith_deg = 90.0 - apparent_elevation_deg
+    apparent_zenith_deg = 90 - apparent_elevation_deg
 
     return ApparentSolPos(
         pos.azimuth,
@@ -270,26 +285,26 @@ function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlg
 end
 
 function solar_position(
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     dt::DateTime,
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
 ) where {T<:AbstractFloat}
-    _solar_position(obs, dt, alg, refraction)
+    return _solar_position(obs, dt, alg, refraction)
 end
 
 function solar_position(
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     dt::ZonedDateTime,
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
 ) where {T<:AbstractFloat}
-    solar_position(obs, DateTime(dt, UTC), alg, refraction)
+    return solar_position(obs, DateTime(dt, UTC), alg, refraction)
 end
 
 function solar_position!(
     pos::StructArrays.StructVector{T},
-    obs::Observer,
+    obs::AbstractObserver,
     dts::AbstractVector{Union{DateTime,ZonedDateTime}},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -302,7 +317,7 @@ end
 
 function solar_position!(
     pos::StructArrays.StructVector{T},
-    obs::Observer,
+    obs::AbstractObserver,
     dts::AbstractVector{DateTime},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -315,7 +330,7 @@ end
 
 function solar_position!(
     pos::StructArrays.StructVector{T},
-    obs::Observer,
+    obs::AbstractObserver,
     dts::AbstractVector{ZonedDateTime},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -327,7 +342,7 @@ function solar_position!(
 end
 
 function solar_position(
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     dts::AbstractVector{Union{DateTime,ZonedDateTime}},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -335,11 +350,11 @@ function solar_position(
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
-    pos
+    return pos
 end
 
 function solar_position(
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     dts::AbstractVector{DateTime},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -347,11 +362,11 @@ function solar_position(
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
-    pos
+    return pos
 end
 
 function solar_position(
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     dts::AbstractVector{ZonedDateTime},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction(),
@@ -359,7 +374,7 @@ function solar_position(
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
-    pos
+    return pos
 end
 
 
@@ -370,7 +385,7 @@ Compute solar positions for all times in a table and add the results as new colu
 
 # Arguments
 - `table` : Table-like object with datetime column (must support Tables.jl interface).
-- `obs::Observer` : Observer location (latitude, longitude, altitude).
+- `obs::AbstractObserver` : Observer location (latitude, longitude, altitude).
 - `latitude, longitude, altitude` : Specify observer location directly.
 - `dt_col::Symbol` : Name of the datetime column (default: `:datetime`).
 - `alg::SolarAlgorithm` : Algorithm to use (default: `PSA()`).
@@ -386,7 +401,7 @@ The input table is modified **in-place** by adding new columns.
 """
 function solar_position!(
     table,
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction();
     dt_col::Symbol = :datetime,
@@ -414,7 +429,7 @@ See [`solar_position!`](@ref) for detailed documentation of arguments, examples,
 """
 function solar_position(
     table,
-    obs::Observer{T},
+    obs::AbstractObserver{T},
     alg::SolarAlgorithm = PSA(),
     refraction::RefractionAlgorithm = DefaultRefraction();
     kwargs...,

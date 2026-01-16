@@ -1,6 +1,5 @@
 module Utilities
 
-using Reexport: @reexport
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS, TYPEDSIGNATURES
 using ..Positioning: Observer, SPA, SolarAlgorithm, calculate_deltat
 import Dates: DateTime, Date, Day

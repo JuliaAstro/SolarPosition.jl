@@ -14,9 +14,8 @@ using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
 using Tables: Tables
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
-using Reexport: @reexport
 import ..Refraction
-using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction
+using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction, SPARefraction
 
 """
     $(TYPEDEF)

@@ -9,7 +9,6 @@ for atmospheric refraction effects.
 module Refraction
 
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF
-using Reexport: @reexport
 
 
 """

@@ -323,21 +323,6 @@ function topocentric_elevation_angle_without_atmosphere(sin_lat, cos_lat, δ′_
     return e0
 end
 
-function atmospheric_refraction_correction(pressure, temp, e0, atmos_refract)
-    # only apply correction when sun is above horizon accounting for refraction
-    if e0 < -(0.26667 + atmos_refract)
-        return 0.0
-    end
-
-    # convert pressure from Pa to hPa/mbar
-    pressure_hPa = pressure / 100.0
-
-    Δe =
-        (pressure_hPa / 1010.0) * (283.0 / (273.0 + temp)) * 1.02 /
-        (60.0 * tand(e0 + 10.3 / (e0 + 5.11)))
-    return Δe  # already in degrees
-end
-
 function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
     (sin_H′, cos_H′) = sincos(H′_rad)
     tan_δ′ = tan(δ′_rad)

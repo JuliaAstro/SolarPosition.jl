@@ -17,3 +17,4 @@ jobs:
           julia-version: ${{ matrix.julia-version }}
           exeflags: "--threads=auto"
           extra-pkgs: "CondaPkg,PythonCall"
+          force-time-unit: "ms"

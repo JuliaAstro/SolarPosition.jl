@@ -62,7 +62,6 @@ apparent_elevation = elevation + refraction_correction
     atmos_refract::T = -0.5667
 end
 
-# Positional constructor for 2 arguments (3-argument constructor is already created by @kwdef)
 SPARefraction(pressure::T, temperature::T) where {T<:AbstractFloat} =
     SPARefraction{T}(pressure, temperature, T(-0.5667))
 

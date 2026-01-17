@@ -1,205 +1,206 @@
 module SolarPositionMakieExt
 
-using Dates, Tables, Makie
+using Dates, Makie
 using SolarPosition
-import SolarPosition: sunpathpolarplot, sunpathpolarplot!, sunpathplot, sunpathplot!
+import SolarPosition: analemmas!
 
-function _add_colorbar!(fig, plot_obj, position = fig[1, 2])
-    month_names =
-        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    month_days = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]
-    inverted_month_days = 365 .- reverse(month_days)
-    inverted_month_names = reverse(month_names)
-    return Colorbar(position, plot_obj, ticks = (inverted_month_days, inverted_month_names))
-end
+"""
+    _generate_analemma_data(observer, year, hours; algorithm=PSA())
 
-function _try_add_colorbar_to_recipe!(ax, plot_obj)
-    try
-        parent = ax.parent
-        while !isa(parent, Figure) &&
-                  !isnothing(parent) &&
-                  hasfield(typeof(parent), :parent)
-            parent = parent.parent
-        end
-        if isa(parent, Figure)
-            _add_colorbar!(parent, plot_obj, parent[1, 2])
-        end
-    catch
-        # silently fail if colorbar can't be added
+Generate solar position data for analemmas at specified hours throughout the year.
+
+# Arguments
+- `observer::Observer`: Observer location
+- `year::Int`: Year for which to generate positions
+- `hours::AbstractVector{Int}`: Hours of the day to generate analemmas for (0-23)
+- `algorithm`: Solar position algorithm to use (default: PSA())
+
+# Returns
+A named tuple with fields: `datetime`, `zenith`, `azimuth`, `hour`, `dayofyear`
+"""
+function _generate_analemma_data(observer, year, hours; algorithm = PSA())
+    # Generate dates for every day of the year
+    datetimes = DateTime(year, 1, 1):Hour(1):DateTime(year, 12, 31)
+    n_points = length(datetimes)
+
+    # Pre-allocate arrays
+    zeniths = Vector{Float64}(undef, n_points)
+    azimuths = Vector{Float64}(undef, n_points)
+    hour_vals = Vector{Int}(undef, n_points)
+    doy_vals = Vector{Int}(undef, n_points)
+
+    # Calculate solar position
+    for (idx, dt) in enumerate(datetimes)
+        pos = solar_position(observer, dt, algorithm)
+        zeniths[idx] = pos.zenith
+        azimuths[idx] = pos.azimuth
+        hour_vals[idx] = Dates.hour(dt)
+        doy_vals[idx] = dayofyear(dt)
     end
-end
 
-function _add_hour_labels!(ax, dts, ze, el, az, coords)
-    hours = hour.(dts)
-    visible_mask = el .> 0
-    if !any(visible_mask)
-        return
-    end
-
-    ze_visible = ze[visible_mask]
-    el_visible = el[visible_mask]
-    az_visible = az[visible_mask]
-    hours_visible = hours[visible_mask]
-
-    for hour_val in unique(hours_visible)
-        hour_mask = hours_visible .== hour_val
-        if !any(hour_mask)
-            continue
-        end
-
-        if coords === :polar
-            idx = argmin(ze_visible[hour_mask])
-            label_az = az_visible[hour_mask][idx]
-            label_ze = ze_visible[hour_mask][idx]
-            x, y = deg2rad(label_az), label_ze
-        else  # cartesian coordinates
-            idx = argmax(el_visible[hour_mask])
-            label_az = az_visible[hour_mask][idx]
-            label_el = el_visible[hour_mask][idx]
-            offset = label_az < 180 ? -10 : 10
-            x, y = label_az + offset, label_el
-        end
-
-        text!(
-            ax,
-            x,
-            y,
-            text = lpad(string(hour_val), 2, '0'),
-            align = (:center, :bottom),
-            fontsize = 13,
-        )
-    end
-end
-
-
-@recipe(SunpathPlot) do scene
-    Theme(
-        colormap = :twilight,
-        backgroundcolor = :white,
-        markersize = 3,
-        hour_labels = true,
-        colorbar = true,
+    return (
+        datetime = datetimes,
+        zenith = zeniths,
+        azimuth = azimuths,
+        hour = hour_vals,
+        dayofyear = doy_vals,
     )
 end
 
-@recipe(SunpathpolarPlot) do scene
-    Theme(colormap = :twilight, markersize = 3, hour_labels = true, colorbar = true)
+"""
+    _add_hour_labels!(ax, observer, year, hours, coords; algorithm=PSA())
+
+Add hour labels to a sun path plot at the position of maximum elevation for each hour.
+
+# Arguments
+- `ax`: The axis to add labels to
+- `observer::Observer`: Observer location
+- `year::Int`: Year for the solar positions
+- `hours::AbstractVector{Int}`: Hours to label (0-23)
+- `coords`: Coordinate system (`:polar` or `:cartesian`)
+- `algorithm`: Solar position algorithm to use (default: PSA())
+"""
+function _add_hour_labels!(ax, observer, year, hours, coords; algorithm = PSA())
+    # For each hour, find the day when the sun reaches maximum elevation at that hour
+    for hour in hours
+        # Sample a few days throughout the year to find max elevation
+        dates = [Date(year, m, 15) for m = 1:12]
+        max_el = -90.0
+        best_pos = nothing
+
+        for date in dates
+            dt = DateTime(date) + Hour(hour)
+            pos = solar_position(observer, dt, algorithm)
+            el = 90.0 - pos.zenith
+
+            if el > max_el
+                max_el = el
+                best_pos = pos
+            end
+        end
+
+        # Only label if sun is above horizon
+        if max_el > 0 && !isnothing(best_pos)
+            if coords === :polar
+                x = deg2rad(best_pos.azimuth)
+                y = best_pos.zenith
+            else  # cartesian
+                offset = best_pos.azimuth < 180 ? -10 : 10
+                x = best_pos.azimuth + offset
+                y = max_el
+            end
+
+            text!(
+                ax,
+                x,
+                y,
+                text = lpad(string(hour), 2, '0'),
+                align = (:center, :bottom),
+                fontsize = 13,
+            )
+        end
+    end
 end
 
-function Makie.plot!(sp::SunpathPlot{<:Tuple})
-    data = sp[1][]
-    dts = data.datetime
-    ze = data.zenith
-    az = data.azimuth
-    el = 90 .- ze
-    vals = 365 .- dayofyear.(dts)
+"""
+    _configure_axis!(ax::Axis)
 
-    ax = current_axis()
-    if ax isa Axis
-        xlims!(ax, 0, 360)
-        ylims!(ax, 0, 90)
-        ax.xlabel = "Azimuth (°)"
-        ax.ylabel = "Elevation (°)"
-        ax.xticks = 0:30:360
-        ax.yticks = 0:10:90
-    end
+Configure cartesian axis for analemma plot.
+"""
+function _configure_axis!(ax::Axis)
+    xlims!(ax, 0, 360)
+    ylims!(ax, 0, 90)
+    ax.xlabel = "Azimuth (°)"
+    ax.ylabel = "Elevation (°)"
+    ax.xticks = 0:30:360
+    ax.yticks = 0:10:90
+end
+
+"""
+    _configure_axis!(ax::PolarAxis)
+
+Configure polar axis for analemma plot.
+"""
+function _configure_axis!(ax::PolarAxis)
+    ax.direction = -1
+    ax.theta_0 = -π / 2
+    ax.rlimits = (0, 90)
+end
+
+"""
+    _plot_analemmas!(sp, ax::Axis, data, observer, year, hours)
+
+Plot analemmas on a cartesian axis.
+"""
+function _plot_analemmas!(sp, ax::Axis, data, observer, year, hours)
+    _configure_axis!(ax)
+
+    # Only plot points where sun is above horizon
+    el = 90 .- data.zenith
+    above_horizon = el .> 0
+    vals = 365 .- data.dayofyear[above_horizon]
 
     p = scatter!(
         sp,
-        az,
-        el;
+        data.azimuth[above_horizon],
+        el[above_horizon];
         color = vals,
-        colormap = sp.colormap[],
+        colormap = sp.colorscheme[],
         markersize = sp.markersize[],
     )
 
-    # add hourly labels if requested
+    # Add hour labels if requested
     if sp.hour_labels[]
-        _add_hour_labels!(ax, dts, ze, el, az, :cartesian)
-    end
-
-    # add colorbar if requested and possible
-    if sp.colorbar[]
-        _try_add_colorbar_to_recipe!(ax, p)
+        _add_hour_labels!(ax, observer, year, hours, :cartesian)
     end
 
     return p
 end
 
+"""
+    _plot_analemmas!(sp, ax::PolarAxis, data, observer, year, hours)
 
-function Makie.plot!(sp::SunpathpolarPlot{<:Tuple})
-    data = sp[1][]
-    dts = data.datetime
-    ze = data.zenith
-    az = data.azimuth
-    vals = 365 .- dayofyear.(dts)
+Plot analemmas on a polar axis.
+"""
+function _plot_analemmas!(sp, ax::PolarAxis, data, observer, year, hours)
+    _configure_axis!(ax)
 
-    ax = current_axis()
-    if ax isa PolarAxis
-        ax.direction = -1
-        ax.theta_0 = -π / 2
-        ax.rlimits = (0, 90)
-    end
+    # Only plot points where sun is above horizon
+    el = 90 .- data.zenith
+    above_horizon = el .> 0
+    vals = 365 .- data.dayofyear[above_horizon]
 
     p = scatter!(
         sp,
-        deg2rad.(az),
-        ze;
+        deg2rad.(data.azimuth[above_horizon]),
+        data.zenith[above_horizon];
         color = vals,
-        colormap = sp.colormap[],
+        colormap = sp.colorscheme[],
         markersize = sp.markersize[],
     )
 
-    # add hourly labels if requested
+    # Add hour labels if requested
     if sp.hour_labels[]
-        _add_hour_labels!(ax, dts, ze, 90 .- ze, az, :polar)
-    end
-
-    # add colorbar if requested and possible
-    if sp.colorbar[]
-        _try_add_colorbar_to_recipe!(ax, p)
+        _add_hour_labels!(ax, observer, year, hours, :polar)
     end
 
     return p
 end
 
-
-
-function Makie.convert_arguments(sp::Type{Union{<:SunpathPlot,<:SunpathpolarPlot}}, tbl)
-    cols = Tables.columns(tbl)
-    dts = Tables.getcolumn(cols, :datetime)
-    zenith = Tables.getcolumn(cols, :zenith)
-    azimuth = Tables.getcolumn(cols, :azimuth)
-    return ((datetime = dts, zenith = zenith, azimuth = azimuth),)
+@recipe(Analemmas) do scene
+    Theme(colorscheme = :twilight, markersize = 3, hour_labels = true)
 end
 
-function SolarPosition.sunpathpolarplot(
-    data;
-    hour_labels = true,
-    colorbar = true,
-    kwargs...,
-)
-    fig = Figure()
-    ax = PolarAxis(fig[1, 1])
-    p = sunpathpolarplot!(ax, data; hour_labels = hour_labels, kwargs...)
+function Makie.plot!(sp::Analemmas{<:Tuple{Observer,Int}})
+    observer = sp[1][]
+    year = sp[2][]
 
-    if colorbar
-        _add_colorbar!(fig, p)
-    end
+    # Generate analemma data for all 24 hours
+    hours = collect(0:23)
+    data = _generate_analemma_data(observer, year, hours)
 
-    return fig
-end
-
-function SolarPosition.sunpathplot(data; hour_labels = true, colorbar = true, kwargs...)
-    fig = Figure()
-    ax = Axis(fig[1, 1])
-    p = sunpathplot!(ax, data; hour_labels = hour_labels, kwargs...)
-
-    if colorbar
-        _add_colorbar!(fig, p)
-    end
-
-    return fig
+    ax = current_axis()
+    return _plot_analemmas!(sp, ax, data, observer, year, hours)
 end
 
 end # module

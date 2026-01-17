@@ -1,6 +1,12 @@
+```@meta
+Draft = false
+```
+
 # [Plotting with Makie.jl](@id plotting-examples)
 
 SolarPosition.jl provides a plotting extension for [Makie.jl](https://makie.juliaplots.org/stable/).
+
+The main plotting function is [`analemmas!`](@ref).
 
 To use it, simply import both the `SolarPosition` and `Makie` packages:
 
@@ -11,62 +17,53 @@ using CairoMakie
 # supporting packages
 using Dates
 using TimeZones
-using DataFrames
 ```
 
 This example notebook is based on the [pvlib sun path example](https://pvlib-python.readthedocs.io/en/stable/gallery/solar-position/plot_sunpath_diagrams.html).
 
 ## Basic Sun Path Plotting
 
-Let's start by defining an observer location and calculating solar positions for a whole year:
+The plotting functions generate analemmas (figure-8 patterns showing the sun's position at
+each hour of the day throughout the year). You simply provide an observer location and
+the year you want to visualize:
 
 ```@example plotting
 # Define observer location (New Delhi, India)
 # Parameters: latitude, longitude, altitude in meters
-tz = tz"Asia/Kolkata"
 obs = Observer(28.6, 77.2, 0.0)
-
-# Generate hourly timestamps for a whole year
-times = collect(ZonedDateTime(DateTime(2019), tz):Hour(1):ZonedDateTime(DateTime(2020), tz))
-
-# This returns a StructVector with solar position data
-positions = solar_position(obs, times)
-
-# For plotting, we need to create a DataFrame that includes the timestamps
-df = DataFrame(positions)
-df.datetime = times
-
-# We can inspect the first few entries
-first(df, 5)
+tz = TimeZone("Asia/Kolkata")
+year = 2019
 ```
 
 ## Simple Sun Path Plot in Cartesian Coordinates
 
-We can visualize solar positions in cartesian coordinates using the `sunpathplot`
-function:
+We can visualize solar positions in cartesian coordinates using the `analemmas!`
+function. The function automatically generates analemmas for all 24 hours of the day:
 
 ```@example plotting
 fig = Figure(backgroundcolor = (:white, 0.0), textcolor= "#f5ab35")
 ax = Axis(fig[1, 1], backgroundcolor = (:white, 0.0))
-sunpathplot!(ax, df, hour_labels = false)
+analemmas!(ax, obs, year, hour_labels = false)
 fig
 ```
 
 ## Polar Coordinates with Hour Labels
 
-We can also work directly with a `DataFrame`. Note that for plotting we need to include
-the datetime information, so we add it to the DataFrame.
-
-Plotting in polar coordinates with `sunpathpolarplot` may yield a more intuitive
-representation of the solar path. Here, we also enable hourly labels for better
-readability:
+Plotting in polar coordinates with `analemmas!` may yield a more intuitive
+representation of the solar path. Here, we enable hourly labels for better readability:
 
 ```@example plotting
 fig2 = Figure(backgroundcolor = :transparent, textcolor= "#f5ab35", size = (800, 600))
 ax2 = PolarAxis(fig2[1, 1], backgroundcolor = "#1f2424")
-sunpathpolarplot!(ax2, df, hour_labels = true)
+analemmas!(ax2, obs, year, hour_labels = true)
+fig2
+```
 
-# Draw individual days
+Now let's manually plot the full solar path for specific dates March 21, June 21, and
+December 21. Also known as the vernal equinox, summer solstice, and winter solstice,
+respectively:
+
+```@example plotting
 line_objects = []
 for (date, label) in [(Date("2019-03-21"), "Mar 21"),
                       (Date("2019-06-21"), "Jun 21"),
@@ -74,9 +71,7 @@ for (date, label) in [(Date("2019-03-21"), "Mar 21"),
     times = collect(ZonedDateTime(DateTime(date), tz):Minute(5):ZonedDateTime(DateTime(date) + Day(1), tz))
     solpos = solar_position(obs, times)
     above_horizon = solpos.elevation .> 0
-    day_df = DataFrame(solpos)
-    day_df.datetime = times
-    day_filtered = day_df[above_horizon, :]
+    day_filtered = solpos[above_horizon]
     line_obj = lines!(ax2, deg2rad.(day_filtered.azimuth), day_filtered.zenith,
                       linewidth = 2, label = label)
     push!(line_objects, line_obj)
@@ -101,11 +96,23 @@ It tells us when the sun rises, reaches its highest point, and sets. And hence a
 length of the day. From the figure we can also read that in June the days are longest,
 while in December they are shortest.
 
-## Plotting without a custom axis
+## Custom Color Schemes
 
-Finally, we can also create plots without explicitly defining an axis beforehand.
-This is a more concise way to create plots, but it offers less customization:
+You can customize the color scheme used for the analemmas by passing a `colorscheme` argument.
+Here's an example using the `:balance` colorscheme.
+
+!!! info
+    More colorschemes are available in the [Makie documentation](https://docs.makie.org/dev/explanations/colors).
 
 ```@example plotting
-sunpathpolarplot(df, hour_labels = true, colorbar = true)
+fig = Figure(backgroundcolor = (:white, 0.0), textcolor= "#f5ab35")
+ax = Axis(fig[1, 1], backgroundcolor = (:white, 0.0))
+analemmas!(ax, obs, year, hour_labels = false, colorscheme = :balance)
+fig
+```
+
+## Docstrings
+
+```@docs
+analemmas!
 ```

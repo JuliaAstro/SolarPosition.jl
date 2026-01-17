@@ -1,35 +1,27 @@
 """Plot solar positions using SolarPosition.jl with hourly labels."""
 
 using Dates
-using TimeZones
-using DataFrames
 using CairoMakie
 using SolarPosition
 
 # define observer location (latitude, longitude, altitude in meters)
-tz = tz"Asia/Kolkata"
-obs = Observer(28.6, 77.2, 0.0)
+obs = Observer(28.6, 77.2, 0.0)  # New Delhi, India
+year = 2019
 
-# a whole year of hourly timestamps
-times = collect(ZonedDateTime(DateTime(2019), tz):Hour(1):ZonedDateTime(DateTime(2020), tz))
-positions = solar_position(obs, times)
-
-# plot positions from NamedTuple with hourly labels in polar coordinates
-df = DataFrame(positions)
-df.datetime = times
-sunpathplot(df)
-
-# plot DataFrame with hourly labels in cartesian coordinates
-sunpathpolarplot(df, hour_labels = true, colorbar = true)
-
-# plot DataFrame in polar coordinates with hourly labels
+# plot in cartesian coordinates with hourly labels
 fig = Figure()
-ax = PolarAxis(fig[1, 1], title = "Polar Coordinates with Hour Labels")
-sunpathpolarplot!(ax, df, hour_labels = true, colorbar = false)
+ax = Axis(fig[1, 1], title = "Cartesian Coordinates with Hour Labels")
+analemmas!(ax, obs, year, hour_labels = true)
 fig
 
-# example without hourly labels for comparison
+# plot in polar coordinates with hourly labels
 fig2 = Figure()
-ax2 = Axis(fig2[1, 1], title = "Cartesian Coordinates (No Labels)")
-sunpathplot!(ax2, df; hour_labels = false, colorbar = true)
+ax2 = PolarAxis(fig2[1, 1], title = "Polar Coordinates with Hour Labels")
+analemmas!(ax2, obs, year, hour_labels = true)
 fig2
+
+# example without hourly labels for comparison
+fig3 = Figure()
+ax3 = Axis(fig3[1, 1], title = "Cartesian Coordinates (No Labels)")
+analemmas!(ax3, obs, year, hour_labels = false)
+fig3

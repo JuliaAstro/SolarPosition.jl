@@ -51,6 +51,7 @@ makedocs(;
         "literature.md",
         "contributing.md",
     ],
+    draft = true,
 )
 
 deploydocs(;

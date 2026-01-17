@@ -12,15 +12,65 @@ include("Utilities/Utilities.jl")
 @reexport using .Utilities
 
 # to make the makie extension work
-export sunpathplot
-export sunpathplot!
-export sunpathpolarplot
-export sunpathpolarplot!
+export analemmas!
 
-function sunpathplot end
-function sunpathplot! end
-function sunpathpolarplot end
-function sunpathpolarplot! end
+"""
+    $(TYPEDSIGNATURES)
+
+Plot analemmas (figure-8 patterns showing the sun's position at each hour throughout the
+year) for a given observer location and year.
+
+# Arguments
+- `ax`: A Makie [`Axis`](https://docs.makie.org/dev/reference/blocks/axis) or [`PolarAxis`](https://docs.makie.org/dev/reference/blocks/polaraxis) to plot on
+- `observer::Observer`: [`Observer`](@ref SolarPosition.Positioning.Observer) location (latitude, longitude, altitude)
+- `year::Int`: Year for which to generate the analemmas
+- `hour_labels::Bool=true`: Whether to add hour labels to the plot
+- `colorscheme::Symbol=:twilight`: Color scheme for the analemma points (any [Makie colormap](https://docs.makie.org/dev/explanations/colors))
+
+# Description
+This function automatically generates solar position data for all 24 hours of each day
+throughout the specified year and plots them as analemmas. The plot specializes to
+either [`PolarAxis`](https://docs.makie.org/dev/reference/blocks/polaraxis) or regular
+[`Axis`](https://docs.makie.org/dev/reference/blocks/axis) and adjusts the plot
+accordingly:
+
+- [`PolarAxis`](https://docs.makie.org/dev/reference/blocks/polaraxis): Plots in polar coordinates with azimuth as the angle and zenith as the radius
+- [`Axis`](https://docs.makie.org/dev/reference/blocks/axis): Plots in cartesian coordinates with azimuth on the x-axis and elevation on the y-axis
+
+The analemmas are colored by day of year. The default colorscheme is `:twilight`, but this
+can be customized using the `colorscheme` keyword argument.
+
+# Examples
+```julia
+using SolarPosition
+using CairoMakie
+
+# Define observer location (New Delhi, India)
+obs = Observer(28.6, 77.2, 0.0)
+year = 2019
+
+# Plot in cartesian coordinates
+fig = Figure()
+ax = Axis(fig[1, 1], title="Sun Path - Cartesian")
+analemmas!(ax, obs, year)
+fig
+
+# Plot in polar coordinates
+fig2 = Figure()
+ax2 = PolarAxis(fig2[1, 1], title="Sun Path - Polar")
+analemmas!(ax2, obs, year, hour_labels=true)
+fig2
+
+# Use a custom colorscheme
+fig3 = Figure()
+ax3 = Axis(fig3[1, 1], title="Sun Path - Custom Colors")
+analemmas!(ax3, obs, year, colorscheme=:viridis)
+fig3
+```
+
+See also: [`Observer`](@ref), [`solar_position`](@ref)
+"""
+function analemmas! end
 
 # to make the ModelingToolkit extension work
 export SolarPositionBlock

@@ -23,7 +23,7 @@ $(TYPEDFIELDS)
 """
 struct SPA <: SolarAlgorithm
     "Difference between terrestrial time and UT1 [seconds]. If `nothing`, uses automatic calculation."
-    delta_t::Union{Float64,Nothing}
+    delta_t::Union{Float64, Nothing}
     "Annual average air pressure [Pa]"
     pressure::Float64
     "Annual average air temperature [°C]"
@@ -32,22 +32,22 @@ struct SPA <: SolarAlgorithm
     atmos_refract::Float64
 
     function SPA(
-        delta_t::Union{Float64,Nothing},
-        pressure::Float64,
-        temperature::Float64,
-        atmos_refract::Float64,
-    )
-        new(delta_t, pressure, temperature, atmos_refract)
+            delta_t::Union{Float64, Nothing},
+            pressure::Float64,
+            temperature::Float64,
+            atmos_refract::Float64,
+        )
+        return new(delta_t, pressure, temperature, atmos_refract)
     end
 end
 
 # keyword argument constructor with default values
 function SPA(;
-    delta_t::Union{Float64,Nothing} = 67.0,
-    pressure::Float64 = 101325.0,
-    temperature::Float64 = 12.0,
-    atmos_refract::Float64 = 0.5667,
-)
+        delta_t::Union{Float64, Nothing} = 67.0,
+        pressure::Float64 = 101325.0,
+        temperature::Float64 = 12.0,
+        atmos_refract::Float64 = 0.5667,
+    )
     return SPA(delta_t, pressure, temperature, atmos_refract)
 end
 
@@ -65,7 +65,7 @@ multiple times at the same location.
 # Internal Fields
 $(TYPEDFIELDS)
 """
-struct SPAObserver{T<:AbstractFloat} <: AbstractObserver{T}
+struct SPAObserver{T <: AbstractFloat} <: AbstractObserver{T}
     "Geodetic latitude (+N)"
     latitude::T
     "Longitude (+E)"
@@ -87,7 +87,7 @@ struct SPAObserver{T<:AbstractFloat} <: AbstractObserver{T}
     "Cached y term for parallax correction"
     y::T
 
-    function SPAObserver{T}(lat::T, lon::T, alt::T = zero(T)) where {T<:AbstractFloat}
+    function SPAObserver{T}(lat::T, lon::T, alt::T = zero(T)) where {T <: AbstractFloat}
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
         (sin_lat, cos_lat) = sincos(lat_rad)
@@ -98,13 +98,13 @@ struct SPAObserver{T<:AbstractFloat} <: AbstractObserver{T}
         x = x_term(sin_u, cos_u, alt, cos_lat)
         y = y_term(sin_u, cos_u, alt, sin_lat)
 
-        new{T}(lat, lon, alt, lat_rad, lon_rad, sin_lat, cos_lat, u, x, y)
+        return new{T}(lat, lon, alt, lat_rad, lon_rad, sin_lat, cos_lat, u, x, y)
     end
 end
 
-SPAObserver(lat::T, lon::T; altitude = 0.0) where {T<:AbstractFloat} =
+SPAObserver(lat::T, lon::T; altitude = 0.0) where {T <: AbstractFloat} =
     SPAObserver{T}(lat, lon, altitude)
-SPAObserver(lat::T, lon::T, alt::T) where {T<:AbstractFloat} = SPAObserver{T}(lat, lon, alt)
+SPAObserver(lat::T, lon::T, alt::T) where {T <: AbstractFloat} = SPAObserver{T}(lat, lon, alt)
 
 
 # heliocentric longitude coefficients (L0-L5)
@@ -125,7 +125,7 @@ end
 end
 
 # calculate sum of A * cos(B + C*x) for coefficient array
-@inline function sum_periodic_terms(coeffs::Matrix{T}, x) where {T<:AbstractFloat}
+@inline function sum_periodic_terms(coeffs::Matrix{T}, x) where {T <: AbstractFloat}
     s = zero(T)
     for i in axes(coeffs, 1)
         s += coeffs[i, 1] * cos(coeffs[i, 2] + coeffs[i, 3] * x)
@@ -141,7 +141,7 @@ function heliocentric_longitude(jme)
     l4 = sum_periodic_terms(L4, jme)
     l5 = sum_periodic_terms(L5, jme)
 
-    l_rad = evalpoly(jme, (l0, l1, l2, l3, l4, l5)) / 1e8
+    l_rad = evalpoly(jme, (l0, l1, l2, l3, l4, l5)) / 1.0e8
     return mod(rad2deg(l_rad), 360.0)
 end
 
@@ -149,7 +149,7 @@ function heliocentric_latitude(jme)
     b0 = sum_periodic_terms(B0, jme)
     b1 = sum_periodic_terms(B1, jme)
 
-    b_rad = (b0 + b1 * jme) / 1e8
+    b_rad = (b0 + b1 * jme) / 1.0e8
     return rad2deg(b_rad)
 end
 
@@ -160,16 +160,16 @@ function heliocentric_radius_vector(jme)
     r3 = sum_periodic_terms(R3, jme)
     r4 = sum_periodic_terms(R4, jme)
 
-    return evalpoly(jme, (r0, r1, r2, r3, r4)) / 1e8
+    return evalpoly(jme, (r0, r1, r2, r3, r4)) / 1.0e8
 end
 
 # nutation calculations
 function mean_elongation(jce)
-    return evalpoly(jce, (297.85036, 445267.111480, -0.0019142, 1.0 / 189474.0))
+    return evalpoly(jce, (297.85036, 445267.11148, -0.0019142, 1.0 / 189474.0))
 end
 
 function mean_anomaly_sun(jce)
-    return evalpoly(jce, (357.52772, 35999.050340, -0.0001603, -1.0 / 300000.0))
+    return evalpoly(jce, (357.52772, 35999.05034, -0.0001603, -1.0 / 300000.0))
 end
 
 function mean_anomaly_moon(jce)
@@ -217,21 +217,21 @@ end
 function mean_ecliptic_obliquity(jme)
     u = jme / 10.0
     ε0 =
-        let p = (
-                84381.448,
-                -4680.93,
-                -1.55,
-                1999.25,
-                -51.38,
-                -249.67,
-                -39.05,
-                7.12,
-                27.87,
-                5.79,
-                2.45,
-            )
-            evalpoly(u, p)
-        end
+    let p = (
+            84381.448,
+            -4680.93,
+            -1.55,
+            1999.25,
+            -51.38,
+            -249.67,
+            -39.05,
+            7.12,
+            27.87,
+            5.79,
+            2.45,
+        )
+        evalpoly(u, p)
+    end
     return ε0  # arcseconds
 end
 
@@ -386,10 +386,10 @@ function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
 end
 
 function _solar_position(
-    obs::SPAObserver{T},
-    dt::DateTime,
-    alg::SPA,
-) where {T<:AbstractFloat}
+        obs::SPAObserver{T},
+        dt::DateTime,
+        alg::SPA,
+    ) where {T <: AbstractFloat}
     δt::Float64 = if alg.delta_t === nothing
         calculate_deltat(dt)
     else
@@ -433,17 +433,17 @@ function _solar_position(
     return SolPos{T}(az, e0, θz0)
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T<:AbstractFloat}
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: AbstractFloat}
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     return _solar_position(spa_obs, dt, alg)
 end
 
 function _solar_position(
-    obs::AbstractObserver{T},
-    dt,
-    alg::SPA,
-    ::DefaultRefraction,
-) where {T<:AbstractFloat}
+        obs::AbstractObserver{T},
+        dt,
+        alg::SPA,
+        ::DefaultRefraction,
+    ) where {T <: AbstractFloat}
     return _solar_position(
         obs,
         dt,
@@ -457,12 +457,12 @@ function _solar_position(
 end
 
 function solar_position!(
-    pos::StructArrays.StructVector{S},
-    obs::AbstractObserver{T},
-    dts::AbstractVector{DateTime},
-    alg::SPA,
-    refraction::RefractionAlgorithm = DefaultRefraction(),
-) where {S<:AbstractSolPos,T<:AbstractFloat}
+        pos::StructArrays.StructVector{S},
+        obs::AbstractObserver{T},
+        dts::AbstractVector{DateTime},
+        alg::SPA,
+        refraction::RefractionAlgorithm = DefaultRefraction(),
+    ) where {S <: AbstractSolPos, T <: AbstractFloat}
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     @inbounds for i in eachindex(dts, pos)
         pos[i] = solar_position(spa_obs, dts[i], alg, refraction)

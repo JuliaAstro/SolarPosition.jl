@@ -28,7 +28,7 @@ $(TYPEDFIELDS)
 """
 struct NOAA <: SolarAlgorithm
     "Difference between terrestrial time and UT1 [seconds]. If `nothing`, uses automatic calculation."
-    delta_t::Union{Float64,Nothing}
+    delta_t::Union{Float64, Nothing}
 end
 
 NOAA() = NOAA(67.0)  # default delta_t value (2020 default from pvlib)
@@ -57,8 +57,8 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
     # sun equation of center [degrees]
     sun_eq_ctr = (
         sind(mean_anom) * (1.914602 - jc * (0.004817 + 0.000014 * jc)) +
-        sind(2 * mean_anom) * (0.019993 - 0.000101 * jc) +
-        sind(3 * mean_anom) * 0.000289
+            sind(2 * mean_anom) * (0.019993 - 0.000101 * jc) +
+            sind(3 * mean_anom) * 0.000289
     )
 
     # sun true/apparent longitude [degrees]
@@ -78,10 +78,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
     var_y = tand(obliq_corr / 2.0)^2
     eot =
         4.0 * rad2deg(
-            var_y * sind(2.0 * mean_long) - 2.0 * eccent * sind(mean_anom) +
+        var_y * sind(2.0 * mean_long) - 2.0 * eccent * sind(mean_anom) +
             4.0 * eccent * var_y * sind(mean_anom) * cosd(2.0 * mean_long) -
             0.5 * var_y^2 * sind(4.0 * mean_long) - 1.25 * eccent^2 * sind(2.0 * mean_anom),
-        )
+    )
 
     # true solar time [minutes]
     hour_frac = fractional_hour(dt)

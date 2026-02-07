@@ -51,13 +51,13 @@ solar_position!(pos, obs, times, PSA(), NoRefraction(), StaticScheduler())
 See also: [`solar_position`](@ref), [`OhMyThreads.Scheduler`]
 """
 function SolarPosition.solar_position!(
-    pos::StructArrays.StructVector{T},
-    obs::Observer,
-    dts::AbstractVector{Z},
-    alg::SolarAlgorithm,
-    refraction::RefractionAlgorithm,
-    executor::OhMyThreads.Scheduler,
-) where {T<:AbstractSolPos,Z<:Union{DateTime,ZonedDateTime}}
+        pos::StructArrays.StructVector{T},
+        obs::Observer,
+        dts::AbstractVector{Z},
+        alg::SolarAlgorithm,
+        refraction::RefractionAlgorithm,
+        executor::OhMyThreads.Scheduler,
+    ) where {T <: AbstractSolPos, Z <: Union{DateTime, ZonedDateTime}}
     f = dt -> SolarPosition.solar_position(obs, dt, alg, refraction)
     tmap!(f, pos, dts; scheduler = executor)
     return pos
@@ -103,22 +103,22 @@ positions = solar_position(obs, times, PSA(), NoRefraction(), StaticScheduler())
 See also: [`solar_position!`](@ref), [`OhMyThreads.Scheduler`]
 """
 function SolarPosition.solar_position(
-    obs::Observer{T},
-    dts::AbstractVector{Z},
-    alg::SolarAlgorithm,
-    refraction::RefractionAlgorithm,
-    executor::OhMyThreads.Scheduler,
-) where {T<:AbstractFloat,Z<:Union{DateTime,ZonedDateTime}}
+        obs::Observer{T},
+        dts::AbstractVector{Z},
+        alg::SolarAlgorithm,
+        refraction::RefractionAlgorithm,
+        executor::OhMyThreads.Scheduler,
+    ) where {T <: AbstractFloat, Z <: Union{DateTime, ZonedDateTime}}
     f = dt -> SolarPosition.solar_position(obs, dt, alg, refraction)
     results = tmap(f, dts; scheduler = executor)
     return StructArrays.StructVector(results)
 end
 
 function SolarPosition.solar_position(
-    obs::Observer{T},
-    dts::AbstractVector{Z},
-    executor::OhMyThreads.Scheduler,
-) where {T<:AbstractFloat,Z<:Union{DateTime,ZonedDateTime}}
+        obs::Observer{T},
+        dts::AbstractVector{Z},
+        executor::OhMyThreads.Scheduler,
+    ) where {T <: AbstractFloat, Z <: Union{DateTime, ZonedDateTime}}
     return SolarPosition.solar_position(
         obs,
         dts,

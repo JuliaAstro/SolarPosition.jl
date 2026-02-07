@@ -28,11 +28,11 @@
             res = solar_position(obs, dt, NOAA(), HUGHES(101325.0, 10.0))
 
             # azimuth calculations have small variations
-            @test isapprox(res.elevation, exp_elev, atol = 1e-8)
-            @test isapprox(res.zenith, exp_zen, atol = 1e-8)
-            @test isapprox(res.azimuth, exp_az, atol = 1e-8)
-            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 1e-8)
-            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 1e-8)
+            @test isapprox(res.elevation, exp_elev, atol = 1.0e-8)
+            @test isapprox(res.zenith, exp_zen, atol = 1.0e-8)
+            @test isapprox(res.azimuth, exp_az, atol = 1.0e-8)
+            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 1.0e-8)
+            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 1.0e-8)
         end
     end
 
@@ -54,11 +54,11 @@
             res = solar_position(obs, dt, NOAA(nothing), HUGHES(101325.0, 10.0))
 
             # results can differ when delta_t is nothing
-            @test isapprox(res.elevation, exp_elev, atol = 1e0)
-            @test isapprox(res.zenith, exp_zen, atol = 1e0)
-            @test isapprox(res.azimuth, exp_az, atol = 1e0)
-            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 1e0)
-            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 1e0)
+            @test isapprox(res.elevation, exp_elev, atol = 1.0e0)
+            @test isapprox(res.zenith, exp_zen, atol = 1.0e0)
+            @test isapprox(res.azimuth, exp_az, atol = 1.0e0)
+            @test isapprox(res.apparent_elevation, exp_app_elev, atol = 1.0e0)
+            @test isapprox(res.apparent_zenith, exp_app_zen, atol = 1.0e0)
         end
     end
 
@@ -87,12 +87,12 @@
             atol = deg2rad(0.1),
         )
 
-        @test isapprox(res_with_refraction.azimuth, res_no_refraction.azimuth, atol = 1e-10)
+        @test isapprox(res_with_refraction.azimuth, res_no_refraction.azimuth, atol = 1.0e-10)
         @test isapprox(
             res_with_refraction.elevation,
             res_no_refraction.elevation,
-            atol = 1e-10,
+            atol = 1.0e-10,
         )
-        @test isapprox(res_with_refraction.zenith, res_no_refraction.zenith, atol = 1e-10)
+        @test isapprox(res_with_refraction.zenith, res_no_refraction.zenith, atol = 1.0e-10)
     end
 end

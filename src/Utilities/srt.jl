@@ -27,7 +27,7 @@ TransitSunriseSunset{ZonedDateTime}(
 # Fields
 $(TYPEDFIELDS)
 """
-struct TransitSunriseSunset{T<:Union{DateTime,ZonedDateTime}}
+struct TransitSunriseSunset{T <: Union{DateTime, ZonedDateTime}}
     transit::T
     sunrise::T
     sunset::T
@@ -35,21 +35,21 @@ end
 
 # Constructor for DateTime (no timezone conversion)
 function TransitSunriseSunset{DateTime}(
-    transit::DateTime,
-    sunrise::DateTime,
-    sunset::DateTime,
-    ::Nothing,
-)
+        transit::DateTime,
+        sunrise::DateTime,
+        sunset::DateTime,
+        ::Nothing,
+    )
     return TransitSunriseSunset{DateTime}(transit, sunrise, sunset)
 end
 
 # Constructor for ZonedDateTime (with timezone conversion)
 function TransitSunriseSunset{ZonedDateTime}(
-    transit::DateTime,
-    sunrise::DateTime,
-    sunset::DateTime,
-    tz::TimeZone,
-)
+        transit::DateTime,
+        sunrise::DateTime,
+        sunset::DateTime,
+        tz::TimeZone,
+    )
     return TransitSunriseSunset{ZonedDateTime}(
         ZonedDateTime(transit, tz; from_utc = true),
         ZonedDateTime(sunrise, tz; from_utc = true),
@@ -61,27 +61,27 @@ end
 for a given date at an Observer location.
 """
 function transit_sunrise_sunset(
-    obs::Observer{T},
-    dt::DateTime,
-    alg::SolarAlgorithm = SPA(),
-)::TransitSunriseSunset{DateTime} where {T<:AbstractFloat}
-    _transit_sunrise_sunset(DateTime, obs, dt, alg)
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SolarAlgorithm = SPA(),
+    )::TransitSunriseSunset{DateTime} where {T <: AbstractFloat}
+    return _transit_sunrise_sunset(DateTime, obs, dt, alg)
 end
 
 function transit_sunrise_sunset(
-    obs::Observer{T},
-    dt::Date,
-    alg::SolarAlgorithm = SPA(),
-)::TransitSunriseSunset{DateTime} where {T<:AbstractFloat}
-    transit_sunrise_sunset(obs, DateTime(dt), alg)
+        obs::Observer{T},
+        dt::Date,
+        alg::SolarAlgorithm = SPA(),
+    )::TransitSunriseSunset{DateTime} where {T <: AbstractFloat}
+    return transit_sunrise_sunset(obs, DateTime(dt), alg)
 end
 
 function transit_sunrise_sunset(
-    obs::Observer{T},
-    zdt::ZonedDateTime,
-    alg::SolarAlgorithm = SPA(),
-)::TransitSunriseSunset{ZonedDateTime} where {T<:AbstractFloat}
-    _transit_sunrise_sunset(timezone(zdt), obs, DateTime(zdt, UTC), alg)
+        obs::Observer{T},
+        zdt::ZonedDateTime,
+        alg::SolarAlgorithm = SPA(),
+    )::TransitSunriseSunset{ZonedDateTime} where {T <: AbstractFloat}
+    return _transit_sunrise_sunset(timezone(zdt), obs, DateTime(zdt, UTC), alg)
 end
 
 # Helper function for next_* functions
@@ -102,11 +102,11 @@ end
 
 # Helper function for previous_* functions
 function _previous_event(
-    obs::Observer,
-    dt::DateTime,
-    alg::SolarAlgorithm,
-    event_field::Symbol,
-)
+        obs::Observer,
+        dt::DateTime,
+        alg::SolarAlgorithm,
+        event_field::Symbol,
+    )
     date_only = Date(dt)
     midnight_utc = DateTime(date_only)
     result = transit_sunrise_sunset(obs, midnight_utc, alg)

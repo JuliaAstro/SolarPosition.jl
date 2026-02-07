@@ -38,6 +38,7 @@ function test_srt_result(result, row, to_datetime_fn)
         actual = datetime2unix(to_datetime_fn(getproperty(result, field)))
         @test actual ≈ expected atol = 1.0
     end
+    return
 end
 
 @testset "SPA" begin
@@ -45,7 +46,7 @@ end
     fields = (:sunset, :sunrise, :transit)
 
     @testset "DateTime input - Location: $(row.location), Date: $(row.date)" for row in
-                                                                                 eachrow(df)
+        eachrow(df)
         obs = Observer(row.latitude, row.longitude)
         dt_input = DateTime(row.date)
         result = transit_sunrise_sunset(obs, dt_input, SPA(delta_t = row.delta_t))
@@ -57,7 +58,7 @@ end
     end
 
     @testset "Date input - Location: $(row.location), Date: $(row.date)" for row in
-                                                                             eachrow(df)
+        eachrow(df)
         obs = Observer(row.latitude, row.longitude)
         date_input = Date(row.date)
         result = transit_sunrise_sunset(obs, date_input, SPA(delta_t = row.delta_t))
@@ -69,9 +70,9 @@ end
     end
 
     @testset "ZonedDateTime input - Location: $(row.location), Date: $(row.date)" for row in
-                                                                                      eachrow(
-        df,
-    )
+        eachrow(
+            df,
+        )
         obs = Observer(row.latitude, row.longitude)
         dt_utc = DateTime(row.date)
         zdt_input = ZonedDateTime(dt_utc, row.timezone; from_utc = true)
@@ -98,10 +99,10 @@ end
 
         result_polar_day =
             @test_logs (:warn, r"Sun does not rise or set.*polar day \(sun above horizon\)") transit_sunrise_sunset(
-                OBS_POLAR,
-                SUMMER_DATETIME,
-                SPA(),
-            )
+            OBS_POLAR,
+            SUMMER_DATETIME,
+            SPA(),
+        )
 
         @test result_polar_day.transit isa DateTime
         @test result_polar_day.transit == result_polar_day.sunrise
@@ -111,10 +112,10 @@ end
         zdt_winter = ZonedDateTime(WINTER_DATETIME, TZ_OSLO; from_utc = true)
         result_zdt_polar_night =
             @test_logs (:warn, r"Sun does not rise or set.*polar night") transit_sunrise_sunset(
-                OBS_POLAR,
-                zdt_winter,
-                SPA(),
-            )
+            OBS_POLAR,
+            zdt_winter,
+            SPA(),
+        )
 
         @test result_zdt_polar_night.transit isa ZonedDateTime
         @test timezone(result_zdt_polar_night.transit) == TZ_OSLO
@@ -139,19 +140,19 @@ end
         # This should give the same result as the default (which is delta_t = 67.0)
         # but different from delta_t = 0.0
         @test result_nothing.transit != result_zero.transit ||
-              result_nothing.sunrise != result_zero.sunrise ||
-              result_nothing.sunset != result_zero.sunset
+            result_nothing.sunrise != result_zero.sunrise ||
+            result_nothing.sunset != result_zero.sunset
 
         @test result_auto.transit != result_zero.transit ||
-              result_auto.sunrise != result_zero.sunrise ||
-              result_auto.sunset != result_zero.sunset
+            result_auto.sunrise != result_zero.sunrise ||
+            result_auto.sunset != result_zero.sunset
 
         @test result_zero.transit != result_custom.transit ||
-              result_zero.sunrise != result_custom.sunrise ||
-              result_zero.sunset != result_custom.sunset
+            result_zero.sunrise != result_custom.sunrise ||
+            result_zero.sunset != result_custom.sunset
 
         @test abs(datetime2unix(result_auto.transit) - datetime2unix(result_zero.transit)) <
-              300
+            300
         @test abs(
             datetime2unix(result_auto.sunrise) - datetime2unix(result_custom.sunrise),
         ) < 300
@@ -173,9 +174,9 @@ end
             @testset "$(func) before/after event" begin
                 @test func(OBS_NEW_YORK, before_time, SPA()) == getfield(result, field)
                 @test func(OBS_NEW_YORK, after_time, SPA()) ==
-                      getfield(next_day_result, field)
+                    getfield(next_day_result, field)
                 @test func(OBS_NEW_YORK, getfield(result, field), SPA()) ==
-                      getfield(next_day_result, field)
+                    getfield(next_day_result, field)
             end
 
             @testset "$(func) Date input" begin
@@ -184,7 +185,7 @@ end
 
             @testset "$(func) different location" begin
                 @test func(OBS_LONDON, DateTime(TEST_DATE), SPA()) ==
-                      getfield(london_result, field)
+                    getfield(london_result, field)
             end
 
             @testset "$(func) ZonedDateTime input" begin
@@ -228,14 +229,14 @@ end
             @testset "$(func) before/after event" begin
                 @test func(OBS_NEW_YORK, after_time, SPA()) == getfield(result, field)
                 @test func(OBS_NEW_YORK, before_time, SPA()) ==
-                      getfield(prev_day_result, field)
+                    getfield(prev_day_result, field)
                 @test func(OBS_NEW_YORK, getfield(result, field), SPA()) ==
-                      getfield(prev_day_result, field)
+                    getfield(prev_day_result, field)
             end
 
             @testset "$(func) Date input at midnight" begin
                 @test func(OBS_NEW_YORK, TEST_DATE, SPA()) ==
-                      getfield(prev_day_result, field)
+                    getfield(prev_day_result, field)
             end
 
             @testset "$(func) ZonedDateTime input" begin

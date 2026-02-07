@@ -30,7 +30,7 @@ jobs:
       - name: Build package (required for ExplicitImports)
         uses: julia-actions/julia-buildpkg@v1
       - name: Install Julia packages
-        run: julia -e 'using Pkg; pkg"add ExplicitImports, JuliaFormatter"'
+        run: julia -e 'using Pkg; pkg"add ExplicitImports"'
       - name: Hack for setup-python cache # https://github.com/actions/setup-python/issues/807
         run: touch requirements.txt
       - name: Setup Python

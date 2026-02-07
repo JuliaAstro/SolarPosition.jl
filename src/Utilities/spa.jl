@@ -20,30 +20,30 @@ function _compute_srt_parameters(dt::DateTime, δt::Float64)
 end
 
 function _transit_sunrise_sunset(
-    ::Type{R},
-    obs::Observer{T},
-    dt::DateTime,
-    alg::SPA,
-) where {T<:AbstractFloat,R<:DateTime}
+        ::Type{R},
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SPA,
+    ) where {T <: AbstractFloat, R <: DateTime}
     return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
 end
 
 function _transit_sunrise_sunset(
-    tz::TimeZone,
-    obs::Observer{T},
-    dt::DateTime,
-    alg::SPA,
-) where {T<:AbstractFloat}
+        tz::TimeZone,
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SPA,
+    ) where {T <: AbstractFloat}
     return _transit_sunrise_sunset_impl(ZonedDateTime, obs, dt, alg, tz)
 end
 
 function _transit_sunrise_sunset_impl(
-    ::Type{R},
-    obs::Observer{T},
-    dt::DateTime,
-    alg::SPA,
-    tz::Union{Nothing,TimeZone},
-) where {T<:AbstractFloat,R<:Union{DateTime,ZonedDateTime}}
+        ::Type{R},
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SPA,
+        tz::Union{Nothing, TimeZone},
+    ) where {T <: AbstractFloat, R <: Union{DateTime, ZonedDateTime}}
     """Calculate the sun transit, sunrise, and sunset
     for a given date at an Observer location using the SPA algorithm.
 

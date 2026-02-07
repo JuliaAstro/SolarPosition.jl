@@ -64,7 +64,7 @@ function _add_hour_labels!(ax, observer, year, hours, coords; algorithm = PSA())
     # For each hour, find the day when the sun reaches maximum elevation at that hour
     for hour in hours
         # Sample a few days throughout the year to find max elevation
-        dates = [Date(year, m, 15) for m = 1:12]
+        dates = [Date(year, m, 15) for m in 1:12]
         max_el = -90.0
         best_pos = nothing
 
@@ -100,6 +100,7 @@ function _add_hour_labels!(ax, observer, year, hours, coords; algorithm = PSA())
             )
         end
     end
+    return
 end
 
 """
@@ -113,7 +114,7 @@ function _configure_axis!(ax::Axis)
     ax.xlabel = "Azimuth (°)"
     ax.ylabel = "Elevation (°)"
     ax.xticks = 0:30:360
-    ax.yticks = 0:10:90
+    return ax.yticks = 0:10:90
 end
 
 """
@@ -124,7 +125,7 @@ Configure polar axis for analemma plot.
 function _configure_axis!(ax::PolarAxis)
     ax.direction = -1
     ax.theta_0 = -π / 2
-    ax.rlimits = (0, 90)
+    return ax.rlimits = (0, 90)
 end
 
 """
@@ -191,7 +192,7 @@ end
     Theme(colorscheme = :twilight, markersize = 3, hour_labels = true)
 end
 
-function Makie.plot!(sp::Analemmas{<:Tuple{Observer,Int}})
+function Makie.plot!(sp::Analemmas{<:Tuple{Observer, Int}})
     observer = sp[1][]
     year = sp[2][]
 

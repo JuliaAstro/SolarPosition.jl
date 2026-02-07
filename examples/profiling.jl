@@ -17,6 +17,6 @@ times = collect(DateTime(2023):Minute(1):DateTime(2024))
 solar_position(obs, times, PSA())
 
 # profile the PSA algorithm with multiple iterations for better sampling
-@profview for _ = 1:1000
+@profview for _ in 1:1000
     solar_position(obs, times, PSA())
 end

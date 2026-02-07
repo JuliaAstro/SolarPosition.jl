@@ -261,7 +261,7 @@ pre-commit run
 
 Pre-commit runs several checks including:
 
-- **JuliaFormatter** - Ensures consistent code formatting
+- **Runic** - Ensures consistent code formatting
 - **ExplicitImports** - Checks for explicit imports
 - **markdownlint** - Lints markdown files
 - **typos** - Catches common spelling mistakes

@@ -95,9 +95,9 @@ function test_conditions()
     # parse times as ZonedDateTime
     inputs.time = [
         try
-            ZonedDateTime(t, dateformat"yyyy-mm-ddTHH:MM:SSzzzz")
+                ZonedDateTime(t, dateformat"yyyy-mm-ddTHH:MM:SSzzzz")
         catch
-            ZonedDateTime(t, dateformat"yyyy-mm-ddTHH:MMzzzz")
+                ZonedDateTime(t, dateformat"yyyy-mm-ddTHH:MMzzzz")
         end for t in inputs.time
     ]
     return inputs

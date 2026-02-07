@@ -44,7 +44,7 @@ refraction_correction = refraction(bennett, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-struct BENNETT{T} <: RefractionAlgorithm where {T<:AbstractFloat}
+struct BENNETT{T} <: RefractionAlgorithm where {T <: AbstractFloat}
     "Annual average atmospheric pressure [Pascal]"
     pressure::T
     "Annual average temperature [°C]"
@@ -53,7 +53,7 @@ end
 
 BENNETT() = BENNETT{Float64}(101325.0, 12.0)
 
-function _refraction(model::BENNETT{T}, elevation_deg::T) where {T<:AbstractFloat}
+function _refraction(model::BENNETT{T}, elevation_deg::T) where {T <: AbstractFloat}
     # convert pressure from Pascal to hPa
     pressure_hPa = model.pressure / T(100.0)
     r = T(0.016667) / tand(elevation_deg + T(7.31) / (elevation_deg + T(4.4)))

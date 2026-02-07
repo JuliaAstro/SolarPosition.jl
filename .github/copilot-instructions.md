@@ -19,12 +19,13 @@ SolarPosition.jl provides a simple, unified interface to a collection of validat
 
 ### General Style
 
-1. **Indentation**: Use 4 spaces (configured in `.JuliaFormatter.toml`)
-2. **Line length**: Maximum 92 characters (configured in `.JuliaFormatter.toml`)
+1. **Indentation**: Use 4 spaces
+2. **Line length**: Maximum 92 characters (soft limit, not enforced)
 3. **Line endings**: Unix-style LF only
-4. **Formatting**: Code is automatically formatted with JuliaFormatter
-   - Run manually: `julia -e 'using JuliaFormatter; format(".")'`
+4. **Formatting**: Code is automatically formatted with Runic
+   - Run manually: `julia -m Runic --inplace .` (requires Runic to be installed)
    - Pre-commit hooks ensure formatting before commits
+   - Note: Runic has no configuration - formatting rules are set in stone
 
 ### Documentation
 
@@ -115,7 +116,7 @@ pip install pre-commit
 pre-commit run --all-files
 
 # Individual tools:
-# - JuliaFormatter: Code formatting
+# - Runic: Code formatting
 # - ExplicitImports: Check for explicit imports
 # - markdownlint: Markdown linting
 # - yamllint: YAML linting
@@ -172,8 +173,8 @@ The project uses GitHub Actions workflows:
 ## Useful Commands
 
 ```bash
-# Format code
-julia -e 'using Pkg; pkg"add JuliaFormatter"; using JuliaFormatter; format(".")'
+# Format code (requires Runic to be installed: julia --project=@runic -e 'using Pkg; Pkg.add("Runic")')
+julia --project=@runic --startup-file=no -m Runic --inplace .
 
 # Run tests
 julia --project=. -e 'using Pkg; Pkg.test()'
@@ -192,6 +193,6 @@ See [docs/src/contributing.md](../docs/src/contributing.md) for detailed contrib
 
 ## References
 
-- [JuliaFormatter documentation](https://domluna.github.io/JuliaFormatter.jl/stable/)
+- [Runic documentation](https://github.com/fredrikekre/Runic.jl)
 - [DocStringExtensions documentation](https://juliadocs.org/DocStringExtensions.jl/stable/)
 - [Julia Style Guide](https://docs.julialang.org/en/v1/manual/style-guide/)

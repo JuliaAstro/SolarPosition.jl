@@ -136,13 +136,13 @@ end
 @testset "Fractional Month Interpolation" begin
     using Dates
 
-    dates = [Date(2020, 6, day) for day = 1:30]
+    dates = [Date(2020, 6, day) for day in 1:30]
     deltat_values = [calculate_deltat(d) for d in dates]
 
     @test all(isfinite, deltat_values)
 
-    for i = 1:(length(deltat_values)-1)
-        @test deltat_values[i+1] >= deltat_values[i] - 0.01
+    for i in 1:(length(deltat_values) - 1)
+        @test deltat_values[i + 1] >= deltat_values[i] - 0.01
     end
 
     @test deltat_values[1] < deltat_values[end]

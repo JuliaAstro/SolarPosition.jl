@@ -16,22 +16,22 @@ $(TYPEDFIELDS)
 """
 struct USNO <: SolarAlgorithm
     "Difference between terrestrial time and UT1 [seconds]. If `nothing`, uses automatic calculation."
-    delta_t::Union{Float64,Nothing}
+    delta_t::Union{Float64, Nothing}
     "Option for calculating Greenwich mean sidereal time (1 or 2)"
     gmst_option::Int
 
-    function USNO(delta_t::Union{Float64,Nothing}, gmst_option::Int)
+    function USNO(delta_t::Union{Float64, Nothing}, gmst_option::Int)
         if gmst_option != 1 && gmst_option != 2
             error("gmst_option must be either 1 or 2")
         end
-        new(delta_t, gmst_option)
+        return new(delta_t, gmst_option)
     end
 end
 
 USNO() = USNO(67.0, 1)  # default delta_t value and gmst_option
 
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T<:AbstractFloat}
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: AbstractFloat}
     δt::T = if alg.delta_t === nothing
         calculate_deltat(dt)
     else
@@ -53,7 +53,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T<:Ab
     q = mod(q, 360.0)
 
     # geocentric apparent ecliptic longitude of the sun (adjusted for aberration) [deg]
-    L = q + 1.915 * sind(g) + 0.020 * sind(2 * g)
+    L = q + 1.915 * sind(g) + 0.02 * sind(2 * g)
     L = mod(L, 360.0)
 
     # mean obliquity of the ecliptic [deg]
@@ -83,10 +83,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T<:Ab
     gmst = if alg.gmst_option == 1
         (
             6.697375 +
-            0.065707485828 * day_ut +
-            1.0027379 * H +
-            0.0854103 * t_cent +
-            0.0000258 * t_cent^2
+                0.065707485828 * day_ut +
+                1.0027379 * H +
+                0.0854103 * t_cent +
+                0.0000258 * t_cent^2
         )
     else  # gmst_option == 2
         (6.697375 + 0.065709824279 * day_ut + 1.0027379 * H + 0.0000258 * t_cent^2)

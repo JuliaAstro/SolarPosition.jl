@@ -96,7 +96,7 @@ using CairoMakie
         @test length(zenith_vals) == length(sol.t)
 
         # Check that zenith ≈ 90 - elevation
-        @test all(isapprox.(zenith_vals, 90 .- elevation_vals; atol = 1e-8))
+        @test all(isapprox.(zenith_vals, 90 .- elevation_vals; atol = 1.0e-8))
 
         # For summer solstice in San Francisco, check that:
         # 1. The sun rises (elevation goes from negative to positive)
@@ -165,12 +165,12 @@ using CairoMakie
         conds = test_conditions()
 
         @testset "$alg_name" for (alg_name, alg, exp_func, refr, apparent) in [
-            ("PSA", PSA(2020), expected_2020, NoRefraction(), false),
-            ("Walraven", Walraven(), expected_walraven, NoRefraction(), false),
-            ("USNO", USNO(), expected_usno, NoRefraction(), false),
-            ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0), true),
-            ("SPA", SPA(), expected_spa, DefaultRefraction(), true),
-        ]
+                ("PSA", PSA(2020), expected_2020, NoRefraction(), false),
+                ("Walraven", Walraven(), expected_walraven, NoRefraction(), false),
+                ("USNO", USNO(), expected_usno, NoRefraction(), false),
+                ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0), true),
+                ("SPA", SPA(), expected_spa, DefaultRefraction(), true),
+            ]
             # Get expected values for all test cases
             df_expected = exp_func()
 
@@ -204,14 +204,14 @@ using CairoMakie
                     @test isapprox(
                         sol[sys.elevation][1],
                         row.apparent_elevation,
-                        atol = 1e-8,
+                        atol = 1.0e-8,
                     )
-                    @test isapprox(sol[sys.zenith][1], row.apparent_zenith, atol = 1e-8)
+                    @test isapprox(sol[sys.zenith][1], row.apparent_zenith, atol = 1.0e-8)
                 else
-                    @test isapprox(sol[sys.elevation][1], row.elevation, atol = 1e-8)
-                    @test isapprox(sol[sys.zenith][1], row.zenith, atol = 1e-8)
+                    @test isapprox(sol[sys.elevation][1], row.elevation, atol = 1.0e-8)
+                    @test isapprox(sol[sys.zenith][1], row.zenith, atol = 1.0e-8)
                 end
-                @test isapprox(sol[sys.azimuth][1], row.azimuth, atol = 1e-8)
+                @test isapprox(sol[sys.azimuth][1], row.azimuth, atol = 1.0e-8)
             end
         end
     end

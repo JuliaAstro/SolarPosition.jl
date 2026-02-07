@@ -11,7 +11,7 @@ import Symbolics
 import SolarPosition: SolarPositionBlock, solar_position
 
 
-seconds_to_datetime(t_sec, t0::DateTime) = t0 + Millisecond(round(Int, t_sec * 1e3))
+seconds_to_datetime(t_sec, t0::DateTime) = t0 + Millisecond(round(Int, t_sec * 1.0e3))
 
 # helper functions to extract fields from solar position
 get_azimuth(pos) = pos.azimuth
@@ -37,12 +37,12 @@ Symbolics.@register_symbolic get_elevation(pos)::Real
 Symbolics.@register_symbolic get_zenith(pos)::Real
 
 function SolarPositionBlock(;
-    name,
-    t0 = Dates.now(),
-    observer::Observer{T} = Observer(0.0, 0.0, 0.0),
-    algorithm = PSA(),
-    refraction = NoRefraction(),
-) where {T<:AbstractFloat}
+        name,
+        t0 = Dates.now(),
+        observer::Observer{T} = Observer(0.0, 0.0, 0.0),
+        algorithm = PSA(),
+        refraction = NoRefraction(),
+    ) where {T <: AbstractFloat}
     @parameters t0::DateTime = t0 [tunable = false]
     @parameters observer::Observer{T} = observer [tunable = false]
     @parameters algorithm::SolarAlgorithm = algorithm [tunable = false]

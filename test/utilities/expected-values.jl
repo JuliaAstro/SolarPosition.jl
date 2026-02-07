@@ -7,7 +7,7 @@ using Dates
 function parse_zdt(s::AbstractString)
     dot_idx = findfirst('.', s)
     if dot_idx !== nothing
-        truncated = s[1:(dot_idx+3)]
+        truncated = s[1:(dot_idx + 3)]
         dt = DateTime(truncated, "yyyy-mm-dd HH:MM:SS.s")
     else
         dt = DateTime(s, "yyyy-mm-dd HH:MM:SS")

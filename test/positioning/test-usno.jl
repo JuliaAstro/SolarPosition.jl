@@ -19,9 +19,9 @@
 
             res = solar_position(obs, dt, USNO())
 
-            @test isapprox(res.elevation, exp_elev, atol = 1e-8)
-            @test isapprox(res.zenith, exp_zen, atol = 1e-8)
-            @test isapprox(res.azimuth, exp_az, atol = 1e-8)
+            @test isapprox(res.elevation, exp_elev, atol = 1.0e-8)
+            @test isapprox(res.zenith, exp_zen, atol = 1.0e-8)
+            @test isapprox(res.azimuth, exp_az, atol = 1.0e-8)
         end
     end
 
@@ -39,9 +39,9 @@
 
             res = solar_position(obs, dt, USNO(67.0, 2))
 
-            @test isapprox(res.elevation, exp_elev, atol = 1e-8)
-            @test isapprox(res.zenith, exp_zen, atol = 1e-8)
-            @test isapprox(res.azimuth, exp_az, atol = 1e-8)
+            @test isapprox(res.elevation, exp_elev, atol = 1.0e-8)
+            @test isapprox(res.zenith, exp_zen, atol = 1.0e-8)
+            @test isapprox(res.azimuth, exp_az, atol = 1.0e-8)
         end
     end
 
@@ -60,9 +60,9 @@
             res = solar_position(obs, dt, USNO(nothing, 1))
 
             # results can differ when delta_t is nothing
-            @test isapprox(res.elevation, exp_elev, atol = 1e0)
-            @test isapprox(res.zenith, exp_zen, atol = 1e0)
-            @test isapprox(res.azimuth, exp_az, atol = 1e0)
+            @test isapprox(res.elevation, exp_elev, atol = 1.0e0)
+            @test isapprox(res.zenith, exp_zen, atol = 1.0e0)
+            @test isapprox(res.azimuth, exp_az, atol = 1.0e0)
         end
     end
 

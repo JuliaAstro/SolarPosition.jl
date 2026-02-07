@@ -41,11 +41,13 @@ const DELTAT_TABLE = (
             evalpoly(u, p)
         end,
     ),
-    (1600.0, 1700.0, y -> begin
-        t = y - 1600.0
-        # TODO: use `evalpoly`/Horner's scheme instead!
-        120.0 - 0.9808 * t - 0.01532 * t^2 + t^3 / 7129.0
-    end),
+    (
+        1600.0, 1700.0, y -> begin
+            t = y - 1600.0
+            # TODO: use `evalpoly`/Horner's scheme instead!
+            120.0 - 0.9808 * t - 0.01532 * t^2 + t^3 / 7129.0
+        end,
+    ),
     (
         1700.0,
         1800.0,
@@ -82,26 +84,34 @@ const DELTAT_TABLE = (
             7.62 + 0.5737 * t - 0.251754 * t^2 + 0.01680668 * t^3 - 0.0004473624 * t^4 + t^5 / 233174.0
         end,
     ),
-    (1900.0, 1920.0, y -> begin
-        t = y - 1900.0
-        p = (-2.79, 1.494119, -0.0598939, 0.0061966, -0.000197)
-        evalpoly(t, p)
-    end),
-    (1920.0, 1941.0, y -> begin
-        t = y - 1920.0
-        p = (21.20, 0.84493, -0.076100, 0.0020936)
-        evalpoly(t, p)
-    end),
-    (1941.0, 1961.0, y -> begin
-        t = y - 1950.0
-        # TODO: use `evalpoly`/Horner's scheme instead!
-        29.07 + 0.407 * t - t^2 / 233.0 + t^3 / 2547.0
-    end),
-    (1961.0, 1986.0, y -> begin
-        t = y - 1975.0
-        # TODO: use `evalpoly`/Horner's scheme instead!
-        45.45 + 1.067 * t - t^2 / 260.0 - t^3 / 718.0
-    end),
+    (
+        1900.0, 1920.0, y -> begin
+            t = y - 1900.0
+            p = (-2.79, 1.494119, -0.0598939, 0.0061966, -0.000197)
+            evalpoly(t, p)
+        end,
+    ),
+    (
+        1920.0, 1941.0, y -> begin
+            t = y - 1920.0
+            p = (21.2, 0.84493, -0.0761, 0.0020936)
+            evalpoly(t, p)
+        end,
+    ),
+    (
+        1941.0, 1961.0, y -> begin
+            t = y - 1950.0
+            # TODO: use `evalpoly`/Horner's scheme instead!
+            29.07 + 0.407 * t - t^2 / 233.0 + t^3 / 2547.0
+        end,
+    ),
+    (
+        1961.0, 1986.0, y -> begin
+            t = y - 1975.0
+            # TODO: use `evalpoly`/Horner's scheme instead!
+            45.45 + 1.067 * t - t^2 / 260.0 - t^3 / 718.0
+        end,
+    ),
     (
         1986.0,
         2005.0,
@@ -111,11 +121,13 @@ const DELTAT_TABLE = (
             evalpoly(t, p)
         end,
     ),
-    (2005.0, 2050.0, y -> begin
-        t = y - 2000.0
-        p = (62.92, 0.32217, 0.005589)
-        evalpoly(t, p)
-    end),
+    (
+        2005.0, 2050.0, y -> begin
+            t = y - 2000.0
+            p = (62.92, 0.32217, 0.005589)
+            evalpoly(t, p)
+        end,
+    ),
     (2050.0, 2150.0, y -> -20.0 + 32.0 * ((y - 1820.0) / 100.0)^2 - 0.5628 * (2150.0 - y)),
     (2150.0, Inf, y -> -20.0 + 32.0 * ((y - 1820.0) / 100.0)^2),
 )
@@ -176,7 +188,7 @@ function calculate_deltat(year::Real, month::Real)::Float64
     return _deltat_lookup(DELTAT_TABLE, year, y)
 end
 
-function calculate_deltat(date::Union{DateTime,Date})
+function calculate_deltat(date::Union{DateTime, Date})
     y = year(date)
     m = month(date)
     d = day(date)

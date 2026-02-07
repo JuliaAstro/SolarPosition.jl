@@ -47,7 +47,7 @@ apparent_elevation = elevation + refraction_correction
 """
 struct ARCHER <: RefractionAlgorithm end
 
-function _refraction(::ARCHER, elevation_deg::T) where {T<:AbstractFloat}
+function _refraction(::ARCHER, elevation_deg::T) where {T <: AbstractFloat}
     zenith = T(90.0) - elevation_deg
 
     # calculate cosine of zenith angle

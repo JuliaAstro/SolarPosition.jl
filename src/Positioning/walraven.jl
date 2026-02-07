@@ -42,14 +42,14 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     # longitude of the sun [rad]
     lon_sun = (
         4.900968 +
-        3.67474e-7 * time +
-        (0.033434 - 2.3e-9 * time) * sin(g) +
-        0.000349 * sin(2 * g) +
-        θ
+            3.67474e-7 * time +
+            (0.033434 - 2.3e-9 * time) * sin(g) +
+            0.000349 * sin(2 * g) +
+            θ
     )
 
     # obliquity of ecliptic [rad]
-    ϵ = deg2rad(T(23.4420)) - deg2rad(T(3.56e-7)) * time
+    ϵ = deg2rad(T(23.442)) - deg2rad(T(3.56e-7)) * time
     (sin_lon_sun, cos_lon_sun) = sincos(lon_sun)
     (sin_ϵ, cos_ϵ) = sincos(ϵ)
 

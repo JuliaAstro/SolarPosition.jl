@@ -16,7 +16,7 @@ expected = Dict(
         0.1875788,
         0.13769375,
         0.08750312,
-        0.00000000,
+        0.0,
     ],
     "Archer" => [
         0.76852998,
@@ -39,8 +39,8 @@ expected = Dict(
         -0.000022424,
     ],
     "Michalsky" => [
-        0.5600000,
-        0.560000000,
+        0.56,
+        0.56,
         0.56038823,
         0.39595124,
         0.19147691,
@@ -51,22 +51,22 @@ expected = Dict(
     "SG2" => [
         0.328796332,
         0.548029502,
-        0.481177890,
+        0.48117789,
         0.361009325,
         0.188613883,
         0.139390534,
         0.089783442,
-        -0.000032010,
+        -0.00003201,
     ],
     "SPA" => [
-        0.00000000,
+        0.0,
         0.5760885771,
         0.481185828,
         0.361012918,
         0.188614492,
         0.139390797,
         0.0897835168,
-        -0.000032010,
+        -0.00003201,
     ],
 )
 
@@ -88,14 +88,14 @@ elevations = test_elevation_angles()
     @testset "Scalar computation" begin
         for (i, elev) in enumerate(elevations)
             result = refraction(algorithm, elev)
-            @test result ≈ expected[i] atol = 1e-8
+            @test result ≈ expected[i] atol = 1.0e-8
         end
     end
 
     @testset "Vectorized computation" begin
         results = refraction.(Ref(algorithm), elevations)
         for (i, res) in enumerate(results)
-            @test res ≈ expected[i] atol = 1e-8
+            @test res ≈ expected[i] atol = 1.0e-8
         end
     end
 end

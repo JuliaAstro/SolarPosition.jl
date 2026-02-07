@@ -19,11 +19,11 @@
             # SPA includes refraction correction
             res = solar_position(obs, dt, SPA())
 
-            @test isapprox(res.elevation, row.elevation, atol = 1e-8)
-            @test isapprox(res.zenith, row.zenith, atol = 1e-8)
-            @test isapprox(res.azimuth, row.azimuth, atol = 1e-8)
-            @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1e-8)
-            @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1e-8)
+            @test isapprox(res.elevation, row.elevation, atol = 1.0e-8)
+            @test isapprox(res.zenith, row.zenith, atol = 1.0e-8)
+            @test isapprox(res.azimuth, row.azimuth, atol = 1.0e-8)
+            @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1.0e-8)
+            @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1.0e-8)
         end
     end
 
@@ -38,9 +38,9 @@
             res = solar_position(obs, dt, SPA(nothing, 101325.0, 12.0, 0.5667))
 
             # results can differ when delta_t is nothing
-            @test isapprox(res.elevation, row.elevation, atol = 1e0)
-            @test isapprox(res.zenith, row.zenith, atol = 1e0)
-            @test isapprox(res.azimuth, row.azimuth, atol = 1e0)
+            @test isapprox(res.elevation, row.elevation, atol = 1.0e0)
+            @test isapprox(res.zenith, row.zenith, atol = 1.0e0)
+            @test isapprox(res.azimuth, row.azimuth, atol = 1.0e0)
         end
     end
 
@@ -50,7 +50,7 @@
         res = solar_position(obs, times[1], SPA())
 
         # refraction correction should be minimal
-        @test isapprox(res.elevation, res.apparent_elevation, atol = 1e-3)
+        @test isapprox(res.elevation, res.apparent_elevation, atol = 1.0e-3)
     end
 
     @testset "Custom atmospheric parameters" begin
@@ -66,10 +66,10 @@
         @test !isapprox(
             res_default.apparent_elevation,
             res_custom.apparent_elevation,
-            atol = 1e-8,
+            atol = 1.0e-8,
         )
 
-        @test isapprox(res_default.elevation, res_custom.elevation, atol = 1e-10)
+        @test isapprox(res_default.elevation, res_custom.elevation, atol = 1.0e-10)
     end
 
     @testset "Multiple times at same location" begin
@@ -78,7 +78,7 @@
 
         # generate multiple timestamps
         base_dt = DateTime(2023, 6, 21, 0, 0, 0)
-        times = [base_dt + Hour(h) for h = 0:23]
+        times = [base_dt + Hour(h) for h in 0:23]
         results = [solar_position(obs, dt, SPA()) for dt in times]
 
         # verify we got 24 results and they're reasonable
@@ -192,9 +192,9 @@
     @testset "SPA result_type with NoRefraction" begin
         # Explicitly test the result_type dispatch
         @test SolarPosition.Positioning.result_type(SPA, NoRefraction, Float64) ==
-              SolPos{Float64}
+            SolPos{Float64}
         @test SolarPosition.Positioning.result_type(SPA, DefaultRefraction, Float64) ==
-              ApparentSolPos{Float64}
+            ApparentSolPos{Float64}
         @test SolarPosition.Positioning.result_type(
             SPA,
             SolarPosition.Refraction.HUGHES,

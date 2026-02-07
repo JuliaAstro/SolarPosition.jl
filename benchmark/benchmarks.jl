@@ -34,7 +34,7 @@ const TEST_DT = DateTime(2024, 6, 21, 12, 0, 0)
 
 # Generate test time vectors of different sizes
 function generate_times(n::Int)
-    return collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1)+Hour(n-1)))
+    return collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1) + Hour(n - 1)))
 end
 
 # Available algorithms to benchmark

@@ -18,7 +18,7 @@ pd = pyimport("pandas")
 
 # Create pandas DatetimeIndex for Python benchmarks (same timestamps as Julia)
 function create_pandas_times(n::Int)
-    pd.date_range(start = "2024-01-01 00:00:00", periods = n, freq = "h", tz = "UTC")
+    return pd.date_range(start = "2024-01-01 00:00:00", periods = n, freq = "h", tz = "UTC")
 end
 
 # Map algorithm names to solposx functions

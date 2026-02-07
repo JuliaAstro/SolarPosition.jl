@@ -16,11 +16,11 @@ using StructArrays: StructVector
 using Dates: Hour, @dateformat_str
 
 @testset "$alg_name" for (alg_name, alg) in [
-    ("PSA", PSA()),
-    ("NOAA", NOAA()),
-    ("Walraven", Walraven()),
-    ("SPA", SPA()),
-]
+        ("PSA", PSA()),
+        ("NOAA", NOAA()),
+        ("Walraven", Walraven()),
+        ("SPA", SPA()),
+    ]
 
     @testset "Scalar Interface" begin
         lat, lon, alt = 45.0, 10.0, 4000.0
@@ -46,7 +46,7 @@ using Dates: Hour, @dateformat_str
         n_dts = 10
 
         base_dt = DateTime(2020, 10, 17, 12, 30)
-        dts = [base_dt + Hour(i) for i = 0:(n_dts-1)]
+        dts = [base_dt + Hour(i) for i in 0:(n_dts - 1)]
         dts_zoned = [ZonedDateTime(dt, tz"UTC") for dt in dts]
 
         single_dt = base_dt
@@ -55,29 +55,35 @@ using Dates: Hour, @dateformat_str
         @testset "In place" begin
             if alg isa SPA
                 PosType = ApparentSolPos{Float64}
-                pos = StructVector{ApparentSolPos{Float64}}((
-                    azimuth = zeros(n_dts),
-                    elevation = zeros(n_dts),
-                    zenith = zeros(n_dts),
-                    apparent_elevation = zeros(n_dts),
-                    apparent_zenith = zeros(n_dts),
-                ))
+                pos = StructVector{ApparentSolPos{Float64}}(
+                    (
+                        azimuth = zeros(n_dts),
+                        elevation = zeros(n_dts),
+                        zenith = zeros(n_dts),
+                        apparent_elevation = zeros(n_dts),
+                        apparent_zenith = zeros(n_dts),
+                    )
+                )
             elseif alg isa NOAA
                 PosType = ApparentSolPos{Float64}
-                pos = StructVector{ApparentSolPos{Float64}}((
-                    azimuth = zeros(n_dts),
-                    elevation = zeros(n_dts),
-                    zenith = zeros(n_dts),
-                    apparent_elevation = zeros(n_dts),
-                    apparent_zenith = zeros(n_dts),
-                ))
+                pos = StructVector{ApparentSolPos{Float64}}(
+                    (
+                        azimuth = zeros(n_dts),
+                        elevation = zeros(n_dts),
+                        zenith = zeros(n_dts),
+                        apparent_elevation = zeros(n_dts),
+                        apparent_zenith = zeros(n_dts),
+                    )
+                )
             else
                 PosType = SolPos{Float64}
-                pos = StructVector{SolPos{Float64}}((
-                    azimuth = zeros(n_dts),
-                    elevation = zeros(n_dts),
-                    zenith = zeros(n_dts),
-                ))
+                pos = StructVector{SolPos{Float64}}(
+                    (
+                        azimuth = zeros(n_dts),
+                        elevation = zeros(n_dts),
+                        zenith = zeros(n_dts),
+                    )
+                )
             end
 
             solar_position!(pos, obs, dts, alg)
@@ -126,7 +132,7 @@ using Dates: Hour, @dateformat_str
         lat, lon, alt = 45.0, 10.0, 4000.0
         obs = Observer(lat, lon, alt)
         base_dt = DateTime(2020, 10, 17, 12, 30)
-        dt_vector = [base_dt + Hour(i) for i = 0:2]
+        dt_vector = [base_dt + Hour(i) for i in 0:2]
 
         @testset "DataFrame with Observer" begin
             df = DataFrame(datetime = dt_vector, temperature = [20.0, 21.0, 22.0])
@@ -234,18 +240,18 @@ end
     dt = DateTime(2023, 6, 21, 12, 0, 0)
 
     @testset "$alg_name with refraction" for (alg_name, alg) in [
-        ("PSA", PSA()),
-        ("NOAA", NOAA()),
-        ("Walraven", Walraven()),
-        ("USNO", USNO()),
-    ]
-        @testset "Returns ApparentSolPos with $refr_name" for (refr_name, refr) in [
-            ("BENNETT", BENNETT()),
-            ("HUGHES", HUGHES()),
-            ("ARCHER", ARCHER()),
-            ("MICHALSKY", MICHALSKY()),
-            ("SG2", SG2()),
+            ("PSA", PSA()),
+            ("NOAA", NOAA()),
+            ("Walraven", Walraven()),
+            ("USNO", USNO()),
         ]
+        @testset "Returns ApparentSolPos with $refr_name" for (refr_name, refr) in [
+                ("BENNETT", BENNETT()),
+                ("HUGHES", HUGHES()),
+                ("ARCHER", ARCHER()),
+                ("MICHALSKY", MICHALSKY()),
+                ("SG2", SG2()),
+            ]
             res = solar_position(obs, dt, alg, refr)
             @test res isa ApparentSolPos
             @test hasfield(typeof(res), :azimuth)
@@ -309,7 +315,7 @@ end
     dt2 = ZonedDateTime(2020, 6, 21, 13, 0, 0, tz"UTC")
 
     # mixed vector of DateTime and ZonedDateTime
-    dts = Union{DateTime,ZonedDateTime}[dt1, dt2]
+    dts = Union{DateTime, ZonedDateTime}[dt1, dt2]
     positions = solar_position(obs, dts, PSA())
     @test length(positions) == 2
     @test positions isa StructVector

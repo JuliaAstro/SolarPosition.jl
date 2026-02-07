@@ -63,7 +63,7 @@ correction = refraction(hughes, elevation)
 apparent_elevation = elevation + correction
 ```
 """
-function refraction(model::RefractionAlgorithm, elevation::T) where {T<:AbstractFloat}
+function refraction(model::RefractionAlgorithm, elevation::T) where {T <: AbstractFloat}
     return _refraction(model, elevation)
 end
 

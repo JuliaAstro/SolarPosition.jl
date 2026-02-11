@@ -255,9 +255,14 @@ pos_noaa = solar_position(obs, dt, NOAA())
 - **Refraction**: Any `RefractionAlgorithm` subtype (default: `NoRefraction()`)
 
 # Time Zone Handling
-- `DateTime` inputs are assumed to be in UTC
-- `ZonedDateTime` inputs are automatically converted to UTC
-- For local solar time calculations, use appropriate time zones
+- **`DateTime` inputs are assumed to be in UTC.** If you pass a local time as a plain
+  `DateTime`, the result will be incorrect — wrap it in a `ZonedDateTime` with the
+  appropriate time zone instead.
+- **`ZonedDateTime` inputs are automatically converted to UTC** before computing the solar
+  position. For example, `ZonedDateTime(2023, 6, 21, 14, 0, 0, tz"Europe/Brussels")`
+  (UTC+2) is converted to `DateTime(2023, 6, 21, 12, 0, 0)` (UTC) before calculation.
+- Two `ZonedDateTime` values representing the **same UTC instant** in different time zones
+  will produce **identical** results.
 
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """

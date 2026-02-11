@@ -35,9 +35,20 @@ using Dates: Hour, @dateformat_str
         result1 = solar_position(obs_ref, dt_plain, alg)
         @test result1 == result_ref
 
-        # ZonedDateTime
+        # ZonedDateTime (UTC) — same instant as dt_plain
         result2 = solar_position(obs_ref, dt_zoned, alg)
         @test result2 == result_ref
+
+        # ZonedDateTime with non-UTC timezone
+        # 2020-10-17T14:30:00+02:00 (Europe/Brussels) == 2020-10-17T12:30:00 UTC
+        dt_brussels = ZonedDateTime(2020, 10, 17, 14, 30, 0, tz"Europe/Brussels")
+        result_tz = solar_position(obs_ref, dt_brussels, alg)
+        @test result_tz == result_ref
+
+        # 2020-10-17T08:30:00-04:00 (America/New_York EDT) == 2020-10-17T12:30:00 UTC
+        dt_nyc = ZonedDateTime(2020, 10, 17, 8, 30, 0, tz"America/New_York")
+        result_nyc = solar_position(obs_ref, dt_nyc, alg)
+        @test result_nyc == result_ref
     end
 
     @testset "Vectorized Interface" begin
@@ -125,6 +136,21 @@ using Dates: Hour, @dateformat_str
             @test pos2[1] == single_result
 
             @test pos1 == pos2
+        end
+
+        @testset "Return new with non-UTC ZonedDateTime (issue #73)" begin
+            # Convert UTC DateTimes to Brussels timezone ZonedDateTimes
+            # These represent the same instants in time, just in different timezones
+            dts_brussels = [
+                TimeZones.astimezone(
+                        ZonedDateTime(dt, tz"UTC"), tz"Europe/Brussels"
+                    ) for dt in dts
+            ]
+
+            pos_brussels = solar_position(obs, dts_brussels, alg)
+            pos_utc = solar_position(obs, dts, alg)
+
+            @test pos_brussels == pos_utc
         end
     end
 

@@ -1,3 +1,5 @@
+<img width="1648" height="640" alt="Gemini_Generated_Image_mctn28mctn28mctn" src="https://github.com/user-attachments/assets/1e84bf5a-e65a-4d4f-b061-a3a94d48906e" />
+
 # SolarPosition.jl
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaastro.org/SolarPosition/stable/)

@@ -64,56 +64,73 @@ PSA() = PSA(2020)
     end
 end
 
+# Core computation shared by scalar and vectorized paths
+@inline function _psa_kernel(
+        dt::DateTime,
+        p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15,
+        cos_lat, sin_lat, λt, ::Type{T},
+    ) where {T}
+    # elapsed julian days (n) since J2000.0
+    jd = datetime2julian(dt)
+    n = jd - 2451545.0
+
+    # ecliptic coordinates
+    Ω = p1 + p2 * n
+    L = p3 + p4 * n
+    g = p5 + p6 * n
+    (sin_Ω, cos_Ω) = sincos(Ω)
+    λₑ = L + p7 * sin(g) + p8 * sin(2 * g) + p9 + p10 * sin_Ω
+    ϵ = p11 + p12 * n + p13 * cos_Ω
+
+    # celestial right ascension and declination
+    (sin_ϵ, cos_ϵ) = sincos(ϵ)
+    (sin_λₑ, cos_λₑ) = sincos(λₑ)
+    ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)
+    ra = mod2pi(ra)
+    δ = asin(sin_ϵ * sin_λₑ)
+
+    # local coordinates
+    hour = fractional_hour(dt)
+    gmst = p14 + p15 * n + hour
+    lmst = deg2rad(gmst * 15 + λt)
+    ω = lmst - ra
+    (sin_δ, cos_δ) = sincos(δ)
+    (sin_ω, cos_ω) = sincos(ω)
+    θz = acos(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat)
+    γ = atan(-sin_ω, (tan(δ) * cos_lat - sin_lat * cos_ω))
+
+    # parallax correction
+    θz = θz + (EMR / AU) * sin(θz)
+
+    return SolPos{T}(mod(rad2deg(γ), 360.0), rad2deg(π / 2 - θz), rad2deg(θz))
+end
+
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
+    p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 =
+        get_psa_params(alg.coeffs)
+    return _psa_kernel(
+        dt, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15,
+        obs.cos_lat, obs.sin_lat, rad2deg(obs.longitude_rad), T,
+    )
+end
+
 function _solar_position!(
         pos::StructArrays.StructVector{SolPos{T}},
         obs::Observer{T},
         dts::AbstractVector{DateTime},
         alg::PSA,
     ) where {T}
-
     p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 =
         get_psa_params(alg.coeffs)
-
     cos_lat = obs.cos_lat
     sin_lat = obs.sin_lat
     λt = rad2deg(obs.longitude_rad)
 
     @inbounds for i in eachindex(dts, pos)
-        dt = dts[i]
-
-        # elapsed julian days (n) since J2000.0
-        jd = datetime2julian(dt)
-        n = jd - 2451545.0
-
-        # ecliptic coordinates
-        Ω = p1 + p2 * n
-        L = p3 + p4 * n
-        g = p5 + p6 * n
-        (sin_Ω, cos_Ω) = sincos(Ω)
-        λₑ = L + p7 * sin(g) + p8 * sin(2 * g) + p9 + p10 * sin_Ω
-        ϵ = p11 + p12 * n + p13 * cos_Ω
-
-        # celestial right ascension and declination
-        (sin_ϵ, cos_ϵ) = sincos(ϵ)
-        (sin_λₑ, cos_λₑ) = sincos(λₑ)
-        ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)
-        ra = mod2pi(ra)
-        δ = asin(sin_ϵ * sin_λₑ)
-
-        # local coordinates
-        hour = fractional_hour(dt)
-        gmst = p14 + p15 * n + hour
-        lmst = deg2rad(gmst * 15 + λt)
-        ω = lmst - ra
-        (sin_δ, cos_δ) = sincos(δ)
-        (sin_ω, cos_ω) = sincos(ω)
-        θz = acos(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat)
-        γ = atan(-sin_ω, (tan(δ) * cos_lat - sin_lat * cos_ω))
-
-        # parallax correction
-        θz = θz + (EMR / AU) * sin(θz)
-
-        pos[i] = SolPos{T}(mod(rad2deg(γ), 360.0), rad2deg(π / 2 - θz), rad2deg(θz))
+        pos[i] = _psa_kernel(
+            dts[i], p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15,
+            cos_lat, sin_lat, λt, T,
+        )
     end
     return pos
 end

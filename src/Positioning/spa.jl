@@ -433,6 +433,11 @@ function _solar_position(
     return SolPos{T}(az, e0, θz0)
 end
 
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: AbstractFloat}
+    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    return _solar_position(spa_obs, dt, alg)
+end
+
 function _solar_position!(
         pos::StructArrays.StructVector{SolPos{T}},
         obs::Observer{T},

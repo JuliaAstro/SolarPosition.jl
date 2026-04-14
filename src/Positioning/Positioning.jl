@@ -322,7 +322,28 @@ function _solar_position!(
     return pos
 end
 
-# Scalar public API routes through the vectorized path
+# --- Scalar internal interface ---
+
+# Scalar refraction wrappers (zero-allocation path for single datetimes)
+function _solar_position(obs, dt, alg::SolarAlgorithm, ::NoRefraction)
+    return _solar_position(obs, dt, alg)
+end
+
+function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlgorithm)
+    pos = _solar_position(obs, dt, alg)
+    correction = Refraction.refraction(refraction, pos.elevation)
+    apparent_elevation_deg = pos.elevation + correction
+    apparent_zenith_deg = 90 - apparent_elevation_deg
+    return ApparentSolPos(
+        pos.azimuth,
+        pos.elevation,
+        pos.zenith,
+        apparent_elevation_deg,
+        apparent_zenith_deg,
+    )
+end
+
+# Scalar public API (zero-allocation)
 function solar_position(
         obs::AbstractObserver{T},
         dt::DateTime,
@@ -330,10 +351,7 @@ function solar_position(
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: AbstractFloat}
     resolved = _resolve_refraction(alg, refraction, T)
-    RetType = result_type(typeof(alg), typeof(resolved), T)
-    pos = StructArrays.StructVector{RetType}(undef, 1)
-    _solar_position!(pos, obs, DateTime[dt], alg, resolved)
-    return pos[1]
+    return _solar_position(obs, dt, alg, resolved)
 end
 
 function solar_position(

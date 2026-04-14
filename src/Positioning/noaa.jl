@@ -40,7 +40,7 @@ function _solar_position!(
         dts::AbstractVector{DateTime},
         alg::NOAA,
     ) where {T}
-    # Hoist algorithm and observer constants out of the loop
+
     δt = if alg.delta_t === nothing
         calculate_deltat(dts[1])
     else

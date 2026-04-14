@@ -263,34 +263,77 @@ See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`]
 """
 function solar_position end
 
-function _solar_position(obs, dt, alg::SolarAlgorithm, ::NoRefraction)
-    return _solar_position(obs, dt, alg)
+# Resolve DefaultRefraction to a concrete refraction algorithm.
+# Each algorithm file overrides this for its own DefaultRefraction mapping.
+# The observer type T is passed to allow type-parameterized refraction models.
+_resolve_refraction(::SolarAlgorithm, r::RefractionAlgorithm, ::Type{T}) where {T} = r
+
+# --- Vectorized internal interface ---
+
+# Generic fallback: loops over scalar _solar_position for any algorithm that only
+# defines the scalar method. Built-in algorithms override with optimized versions.
+function _solar_position!(
+        pos::StructArrays.StructVector{SolPos{T}},
+        obs::AbstractObserver{T},
+        dts::AbstractVector{DateTime},
+        alg::SolarAlgorithm,
+    ) where {T}
+    @inbounds for i in eachindex(dts, pos)
+        pos[i] = _solar_position(obs, dts[i], alg)
+    end
+    return pos
 end
 
-function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlgorithm)
-    pos = _solar_position(obs, dt, alg)
+# NoRefraction: just compute raw positions
+function _solar_position!(
+        pos::StructArrays.StructVector{SolPos{T}},
+        obs::AbstractObserver{T},
+        dts::AbstractVector{DateTime},
+        alg::SolarAlgorithm,
+        ::NoRefraction,
+    ) where {T}
+    return _solar_position!(pos, obs, dts, alg)
+end
 
-    # apply refraction correction
-    refraction_correction_deg = Refraction.refraction(refraction, pos.elevation)
-    apparent_elevation_deg = pos.elevation + refraction_correction_deg
-    apparent_zenith_deg = 90 - apparent_elevation_deg
-
-    return ApparentSolPos(
-        pos.azimuth,
-        pos.elevation,
-        pos.zenith,
-        apparent_elevation_deg,
-        apparent_zenith_deg,
+# With refraction: compute raw positions into shared columns, then apply refraction
+function _solar_position!(
+        pos::StructArrays.StructVector{ApparentSolPos{T}},
+        obs::AbstractObserver{T},
+        dts::AbstractVector{DateTime},
+        alg::SolarAlgorithm,
+        refraction::RefractionAlgorithm,
+    ) where {T}
+    # Create SolPos view backed by the same column arrays (no heap allocation)
+    raw = StructArrays.StructVector{SolPos{T}}(
+        (
+            azimuth = pos.azimuth,
+            elevation = pos.elevation,
+            zenith = pos.zenith,
+        )
     )
+    _solar_position!(raw, obs, dts, alg)
+
+    # Apply refraction in second pass
+    @inbounds for i in eachindex(pos)
+        correction = Refraction.refraction(refraction, pos.elevation[i])
+        pos.apparent_elevation[i] = pos.elevation[i] + correction
+        pos.apparent_zenith[i] = T(90) - pos.apparent_elevation[i]
+    end
+    return pos
 end
 
+# Scalar public API routes through the vectorized path
 function solar_position(
         obs::AbstractObserver{T},
         dt::DateTime,
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: AbstractFloat}
-    return _solar_position(obs, dt, alg, refraction)
+    resolved = _resolve_refraction(alg, refraction, T)
+    RetType = result_type(typeof(alg), typeof(resolved), T)
+    pos = StructArrays.StructVector{RetType}(undef, 1)
+    _solar_position!(pos, obs, DateTime[dt], alg, resolved)
+    return pos[1]
 end
 
 function solar_position(
@@ -303,77 +346,49 @@ function solar_position(
 end
 
 function solar_position!(
-        pos::StructArrays.StructVector{T},
-        obs::AbstractObserver,
-        dts::AbstractVector{Union{DateTime, ZonedDateTime}},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractSolPos}
-    @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(obs, dts[i], alg, refraction)
-    end
-    return pos
-end
-
-function solar_position!(
-        pos::StructArrays.StructVector{T},
-        obs::AbstractObserver,
-        dts::AbstractVector{DateTime},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractSolPos}
-    @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(obs, dts[i], alg, refraction)
-    end
-    return pos
-end
-
-function solar_position!(
-        pos::StructArrays.StructVector{T},
-        obs::AbstractObserver,
-        dts::AbstractVector{ZonedDateTime},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractSolPos}
-    @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(obs, dts[i], alg, refraction)
-    end
-    return pos
-end
-
-function solar_position(
-        obs::AbstractObserver{T},
-        dts::AbstractVector{Union{DateTime, ZonedDateTime}},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
-    pos = StructArrays.StructVector{RetType}(undef, length(dts))
-    solar_position!(pos, obs, dts, alg, refraction)
-    return pos
-end
-
-function solar_position(
+        pos::StructArrays.StructVector{<:AbstractSolPos},
         obs::AbstractObserver{T},
         dts::AbstractVector{DateTime},
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
-    pos = StructArrays.StructVector{RetType}(undef, length(dts))
-    solar_position!(pos, obs, dts, alg, refraction)
+    ) where {T}
+    resolved = _resolve_refraction(alg, refraction, T)
+    _solar_position!(pos, obs, dts, alg, resolved)
     return pos
 end
 
-function solar_position(
+function solar_position!(
+        pos::StructArrays.StructVector{<:AbstractSolPos},
         obs::AbstractObserver{T},
         dts::AbstractVector{ZonedDateTime},
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
+    ) where {T}
+    utc_dts = DateTime.(dts, Ref(UTC))
+    return solar_position!(pos, obs, utc_dts, alg, refraction)
+end
+
+function solar_position!(
+        pos::StructArrays.StructVector{<:AbstractSolPos},
+        obs::AbstractObserver{T},
+        dts::AbstractVector{Union{DateTime, ZonedDateTime}},
+        alg::SolarAlgorithm = PSA(),
+        refraction::RefractionAlgorithm = DefaultRefraction(),
+    ) where {T}
+    utc_dts = [dt isa ZonedDateTime ? DateTime(dt, UTC) : dt for dt in dts]
+    return solar_position!(pos, obs, utc_dts, alg, refraction)
+end
+
+function solar_position(
+        obs::AbstractObserver{T},
+        dts::AbstractVector{<:Union{DateTime, ZonedDateTime}},
+        alg::SolarAlgorithm = PSA(),
+        refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: AbstractFloat}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
+    resolved = _resolve_refraction(alg, refraction, T)
+    RetType = result_type(typeof(alg), typeof(resolved), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
-    solar_position!(pos, obs, dts, alg, refraction)
+    solar_position!(pos, obs, dts, alg, resolved)
     return pos
 end
 

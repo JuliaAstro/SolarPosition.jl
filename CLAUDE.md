@@ -40,30 +40,35 @@ The package provides a unified interface to multiple solar position algorithms. 
 
 ```text
 src/
-  SolarPosition.jl       # Main module, re-exports all submodules
+  SolarPosition.jl       # Main module, re-exports all submodules via @reexport
   Positioning/           # Solar position algorithms
-    Positioning.jl       # Observer struct, SolPos/ApparentSolPos types, solar_position() API
+    Positioning.jl       # Observer, SolPos/ApparentSolPos types, solar_position() dispatch
     psa.jl               # PSA algorithm (default, ±0.0083°)
     noaa.jl, spa.jl,     # Other algorithms (NOAA, SPA, Walraven, USNO)
     walraven.jl, usno.jl
     deltat.jl            # Delta T / leap seconds
   Refraction/            # Atmospheric refraction correction models
-    Refraction.jl        # Abstract base + interface
-    hughes.jl, bennett.jl, sg2.jl, spa.jl, ...
+    Refraction.jl        # RefractionAlgorithm abstract type + refraction() interface
+    hughes.jl, archer.jl, bennett.jl, michalsky.jl, sg2.jl, spa.jl
   Utilities/             # Sunrise/sunset/transit calculations
-    srt.jl, spa.jl
-ext/                     # Weak dependency extensions
-  SolarPositionMakieExt.jl          # Sun path plotting
-  SolarPositionOhMyThreadsExt.jl    # Parallel solar position computation
-  SolarPositionModelingToolkitExt.jl # Symbolic models for MTK
+    srt.jl               # transit_sunrise_sunset(), next_sunrise/sunset/solar_noon, etc.
+    spa.jl               # SPA-based utility helpers
+ext/                     # Weak dependency extensions (loaded via [weakdeps] in Project.toml)
+  SolarPositionMakieExt.jl          # analemmas!() sun path plotting
+  SolarPositionOhMyThreadsExt.jl    # Parallel solar_position via OhMyThreads
+  SolarPositionModelingToolkitExt.jl # SolarPositionBlock for MTK symbolic models
 ```
 
-**Core API pattern:** `solar_position(algorithm, observer, datetime)` returns a `SolPos` or `ApparentSolPos` (if refraction is included). The `Observer` struct holds location (lat/lon/altitude) and optional atmospheric parameters (pressure, temperature).
+**Core API pattern:** `solar_position(observer, datetime, algorithm, refraction)` returns a `SolPos` or `ApparentSolPos` (if refraction model is provided). Also accepts vectors of datetimes (returns `StructVector`) and Tables.jl-compatible tables (adds columns in-place).
 
-**Test discovery:** Test files matching `test-*.jl` under `test/` are automatically discovered and wrapped in `@testset`. Reference values live in `expected-values.jl` files alongside algorithm tests.
+**Adding a new algorithm:** Subtype `SolarAlgorithm`, implement `_solar_position(obs, dt, alg::YourAlg)::SolPos`, and the dispatch in `Positioning.jl` handles refraction wrapping automatically. Same pattern for refraction: subtype `RefractionAlgorithm` and implement `_refraction(model, elevation)`.
+
+**Test discovery:** Test files matching `test-*.jl` under `test/` are automatically discovered and wrapped in `@testset`. Don't add tests to `runtests.jl` directly. Reference values live in `expected-values.jl` files alongside algorithm tests.
 
 ## Code Style
 
-- Formatter: **Runic.jl** (enforced via pre-commit). Run before committing.
-- Imports: All used symbols must be explicitly imported (checked by ExplicitImports.jl).
+- Formatter: **Runic.jl** (enforced via pre-commit). Run `pre-commit run runic --all-files` before committing.
+- Imports: All used symbols must be explicitly imported (checked by ExplicitImports.jl pre-commit hook).
+- Spelling: **typos** is enforced via pre-commit. If a false positive occurs, add it to `_typos.toml`.
 - Package quality is checked with **Aqua.jl** and type inference with **JET.jl** (Julia 1.12 only).
+- Pre-commit `no-commit-to-branch` blocks direct commits to `main`; work on feature branches.

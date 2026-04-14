@@ -433,41 +433,38 @@ function _solar_position(
     return SolPos{T}(az, e0, θz0)
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: AbstractFloat}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
-end
-
-function _solar_position(
-        obs::AbstractObserver{T},
-        dt,
-        alg::SPA,
-        ::DefaultRefraction,
-    ) where {T <: AbstractFloat}
-    return _solar_position(
-        obs,
-        dt,
-        alg,
-        SPARefraction{T}(
-            pressure = T(alg.pressure),
-            temperature = T(alg.temperature),
-            atmos_refract = T(alg.atmos_refract),
-        ),
-    )
-end
-
-function solar_position!(
-        pos::StructArrays.StructVector{S},
-        obs::AbstractObserver{T},
+function _solar_position!(
+        pos::StructArrays.StructVector{SolPos{T}},
+        obs::Observer{T},
         dts::AbstractVector{DateTime},
         alg::SPA,
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {S <: AbstractSolPos, T <: AbstractFloat}
+    ) where {T <: AbstractFloat}
+    # Create SPAObserver once (caches parallax terms)
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(spa_obs, dts[i], alg, refraction)
+        pos[i] = _solar_position(spa_obs, dts[i], alg)
     end
     return pos
+end
+
+function _solar_position!(
+        pos::StructArrays.StructVector{SolPos{T}},
+        obs::SPAObserver{T},
+        dts::AbstractVector{DateTime},
+        alg::SPA,
+    ) where {T <: AbstractFloat}
+    @inbounds for i in eachindex(dts, pos)
+        pos[i] = _solar_position(obs, dts[i], alg)
+    end
+    return pos
+end
+
+function _resolve_refraction(alg::SPA, ::DefaultRefraction, ::Type{T}) where {T}
+    return SPARefraction{T}(
+        pressure = T(alg.pressure),
+        temperature = T(alg.temperature),
+        atmos_refract = T(alg.atmos_refract),
+    )
 end
 
 # SPA returns SolPos with NoRefraction, ApparentSolPos with any refraction

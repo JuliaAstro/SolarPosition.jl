@@ -45,7 +45,7 @@ repos:
         name: ExplicitImports checks
         args: [--print, --checklist, exclude_all_qualified_accesses_are_public]
   - repo: https://github.com/fredrikekre/runic-pre-commit
-    rev: v2.1.0
+    rev: v2.2.0
     hooks:
       - id: runic
   - repo: https://github.com/crate-ci/typos

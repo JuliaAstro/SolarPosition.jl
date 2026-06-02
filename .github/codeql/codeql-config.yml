@@ -1,0 +1,9 @@
+name: "CodeQL config"
+
+# CodeQL does not support Julia, so the only analyzable code in this
+# repository is the GitHub Actions workflows (the `actions` language).
+queries:
+  - uses: security-extended
+
+paths:
+  - .github

@@ -51,7 +51,8 @@ struct BENNETT{T} <: RefractionAlgorithm where {T <: AbstractFloat}
     temperature::T
 end
 
-BENNETT() = BENNETT{Float64}(101325.0, 12.0)
+BENNETT{T}() where {T <: AbstractFloat} = BENNETT{T}(T(101325), T(12))
+BENNETT() = BENNETT{Float64}()
 
 function _refraction(model::BENNETT{T}, elevation_deg::T) where {T <: AbstractFloat}
     # convert pressure from Pascal to hPa

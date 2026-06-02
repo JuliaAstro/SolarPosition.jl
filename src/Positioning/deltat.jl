@@ -200,3 +200,14 @@ end
 function calculate_deltat(datetime::ZonedDateTime)
     return calculate_deltat(DateTime(datetime, UTC))
 end
+
+# Type-generic entry points: keep the Float64 polynomial value (ΔT is uncertain to ~seconds),
+# convert to T so the result stays type-stable through the pipeline.
+calculate_deltat(::Type{T}, year::Real, month::Real) where {T <: AbstractFloat} =
+    T(calculate_deltat(year, month))
+
+calculate_deltat(::Type{T}, date::Union{DateTime, Date}) where {T <: AbstractFloat} =
+    T(calculate_deltat(date))
+
+calculate_deltat(::Type{T}, datetime::ZonedDateTime) where {T <: AbstractFloat} =
+    T(calculate_deltat(datetime))

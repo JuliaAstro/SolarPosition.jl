@@ -111,24 +111,11 @@ SPAObserver(lat::T, lon::T, alt::T) where {T <: AbstractFloat} = SPAObserver{T}(
 include("spa_coefficients.jl")
 
 
-# helper functions for SPA calculations
-@inline function julian_ephemeris_day(jd, δt)
-    return jd + δt / 86400.0
-end
-
-@inline function julian_ephemeris_century(jde)
-    return (jde - 2451545.0) / 36525.0
-end
-
-@inline function julian_ephemeris_millennium(jce)
-    return jce / 10.0
-end
-
-# calculate sum of A * cos(B + C*x) for coefficient array
-@inline function sum_periodic_terms(coeffs::Matrix{T}, x) where {T <: AbstractFloat}
+# sum of A * cos(B + C*x); per-element T() keeps the accumulation in T (coeffs are Float64)
+@inline function sum_periodic_terms(coeffs::Matrix, x::T) where {T <: AbstractFloat}
     s = zero(T)
     for i in axes(coeffs, 1)
-        s += coeffs[i, 1] * cos(coeffs[i, 2] + coeffs[i, 3] * x)
+        s += T(coeffs[i, 1]) * cos(T(coeffs[i, 2]) + T(coeffs[i, 3]) * x)
     end
     return s
 end
@@ -141,15 +128,15 @@ function heliocentric_longitude(jme)
     l4 = sum_periodic_terms(L4, jme)
     l5 = sum_periodic_terms(L5, jme)
 
-    l_rad = evalpoly(jme, (l0, l1, l2, l3, l4, l5)) / 1.0e8
-    return mod(rad2deg(l_rad), 360.0)
+    l_rad = evalpoly(jme, (l0, l1, l2, l3, l4, l5)) / oftype(jme, 1.0e8)
+    return mod(rad2deg(l_rad), 360)
 end
 
 function heliocentric_latitude(jme)
     b0 = sum_periodic_terms(B0, jme)
     b1 = sum_periodic_terms(B1, jme)
 
-    b_rad = (b0 + b1 * jme) / 1.0e8
+    b_rad = (b0 + b1 * jme) / oftype(jme, 1.0e8)
     return rad2deg(b_rad)
 end
 
@@ -160,39 +147,39 @@ function heliocentric_radius_vector(jme)
     r3 = sum_periodic_terms(R3, jme)
     r4 = sum_periodic_terms(R4, jme)
 
-    return evalpoly(jme, (r0, r1, r2, r3, r4)) / 1.0e8
+    return evalpoly(jme, (r0, r1, r2, r3, r4)) / oftype(jme, 1.0e8)
 end
 
 # nutation calculations
-function mean_elongation(jce)
-    return evalpoly(jce, (297.85036, 445267.11148, -0.0019142, 1.0 / 189474.0))
+function mean_elongation(jce::T) where {T}
+    return evalpoly(jce, map(T, (297.85036, 445267.11148, -0.0019142, 1.0 / 189474.0)))
 end
 
-function mean_anomaly_sun(jce)
-    return evalpoly(jce, (357.52772, 35999.05034, -0.0001603, -1.0 / 300000.0))
+function mean_anomaly_sun(jce::T) where {T}
+    return evalpoly(jce, map(T, (357.52772, 35999.05034, -0.0001603, -1.0 / 300000.0)))
 end
 
-function mean_anomaly_moon(jce)
-    return evalpoly(jce, (134.96298, 477198.867398, 0.0086972, 1.0 / 56250.0))
+function mean_anomaly_moon(jce::T) where {T}
+    return evalpoly(jce, map(T, (134.96298, 477198.867398, 0.0086972, 1.0 / 56250.0)))
 end
 
-function moon_argument_latitude(jce)
-    return evalpoly(jce, (93.27191, 483202.017538, -0.0036825, 1.0 / 327270.0))
+function moon_argument_latitude(jce::T) where {T}
+    return evalpoly(jce, map(T, (93.27191, 483202.017538, -0.0036825, 1.0 / 327270.0)))
 end
 
-function moon_ascending_longitude(jce)
-    return evalpoly(jce, (125.04452, -1934.136261, 0.0020708, 1.0 / 450000.0))
+function moon_ascending_longitude(jce::T) where {T}
+    return evalpoly(jce, map(T, (125.04452, -1934.136261, 0.0020708, 1.0 / 450000.0)))
 end
 
-function nutation_longitude_obliquity(jce)
+function nutation_longitude_obliquity(jce::T) where {T}
     x0 = mean_elongation(jce)
     x1 = mean_anomaly_sun(jce)
     x2 = mean_anomaly_moon(jce)
     x3 = moon_argument_latitude(jce)
     x4 = moon_ascending_longitude(jce)
 
-    δψ_sum = 0.0
-    δε_sum = 0.0
+    δψ_sum = zero(T)
+    δε_sum = zero(T)
 
     for i in axes(NUTATION_YTERM, 1)
         arg_deg =
@@ -204,54 +191,40 @@ function nutation_longitude_obliquity(jce)
 
         arg_rad = deg2rad(arg_deg)
         (sin_arg, cos_arg) = sincos(arg_rad)
-        δψ_sum += (NUTATION_ABCD[i, 1] + NUTATION_ABCD[i, 2] * jce) * sin_arg
-        δε_sum += (NUTATION_ABCD[i, 3] + NUTATION_ABCD[i, 4] * jce) * cos_arg
+        δψ_sum += (T(NUTATION_ABCD[i, 1]) + T(NUTATION_ABCD[i, 2]) * jce) * sin_arg
+        δε_sum += (T(NUTATION_ABCD[i, 3]) + T(NUTATION_ABCD[i, 4]) * jce) * cos_arg
     end
 
-    δψ = δψ_sum / 36000000.0  # convert to degrees
-    δε = δε_sum / 36000000.0  # convert to degrees
-
-    return δψ, δε
+    return δψ_sum / T(36_000_000), δε_sum / T(36_000_000)  # arcsec/10000 -> deg
 end
 
-function mean_ecliptic_obliquity(jme)
-    u = jme / 10.0
-    ε0 =
-    let p = (
-            84381.448,
-            -4680.93,
-            -1.55,
-            1999.25,
-            -51.38,
-            -249.67,
-            -39.05,
-            7.12,
-            27.87,
-            5.79,
-            2.45,
-        )
-        evalpoly(u, p)
-    end
-    return ε0  # arcseconds
+function mean_ecliptic_obliquity(jme::T) where {T}
+    u = jme / 10
+    p = map(
+        T,
+        (84381.448, -4680.93, -1.55, 1999.25, -51.38, -249.67, -39.05, 7.12, 27.87, 5.79, 2.45),
+    )
+    return evalpoly(u, p)  # arcseconds
 end
 
-@inline function true_ecliptic_obliquity(ε0, δε)
-    return ε0 / 3600.0 + δε  # convert arcseconds to degrees
+@inline function true_ecliptic_obliquity(ε0::T, δε) where {T}
+    return ε0 / T(3600) + δε  # arcseconds to degrees
 end
 
-@inline function aberration_correction(R)
-    return -20.4898 / (3600.0 * R)  # degrees
+@inline function aberration_correction(R::T) where {T}
+    return T(-20.4898) / (T(3600) * R)  # degrees
 end
 
 @inline function apparent_sun_longitude(θ, δψ, δτ)
     return θ + δψ + δτ
 end
 
-function mean_sidereal_time(jd, jc)
+# `n` is days since J2000 (jd - 2451545); `jc` Julian centuries
+function mean_sidereal_time(n::T, jc) where {T}
     ν0 =
-        280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * jc^2 -
-        jc^3 / 38710000.0
-    return mod(ν0, 360.0)
+        T(280.46061837) + T(360.98564736629) * n + T(0.000387933) * jc^2 -
+        jc^3 / T(38710000)
+    return mod(ν0, 360)
 end
 
 function apparent_sidereal_time(ν0, δψ, ε)
@@ -265,7 +238,7 @@ function geocentric_sun_right_ascension(λ, ε, β)
 
     num = sin_λ * cos_ε - (sin_β / cos_β) * sin_ε
     α = rad2deg(atan(num, cos_λ))
-    return mod(α, 360.0)
+    return mod(α, 360)
 end
 
 function geocentric_sun_declination(λ, ε, β)
@@ -279,24 +252,24 @@ end
 
 @inline function local_hour_angle(ν, lon, α)
     H = ν + lon - α
-    return mod(H, 360.0)
+    return mod(H, 360)
 end
 
-@inline function equatorial_horizontal_parallax_rad(R)
-    return deg2rad(8.794 / (3600.0 * R))  # radians
+@inline function equatorial_horizontal_parallax_rad(R::T) where {T}
+    return deg2rad(T(8.794) / (T(3600) * R))  # radians
 end
 
 # observer-dependent terms (used for parallax correction caching in SPAObserver)
-@inline function u_term(lat_rad)
-    return atan(0.99664719 * tan(lat_rad))
+@inline function u_term(lat_rad::T) where {T}
+    return atan(T(0.99664719) * tan(lat_rad))
 end
 
-@inline function x_term(sin_u, cos_u, alt, cos_lat)
-    return cos_u + alt / 6378140.0 * cos_lat
+@inline function x_term(sin_u, cos_u, alt::T, cos_lat) where {T}
+    return cos_u + alt / T(6378140) * cos_lat
 end
 
-@inline function y_term(sin_u, cos_u, alt, sin_lat)
-    return 0.99664719 * sin_u + alt / 6378140.0 * sin_lat
+@inline function y_term(sin_u, cos_u, alt::T, sin_lat) where {T}
+    return T(0.99664719) * sin_u + alt / T(6378140) * sin_lat
 end
 
 function parallax_sun_right_ascension_rad(x, sin_ξ, sin_H, cos_H, cos_δ)
@@ -332,7 +305,7 @@ function topocentric_azimuth_angle(H′_rad, δ′_rad, sin_lat, cos_lat)
     γ = rad2deg(atan(num, denom))
 
     # convert from astronomers azimuth (0=south) to standard (0=north)
-    φ = mod(γ + 180.0, 360.0)
+    φ = mod(γ + 180, 360)
     return φ
 end
 
@@ -347,12 +320,13 @@ end
 # - ε: true ecliptic obliquity (degrees)
 # - δψ: nutation in longitude (degrees)
 # - jme: Julian Ephemeris Millennium
-function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
-    jd = datetime2julian(dt)
-    jde = julian_ephemeris_day(jd, δt)
-    jc = (jd - 2451545.0) / 36525.0
-    jce = julian_ephemeris_century(jde)
-    jme = julian_ephemeris_millennium(jce)
+function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
+    jd = julian_date(T, dt)
+    jde = jd + δt / T(86400)
+    n = jd - T(2451545)
+    jc = n / T(36525)
+    jce = (jde - T(2451545)) / T(36525)
+    jme = jce / T(10)
 
     # heliocentric position of Earth
     L = heliocentric_longitude(jme)
@@ -360,7 +334,7 @@ function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     R = heliocentric_radius_vector(jme)
 
     # geocentric position (sun as seen from Earth center)
-    θ = mod(L + 180.0, 360.0)  # geocentric longitude
+    θ = mod(L + 180, 360)  # geocentric longitude
     β = -B  # geocentric latitude
 
     # nutation and obliquity
@@ -375,7 +349,7 @@ function _compute_spa_srt_parameters(dt::DateTime, δt::Float64)
     λ = apparent_sun_longitude(θ, δψ, δτ)
 
     # sidereal time at Greenwich
-    ν0 = mean_sidereal_time(jd, jc)
+    ν0 = mean_sidereal_time(n, jc)
     ν = apparent_sidereal_time(ν0, δψ, ε)
 
     # geocentric sun position
@@ -390,14 +364,14 @@ function _solar_position(
         dt::DateTime,
         alg::SPA,
     ) where {T <: AbstractFloat}
-    δt::Float64 = if alg.delta_t === nothing
-        calculate_deltat(dt)
+    δt::T = if alg.delta_t === nothing
+        calculate_deltat(T, dt)
     else
-        alg.delta_t
+        T(alg.delta_t)
     end
 
     # Compute sidereal time, right ascension, declination, and related parameters
-    ν, α, δ, R, ε, δψ, jme = _compute_spa_srt_parameters(dt, δt)
+    ν, α, δ, R, ε, δψ, jme = _compute_spa_srt_parameters(T, dt, δt)
 
     # observer local hour angle
     H = local_hour_angle(ν, obs.longitude, α)
@@ -425,7 +399,7 @@ function _solar_position(
     )
 
     # zenith without refraction
-    θz0 = 90.0 - e0
+    θz0 = 90 - e0
 
     # azimuth (same for both apparent and non-apparent)
     az = topocentric_azimuth_angle(H′_rad, δ′_rad, obs.sin_lat, obs.cos_lat)

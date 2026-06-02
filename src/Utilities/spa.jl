@@ -5,17 +5,12 @@ using TimeZones: TimeZone
 
 using ..Positioning: _compute_spa_srt_parameters
 
-const SECONDS_PER_DAY = 86400.0
-
 _frac_to_dt(dt_midnight, frac) =
-    dt_midnight + Dates.Second(round(Int, frac * SECONDS_PER_DAY))
+    dt_midnight + Dates.Second(round(Int, frac * 86_400))
 
-# Helper function to compute sidereal time, right ascension, and declination
-# for sunrise/sunset calculations at a given datetime.
-# Returns (ν, α, δ) where ν is apparent sidereal time at Greenwich,
-# α is geocentric right ascension, δ is geocentric declination (all in degrees).
-function _compute_srt_parameters(dt::DateTime, δt::Float64)
-    srt = _compute_spa_srt_parameters(dt, δt)
+# Returns (ν, α, δ): apparent sidereal time, geocentric right ascension, declination (degrees).
+function _compute_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
+    srt = _compute_spa_srt_parameters(T, dt, δt)
     return (srt.ν, srt.α, srt.δ)
 end
 
@@ -56,9 +51,9 @@ function _transit_sunrise_sunset_impl(
     dt_midnight = DateTime(Date(dt))
 
     δt = if alg.delta_t === nothing
-        calculate_deltat(dt_midnight)
+        calculate_deltat(T, dt_midnight)
     else
-        alg.delta_t
+        T(alg.delta_t)
     end
 
     lon = obs.longitude
@@ -74,19 +69,19 @@ function _transit_sunrise_sunset_impl(
 
     # Calculate sidereal time and sun position at different times
     # For UT day: get apparent sidereal time ν
-    ν, α_ut, δ_ut = _compute_srt_parameters(dt_utday, δt)
+    ν, α_ut, δ_ut = _compute_srt_parameters(T, dt_utday, δt)
 
     # For TT days: get right ascension and declination
-    ν_tt0, α0, δ0 = _compute_srt_parameters(dt_ttday0, δt)
-    ν_ttn1, α_n1, δ_n1 = _compute_srt_parameters(dt_ttdayn1, δt)
-    ν_ttp1, α_p1, δ_p1 = _compute_srt_parameters(dt_ttdayp1, δt)
+    ν_tt0, α0, δ0 = _compute_srt_parameters(T, dt_ttday0, δt)
+    ν_ttn1, α_n1, δ_n1 = _compute_srt_parameters(T, dt_ttdayn1, δt)
+    ν_ttp1, α_p1, δ_p1 = _compute_srt_parameters(T, dt_ttdayp1, δt)
 
     # Approximate sun transit time (fraction of day)
-    m0 = (α0 - lon - ν) / 360.0
+    m0 = (α0 - lon - ν) / 360
 
     # Hour angle at sunrise/sunset (accounting for atmospheric refraction)
     # -0.8333 degrees is the standard altitude for sunrise/sunset
-    h0 = -0.8333
+    h0 = T(-0.8333)
     sin_h0 = sind(h0)
     sin_lat = obs.sin_lat
     cos_lat = obs.cos_lat
@@ -108,45 +103,45 @@ function _transit_sunrise_sunset_impl(
 
     # Initial approximations (fraction of day)
     m = zeros(T, 3)
-    m[1] = mod(m0, 1.0)  # transit
-    m[2] = mod(m[1] - H0 / 360.0, 1.0)  # sunrise
-    m[3] = mod(m[1] + H0 / 360.0, 1.0)  # sunset
+    m[1] = mod(m0, 1)  # transit
+    m[2] = mod(m[1] - H0 / 360, 1)  # sunrise
+    m[3] = mod(m[1] + H0 / 360, 1)  # sunset
 
     # Track if we need to add/subtract a day
-    add_a_day = (m[1] + H0 / 360.0) >= 1.0
-    sub_a_day = (m[1] - H0 / 360.0) < 0.0
+    add_a_day = (m[1] + H0 / 360) >= 1
+    sub_a_day = (m[1] - H0 / 360) < 0
 
     # Sidereal time at Greenwich for each event
-    ν_s = ν .+ 360.985647 .* m
+    ν_s = ν .+ T(360.985647) .* m
 
     # Interpolation parameter (fraction of day in TT)
-    δt_days = δt / 86400.0
+    δt_days = δt / 86_400
     n = m .+ δt_days
 
     # Calculate differences for interpolation
     a = α0 - α_n1
-    a = abs(a) > 2.0 ? mod(a, 1.0) : a
+    a = abs(a) > 2 ? mod(a, 1) : a
 
     a_p = δ0 - δ_n1
-    a_p = abs(a_p) > 2.0 ? mod(a_p, 1.0) : a_p
+    a_p = abs(a_p) > 2 ? mod(a_p, 1) : a_p
 
     b = α_p1 - α0
-    b = abs(b) > 2.0 ? mod(b, 1.0) : b
+    b = abs(b) > 2 ? mod(b, 1) : b
 
     b_p = δ_p1 - δ0
-    b_p = abs(b_p) > 2.0 ? mod(b_p, 1.0) : b_p
+    b_p = abs(b_p) > 2 ? mod(b_p, 1) : b_p
 
     c = b - a
     c_p = b_p - a_p
 
     # Interpolated right ascension and declination at each event
-    α_prime = α0 .+ (n .* (a .+ b .+ c .* n)) ./ 2.0
-    δ_prime = δ0 .+ (n .* (a_p .+ b_p .+ c_p .* n)) ./ 2.0
+    α_prime = α0 .+ (n .* (a .+ b .+ c .* n)) ./ 2
+    δ_prime = δ0 .+ (n .* (a_p .+ b_p .+ c_p .* n)) ./ 2
 
     # Local hour angle for each event
-    H_p = mod.(ν_s .+ lon .- α_prime, 360.0)
+    H_p = mod.(ν_s .+ lon .- α_prime, 360)
     # Normalize to [-180, 180]
-    H_p[H_p .>= 180.0] .-= 360.0
+    H_p[H_p .>= 180] .-= 360
 
     # Precompute sin/cos for reuse using sincosd for efficiency
     sincos_δ_prime = sincosd.(δ_prime)
@@ -162,13 +157,13 @@ function _transit_sunrise_sunset_impl(
 
     # Corrections to times (in fraction of day)
     # Transit correction
-    ΔT = -H_p[1] / 360.0
+    ΔT = -H_p[1] / 360
 
     # Sunrise correction
-    ΔR = (h[2] + 0.8333) / (360.0 * cos_δ_prime[2] * cos_lat * sin_H_p[2])
+    ΔR = (h[2] + T(0.8333)) / (360 * cos_δ_prime[2] * cos_lat * sin_H_p[2])
 
     # Sunset correction
-    ΔS = (h[3] + 0.8333) / (360.0 * cos_δ_prime[3] * cos_lat * sin_H_p[3])
+    ΔS = (h[3] + T(0.8333)) / (360 * cos_δ_prime[3] * cos_lat * sin_H_p[3])
 
     # Final times (in fraction of day)
     T_frac = m[1] + ΔT
@@ -177,10 +172,10 @@ function _transit_sunrise_sunset_impl(
 
     # Adjust for day boundaries
     if sub_a_day
-        R_frac -= 1.0
+        R_frac -= 1
     end
     if add_a_day
-        S_frac += 1.0
+        S_frac += 1
     end
 
     # Convert fractions of day to DateTime

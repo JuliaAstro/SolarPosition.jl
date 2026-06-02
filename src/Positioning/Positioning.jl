@@ -8,7 +8,7 @@ refraction corrections.
 """
 module Positioning
 
-using Dates: Dates, datetime2julian, DateTime, Date, daysinmonth, dayofyear
+using Dates: Dates, DateTime, Date, daysinmonth, dayofyear
 using Dates: year, month, day
 using TimeZones: ZonedDateTime, UTC
 using StructArrays: StructArrays
@@ -259,6 +259,18 @@ pos_noaa = solar_position(obs, dt, NOAA())
 - `ZonedDateTime` inputs are automatically converted to UTC
 - For local solar time calculations, use appropriate time zones
 
+# Floating-Point Precision
+The result element type follows the `Observer{T}` element type `T`, and the computation runs
+at that precision:
+- **`Float64`** (default): reference accuracy for every algorithm.
+- **`BigFloat`** (and other wide types, e.g. `Float128`): genuine extended precision for every
+  algorithm — use a higher `setprecision` for more correct digits.
+- **`Float32`**: accurate and faster for `PSA`, `NOAA`, and `Walraven`. `USNO` and `SPA` use a
+  Julian-date formulation whose ~2.45e6 magnitude is under-resolved below `Float64`, so prefer
+  `Float64` or wider for those two.
+- **`Float16`**: experimental — its range/precision is too small for these algorithms
+  (overflow and inverse-trig domain errors are likely). Use `Float32` or wider.
+
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """
 function solar_position end
@@ -446,6 +458,7 @@ result_type(::Type{<:SolarAlgorithm}, ::Type{<:RefractionAlgorithm}, ::Type{T}) 
     ApparentSolPos{T}
 
 include("utils.jl")
+include("timebase.jl")
 include("deltat.jl")
 include("psa.jl")
 include("noaa.jl")

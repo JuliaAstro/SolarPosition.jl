@@ -70,7 +70,8 @@ struct HUGHES{T} <: RefractionAlgorithm where {T <: AbstractFloat}
     temperature::T
 end
 
-HUGHES() = HUGHES{Float64}(101325.0, 10.0)
+HUGHES{T}() where {T <: AbstractFloat} = HUGHES{T}(T(101325), T(10))
+HUGHES() = HUGHES{Float64}()
 
 function _refraction(model::HUGHES{T}, elevation_deg::T) where {T <: AbstractFloat}
     # this avoids numerical instability at very high elevations

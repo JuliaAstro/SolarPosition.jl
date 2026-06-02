@@ -4,8 +4,9 @@ exclude = [
   "^https://github.com/.*/releases/tag/v.*$",
   "^https://doi.org/FIXME$",
   "zenodo.org/badge/DOI/FIXME$",
-  # ScienceDirect blocks automated requests (returns 403 to the link checker)
+  # These sites block automated requests (return 403 to the link checker)
   "^https://www\\.sciencedirect\\.com/.*$",
+  "^https://www\\.timeanddate\\.com/.*$",
 ]
 
 exclude_path = ["docs/build"]

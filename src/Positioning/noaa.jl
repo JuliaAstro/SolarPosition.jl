@@ -71,7 +71,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
 
     # obliquity correction [degrees]
     obliq_corr = mean_obliq + T(0.00256) * cosd(T(125.04) - T(1934.136) * jc)
-    sun_declin = asind(sind(obliq_corr) * sind(sun_app_long))
+    sun_declin = asind(unit_clamp(sind(obliq_corr) * sind(sun_app_long)))
 
     # equation of time [minutes]
     var_y = tand(obliq_corr / 2)^2
@@ -94,7 +94,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
 
     # zenith angle [degrees]
     zenith = acosd(
-        obs.sin_lat * sind(sun_declin) + obs.cos_lat * cosd(sun_declin) * cosd(hour_angle),
+        unit_clamp(
+            obs.sin_lat * sind(sun_declin) +
+                obs.cos_lat * cosd(sun_declin) * cosd(hour_angle),
+        ),
     )
 
     # azimuth angle [degrees]
@@ -102,9 +105,9 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
     azimuth_denominator = obs.cos_lat * sind(zenith)
 
     azimuth = if hour_angle > 0
-        mod(acosd(azimuth_numerator / azimuth_denominator) + 180, 360)
+        mod(acosd(unit_clamp(azimuth_numerator / azimuth_denominator)) + 180, 360)
     else
-        mod(540 - acosd(azimuth_numerator / azimuth_denominator), 360)
+        mod(540 - acosd(unit_clamp(azimuth_numerator / azimuth_denominator)), 360)
     end
 
     return SolPos{T}(azimuth, 90 - zenith, zenith)

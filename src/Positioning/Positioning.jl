@@ -265,9 +265,8 @@ at that precision:
 - **`Float64`** (default): reference accuracy for every algorithm.
 - **`BigFloat`** (and other wide types, e.g. `Float128`): genuine extended precision for every
   algorithm — use a higher `setprecision` for more correct digits.
-- **`Float32`**: accurate and faster for `PSA`, `NOAA`, and `Walraven`. `USNO` and `SPA` use a
-  Julian-date formulation whose ~2.45e6 magnitude is under-resolved below `Float64`, so prefer
-  `Float64` or wider for those two.
+- **`Float32`**: accurate and faster for every algorithm (a magnitude-safe time base keeps full
+  intra-day resolution instead of riding on the ~2.45e6 Julian Date).
 - **`Float16`**: experimental — its range/precision is too small for these algorithms
   (overflow and inverse-trig domain errors are likely). Use `Float32` or wider.
 

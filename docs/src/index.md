@@ -85,6 +85,9 @@ accuracy and implementation status.
 | [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Walraven, 1978](https://doi.org/10.1016/0038-092X(78)90155-X)                                  | ±0.0100° | None                                             | ✅     |
 | [`USNO`](@ref SolarPosition.Positioning.USNO)         | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None                                             | ✅     |
 | [`SPA`](@ref SolarPosition.Positioning.SPA)           | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in                                         | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None                                             | ✅     |
+| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                               | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         | ✅     |
+| [`SG2`](@ref SolarPosition.Positioning.SG2)           | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                             | ±0.0030° | [`SG2Refraction`](@ref SolarPosition.Refraction.SG2Refraction) | ✅     |
 
 ## Refraction correction algorithms
 
@@ -96,7 +99,7 @@ Atmospheric refraction correction algorithms available in SolarPosition.jl.
 | [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)                   | Archer et al., 1980                                                                              | None                   | ✅     |
 | [`BENNETT`](@ref SolarPosition.Refraction.BENNETT)                 | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  | ✅     |
 | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)             | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                                  | None                   | ✅     |
-| [`SG2`](@ref SolarPosition.Refraction.SG2)                         | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
+| [`SG2Refraction`](@ref SolarPosition.Refraction.SG2Refraction)     | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
 | [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction)     | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅     |
 
 ## Extensions

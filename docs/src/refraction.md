@@ -29,7 +29,7 @@ of the available algorithms:
 | [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)               | [Arc80](@cite) | None                   | ✅     |
 | [`BENNETT`](@ref SolarPosition.Refraction.BENNETT)             | [Ben82](@cite) | Pressure, Temperature  | ✅     |
 | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         | [Mic88](@cite) | None                   | ✅     |
-| [`SG2`](@ref SolarPosition.Refraction.SG2)                     | [BW12](@cite)  | Pressure, Temperature  | ✅     |
+| [`SG2Refraction`](@ref SolarPosition.Refraction.SG2Refraction) | [BW12](@cite)  | Pressure, Temperature  | ✅     |
 | [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction) | [RA04](@cite)  | Pressure, Temperature  | ✅     |
 
 To calculate refraction, we can use the [`refraction`](@ref SolarPosition.Refraction.refraction) function:
@@ -83,7 +83,7 @@ using CairoMakie
 # Define models and elevation range
 models = [("Archer", SolarPosition.Refraction.ARCHER()), ("Bennett", SolarPosition.Refraction.BENNETT()),
           ("Hughes", SolarPosition.Refraction.HUGHES()), ("Michalsky", SolarPosition.Refraction.MICHALSKY()),
-          ("SG2", SolarPosition.Refraction.SG2()), ("SPA", SolarPosition.Refraction.SPARefraction())]
+          ("SG2", SolarPosition.Refraction.SG2Refraction()), ("SPA", SolarPosition.Refraction.SPARefraction())]
 elevation = -1.5:0.1:90.0
 
 # Create figure with two subplots
@@ -161,7 +161,7 @@ solar position calculations. It includes special handling for very low elevation
 SolarPosition.Refraction.MICHALSKY
 ```
 
-## [SG2](@id sg2-refraction)
+## [SG2Refraction](@id sg2-refraction)
 
 The SG2 (Second Generation) refraction algorithm is optimized for fast computation over multi-decadal periods.
 
@@ -169,7 +169,7 @@ Developed by [BW12](@cite), this algorithm uses a two-regime approach with diffe
 for elevations above and below a threshold. It accounts for atmospheric pressure and temperature.
 
 ```@docs
-SolarPosition.Refraction.SG2
+SolarPosition.Refraction.SG2Refraction
 ```
 
 ## [SPARefraction](@id spa-refraction)

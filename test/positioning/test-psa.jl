@@ -47,7 +47,7 @@
         end
 
         # test with other refraction algorithms
-        algs = [ARCHER(), MICHALSKY(), SG2()]
+        algs = [ARCHER(), MICHALSKY(), SG2Refraction()]
         for alg in algs
             res_alg = solar_position(obs, dt, PSA(), alg)
             @test res_alg isa ApparentSolPos

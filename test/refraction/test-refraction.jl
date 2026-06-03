@@ -1,7 +1,7 @@
 """Unit tests for atmospheric refraction algorithms"""
 
 using SolarPosition.Refraction:
-    HUGHES, ARCHER, BENNETT, MICHALSKY, SG2, SPARefraction, refraction
+    HUGHES, ARCHER, BENNETT, MICHALSKY, SG2Refraction, SPARefraction, refraction
 
 # test elevation angles in degrees
 test_elevation_angles() = [-1.0, -0.6, 0.0, 1.0, 4.0, 6.0, 10.0, 90.0]
@@ -76,7 +76,7 @@ test_algorithms = [
     ("Archer", () -> ARCHER(), expected["Archer"]),
     ("Bennett", () -> BENNETT(101325.0, 12.0), expected["Bennett"]),
     ("Michalsky", () -> MICHALSKY(), expected["Michalsky"]),
-    ("SG2", () -> SG2(101325.0, 12.0), expected["SG2"]),
+    ("SG2", () -> SG2Refraction(101325.0, 12.0), expected["SG2"]),
     ("SPARefraction", () -> SPARefraction(101325.0, 12.0), expected["SPA"]),
 ]
 

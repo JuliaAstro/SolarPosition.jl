@@ -234,7 +234,7 @@ end
 
 @testset "Refraction Integration" begin
     using SolarPosition.Positioning: ApparentSolPos
-    using SolarPosition.Refraction: BENNETT, HUGHES, ARCHER, MICHALSKY, SG2
+    using SolarPosition.Refraction: BENNETT, HUGHES, ARCHER, MICHALSKY, SG2Refraction
 
     obs = Observer(45.0, 10.0, 100.0)
     dt = DateTime(2023, 6, 21, 12, 0, 0)
@@ -250,7 +250,7 @@ end
                 ("HUGHES", HUGHES()),
                 ("ARCHER", ARCHER()),
                 ("MICHALSKY", MICHALSKY()),
-                ("SG2", SG2()),
+                ("SG2", SG2Refraction()),
             ]
             res = solar_position(obs, dt, alg, refr)
             @test res isa ApparentSolPos

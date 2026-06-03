@@ -63,6 +63,9 @@ The following solar position algorithms are currently implemented in SolarPositi
 | [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Wal78](@cite)  | ±0.0100° | None                                             | ✅     |
 | [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500° | None                                             | ✅     |
 | [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003° | Built-in                                         | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqb83](@cite)  | ±0.0100° | None                                             | ✅     |
+| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Mic88](@cite) | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         | ✅     |
+| [`SG2`](@ref SolarPosition.Positioning.SG2)           | [BW12](@cite)   | ±0.0030° | [`SG2Refraction`](@ref SolarPosition.Refraction.SG2Refraction) | ✅     |
 
 ## [PSA](@id psa-algorithm)
 
@@ -120,4 +123,41 @@ position calculation with periodic terms for Earth heliocentric longitude and la
 
 ```@docs
 SolarPosition.Positioning.SPA
+```
+
+## [Iqbal](@id iqbal-algorithm)
+
+The Iqbal algorithm is a fast, low-complexity method that derives the solar declination
+and equation of time from a truncated Fourier series in the day angle.
+
+The formulation was compiled by [Iqb83](@cite) and builds on the Fourier-series
+representation of [Spe71](@cite).
+
+```@docs
+SolarPosition.Positioning.Iqbal
+```
+
+## [Michalsky](@id michalsky-algorithm)
+
+The Michalsky algorithm implements the Astronomical Almanac's approximate solar position
+algorithm, with a stated accuracy of ±0.01° between 1950 and 2050. It exposes options for
+the azimuth-quadrant correction and the Julian date formulation.
+
+The algorithm was published by [Mic88](@cite); the azimuth correction that makes it valid
+for all latitudes is from [Spe89](@cite).
+
+```@docs
+SolarPosition.Positioning.Michalsky
+```
+
+## [SG2](@id sg2-algorithm)
+
+The SG2 (Second Generation) algorithm is optimized for fast and accurate computation over
+multi-decadal periods, with a stated accuracy of ±0.003° between 1980 and 2030. Dates
+outside this range raise an `ArgumentError`.
+
+The algorithm was published by [BW12](@cite).
+
+```@docs
+SolarPosition.Positioning.SG2
 ```

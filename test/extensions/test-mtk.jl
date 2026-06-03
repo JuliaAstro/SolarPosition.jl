@@ -10,7 +10,7 @@ using SolarPosition:
     DefaultRefraction,
     SolarPositionBlock
 
-using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2
+using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2Refraction
 using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
 using Dates: DateTime

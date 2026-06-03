@@ -321,11 +321,10 @@ end
 # - δψ: nutation in longitude (degrees)
 # - jme: Julian Ephemeris Millennium
 function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
-    jd = julian_date(T, dt)
-    jde = jd + δt / T(86400)
-    n = jd - T(2451545)
+    # magnitude-safe time base: small day-count `n`, ΔT folded as a day-fraction
+    n = julian_day_j2000(T, dt)
     jc = n / T(36525)
-    jce = (jde - T(2451545)) / T(36525)
+    jce = (n + δt / T(86400)) / T(36525)
     jme = jce / T(10)
 
     # heliocentric position of Earth

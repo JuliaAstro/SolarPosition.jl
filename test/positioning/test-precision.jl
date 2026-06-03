@@ -1,5 +1,5 @@
-"""Genuine precision across types: BigFloat carries real extra digits, Float64 stays exact,
-Float32 is usable for the magnitude-safe algorithms."""
+"""Genuine precision across types: BigFloat carries real extra digits, Float64 stays accurate,
+and Float32 is usable for every algorithm thanks to the magnitude-safe time base."""
 
 using SolarPosition: Observer, solar_position, PSA, NOAA, Walraven, USNO, SPA
 using SolarPosition.Refraction: NoRefraction
@@ -22,30 +22,28 @@ using Dates: DateTime
         end
     end
 
-    # PSA/NOAA/Walraven use a magnitude-safe time base -> Float64 tracks the true answer to
-    # ~1e-12. USNO/SPA reproduce the exact Julian-date arithmetic, whose ~2.45e6 magnitude
-    # limits Float64 intraday resolution (~1e-7 after the sidereal-rate amplification).
     @testset "Float64 matches the BigFloat reference" begin
-        for (alg, atol) in (
-                (PSA(), 1.0e-9), (NOAA(), 1.0e-9), (Walraven(), 1.0e-9),
-                (USNO(), 1.0e-6), (SPA(), 1.0e-6),
-            )
+        # The magnitude-safe time base keeps full intra-day resolution, so every algorithm
+        # tracks the genuine (BigFloat) answer to ~1e-8 in Float64.
+        for alg in allalgs
             ref = setprecision(() -> solar_position(mkobs(BigFloat), dt, alg, NoRefraction()), BigFloat, 256)
             p = solar_position(mkobs(Float64), dt, alg, NoRefraction())
-            @test isapprox(p.azimuth, Float64(ref.azimuth); atol)
-            @test isapprox(p.elevation, Float64(ref.elevation); atol)
+            @test isapprox(p.azimuth, Float64(ref.azimuth), atol = 1.0e-8)
+            @test isapprox(p.elevation, Float64(ref.elevation), atol = 1.0e-8)
         end
     end
 
-    # PSA/NOAA/Walraven keep a magnitude-safe time base, so Float32 stays accurate (and runs
-    # genuinely in Float32). USNO/SPA reproduce the exact Float64 Julian-date arithmetic, which
-    # is magnitude-limited below Float64 — they are not asserted here.
-    @testset "Float32 is usable for magnitude-safe algorithms" begin
-        for alg in (PSA(), NOAA(), Walraven())
+    @testset "Float32 is usable for every algorithm" begin
+        # Float32 runs genuinely in Float32 and stays usable. PSA/NOAA/Walraven/USNO reach
+        # ~1e-2 deg; SPA is looser (~0.3 deg) because its sidereal term (~3.5e6) still costs
+        # Float32 precision, but it is far from the ~10 deg a non-magnitude-safe base would give.
+        for (alg, atol) in (
+                (PSA(), 0.05), (NOAA(), 0.05), (Walraven(), 0.05), (USNO(), 0.05), (SPA(), 0.3),
+            )
             ref = setprecision(() -> solar_position(mkobs(BigFloat), dt, alg, NoRefraction()), BigFloat, 128)
             p = solar_position(mkobs(Float32), dt, alg, NoRefraction())
-            @test isapprox(Float64(p.azimuth), Float64(ref.azimuth), atol = 0.05)
-            @test isapprox(Float64(p.elevation), Float64(ref.elevation), atol = 0.05)
+            @test isapprox(Float64(p.azimuth), Float64(ref.azimuth); atol)
+            @test isapprox(Float64(p.elevation), Float64(ref.elevation); atol)
         end
     end
 end

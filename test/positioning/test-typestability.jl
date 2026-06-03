@@ -10,7 +10,7 @@ using Dates: DateTime
     algorithms = (PSA(), NOAA(), Walraven(), USNO(), SPA())
 
     # The result element type must follow the Observer element type, and the call must be
-    # type-stable (inferrable to a concrete type) for every precision and algorithm.
+    # type-stable (inferable to a concrete type) for every precision and algorithm.
     for T in (Float16, Float32, Float64, BigFloat)
         obs = Observer(T(40), T(-105); altitude = T(1600))
         for alg in algorithms

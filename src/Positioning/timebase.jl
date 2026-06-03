@@ -32,6 +32,19 @@ day part is exact; only the `[0, 1)` intra-day fraction carries `T` rounding.
 end
 
 """
+    julian_day_j2000_split(T, dt) -> (day::T, frac::T)
+
+Same day-count as [`julian_day_j2000`](@ref) but kept as the exact integer day plus the
+`[0, 1)` intra-day fraction *separately*, so the fraction keeps full `T` precision instead of
+being swamped by the integer part. Needed where the day-count is multiplied by a large factor
+(e.g. sidereal time) at low precision.
+"""
+@inline function julian_day_j2000_split(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
+    (day, msofday) = _j2000_day_and_ms(dt)
+    return (T(day), T(msofday) / T(86_400_000))
+end
+
+"""
     julian_century(T, dt) -> T
 
 Julian centuries since J2000.0 (magnitude ~0.2 for dates near 2000), at precision `T`.

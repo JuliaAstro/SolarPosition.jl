@@ -86,7 +86,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     (sin_λₑ, cos_λₑ) = sincos(λₑ)
     ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)                                   # Eq. 8
     ra = mod2pi(ra)
-    δ = asin(sin_ϵ * sin_λₑ)                                            # Eq. 9
+    δ = asin(unit_clamp(sin_ϵ * sin_λₑ))                                # Eq. 9
 
     # computes the local coordinates: azimuth (γ) and zenith angle (θz)
     λt = rad2deg(obs.longitude_rad)
@@ -99,7 +99,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     ω = lmst - ra                                                       # Eq. 12
     (sin_δ, cos_δ) = sincos(δ)
     (sin_ω, cos_ω) = sincos(ω)
-    θz = acos(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat)                # Eq. 13
+    θz = acos(unit_clamp(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat))    # Eq. 13
     γ = atan(-sin_ω, (tan(δ) * cos_lat - sin_lat * cos_ω))              # Eq. 14
 
     # parallax correction

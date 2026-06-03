@@ -61,7 +61,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
     ra = mod(ra, 24)
 
     # sun's declination angle [deg]
-    δ = asind(sind(ϵ) * sind(L))
+    δ = asind(unit_clamp(sind(ϵ) * sind(L)))
 
     # hours elapsed since the previous midnight (0h) UT1, and that midnight's day-count
     H = fractional_hour(T, dt)
@@ -105,7 +105,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
     ha = (gast - ra) * 15 + obs.longitude
 
     # solar elevation [deg]
-    elevation = asind(cosd(ha) * cosd(δ) * obs.cos_lat + sind(δ) * obs.sin_lat)
+    elevation = asind(unit_clamp(cosd(ha) * cosd(δ) * obs.cos_lat + sind(δ) * obs.sin_lat))
 
     # azimuth [deg]
     azimuth = rad2deg(atan(-sind(ha), (tand(δ) * obs.cos_lat - obs.sin_lat * cosd(ha))))

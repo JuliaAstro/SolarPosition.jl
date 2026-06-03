@@ -247,7 +247,7 @@ function geocentric_sun_declination(λ, ε, β)
     (sin_ε, cos_ε) = sincos(deg2rad(ε))
     sin_λ = sin(deg2rad(λ))
 
-    δ = rad2deg(asin(sin_β * cos_ε + cos_β * sin_ε * sin_λ))
+    δ = rad2deg(asin(unit_clamp(sin_β * cos_ε + cos_β * sin_ε * sin_λ)))
     return δ
 end
 
@@ -293,7 +293,7 @@ function topocentric_elevation_angle_without_atmosphere(sin_lat, cos_lat, δ′_
     (sin_δ′, cos_δ′) = sincos(δ′_rad)
     cos_H′ = cos(H′_rad)
 
-    e0 = rad2deg(asin(sin_lat * sin_δ′ + cos_lat * cos_δ′ * cos_H′))
+    e0 = rad2deg(asin(unit_clamp(sin_lat * sin_δ′ + cos_lat * cos_δ′ * cos_H′)))
     return e0
 end
 

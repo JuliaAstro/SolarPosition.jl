@@ -34,16 +34,13 @@ using Dates: DateTime
     end
 
     @testset "Float32 is usable for every algorithm" begin
-        # Float32 runs genuinely in Float32 and stays usable. PSA/NOAA/Walraven/USNO reach
-        # ~1e-2 deg; SPA is looser (~0.3 deg) because its sidereal term (~3.5e6) still costs
-        # Float32 precision, but it is far from the ~10 deg a non-magnitude-safe base would give.
-        for (alg, atol) in (
-                (PSA(), 0.05), (NOAA(), 0.05), (Walraven(), 0.05), (USNO(), 0.05), (SPA(), 0.3),
-            )
+        # Float32 runs genuinely in Float32 and stays accurate (~1e-2 deg) for every algorithm,
+        # including SPA once its sidereal term is reduced mod 360 (see mean_sidereal_time).
+        for alg in allalgs
             ref = setprecision(() -> solar_position(mkobs(BigFloat), dt, alg, NoRefraction()), BigFloat, 128)
             p = solar_position(mkobs(Float32), dt, alg, NoRefraction())
-            @test isapprox(Float64(p.azimuth), Float64(ref.azimuth); atol)
-            @test isapprox(Float64(p.elevation), Float64(ref.elevation); atol)
+            @test isapprox(Float64(p.azimuth), Float64(ref.azimuth), atol = 0.05)
+            @test isapprox(Float64(p.elevation), Float64(ref.elevation), atol = 0.05)
         end
     end
 end

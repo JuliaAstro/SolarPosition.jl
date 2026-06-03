@@ -219,11 +219,12 @@ end
     return θ + δψ + δτ
 end
 
-# `n` is days since J2000 (jd - 2451545); `jc` Julian centuries
-function mean_sidereal_time(n::T, jc) where {T}
-    ν0 =
-        T(280.46061837) + T(360.98564736629) * n + T(0.000387933) * jc^2 -
-        jc^3 / T(38710000)
+# day-count split into exact integer `n_int` and `[0,1)` fraction `n_frac` (jd - 2451545);
+# `jc` Julian centuries. The 360*n_int whole rotations vanish mod 360, so only the
+# 0.98564736629 deg/day drift is kept at full magnitude — this preserves Float32 precision.
+function mean_sidereal_time(n_int::T, n_frac::T, jc) where {T}
+    rot = T(0.98564736629) * n_int + T(360.98564736629) * n_frac
+    ν0 = T(280.46061837) + rot + T(0.000387933) * jc^2 - jc^3 / T(38710000)
     return mod(ν0, 360)
 end
 
@@ -321,8 +322,10 @@ end
 # - δψ: nutation in longitude (degrees)
 # - jme: Julian Ephemeris Millennium
 function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
-    # magnitude-safe time base: small day-count `n`, ΔT folded as a day-fraction
-    n = julian_day_j2000(T, dt)
+    # magnitude-safe time base: day-count `n` split into integer + fraction (kept split for
+    # the sidereal term), ΔT folded as a day-fraction
+    (n_int, n_frac) = julian_day_j2000_split(T, dt)
+    n = n_int + n_frac
     jc = n / T(36525)
     jce = (n + δt / T(86400)) / T(36525)
     jme = jce / T(10)
@@ -348,7 +351,7 @@ function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: A
     λ = apparent_sun_longitude(θ, δψ, δτ)
 
     # sidereal time at Greenwich
-    ν0 = mean_sidereal_time(n, jc)
+    ν0 = mean_sidereal_time(n_int, n_frac, jc)
     ν = apparent_sidereal_time(ν0, δψ, ε)
 
     # geocentric sun position

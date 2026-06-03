@@ -201,3 +201,26 @@ end
     @test isfinite(dt_1935)
     @test dt_1935 > 0.0
 end
+
+@testset "Type-generic interface" begin
+    using Dates, TimeZones
+
+    # The typed methods return ΔT at precision T (value matches the Float64 computation).
+    for T in (Float32, Float64, BigFloat)
+        ym = calculate_deltat(T, 2020, 6)
+        @test ym isa T
+        @test ym ≈ T(calculate_deltat(2020, 6))
+
+        d = calculate_deltat(T, Date(2020, 6, 15))
+        @test d isa T
+        @test d ≈ T(calculate_deltat(Date(2020, 6, 15)))
+
+        dt = calculate_deltat(T, DateTime(2020, 6, 15, 12, 30))
+        @test dt isa T
+        @test dt ≈ T(calculate_deltat(DateTime(2020, 6, 15, 12, 30)))
+
+        zdt = calculate_deltat(T, ZonedDateTime(2020, 6, 15, 12, 30, tz"UTC"))
+        @test zdt isa T
+        @test zdt ≈ T(calculate_deltat(ZonedDateTime(2020, 6, 15, 12, 30, tz"UTC")))
+    end
+end

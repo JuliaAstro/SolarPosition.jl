@@ -60,7 +60,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     end
 
     # declination [rad]
-    d = asin(sin_lon_sun * sin_ϵ)
+    d = asin(unit_clamp(sin_lon_sun * sin_ϵ))
 
     # sidereal time [rad]
     side_t = T(1.759335) + 2 * T(π) * (time / T(365.25) - δ) + T(3.694e-7) * time
@@ -80,11 +80,11 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     (sin_ha, cos_ha) = sincos(ha)
 
     # elevation [rad]
-    el = asin(obs.sin_lat * sin_d + obs.cos_lat * cos_d * cos_ha)
+    el = asin(unit_clamp(obs.sin_lat * sin_d + obs.cos_lat * cos_d * cos_ha))
     (sin_el, cos_el) = sincos(el)
 
     # azimuth [deg] - initial calculation
-    az = rad2deg(asin(cos_d * sin_ha / cos_el))
+    az = rad2deg(asin(unit_clamp(cos_d * sin_ha / cos_el)))
 
     # azimuth quadrant assignment - Spencer (1989) correction for all longitudes
     cos_az = sin_d - sin_el * obs.sin_lat

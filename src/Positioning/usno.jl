@@ -38,9 +38,8 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
         T(alg.delta_t)
     end
 
-    # Julian date and days since J2000.0 (UT), at precision T
-    jd = julian_date(T, dt)
-    D = jd - T(2451545)
+    # days since J2000.0 (UT), magnitude-safe at precision T
+    D = julian_day_j2000(T, dt)
 
     # mean anomaly of the sun [deg]
     g = T(357.529) + T(0.98560028) * D
@@ -64,12 +63,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
     # sun's declination angle [deg]
     δ = asind(sind(ϵ) * sind(L))
 
-    # previous midnight (0h) UT1 and hours elapsed since
-    jd_0 = julian_date(T, DateTime(year(dt), month(dt), day(dt), 0, 0, 0))
-    H = (jd - jd_0) * 24
-    day_ut = jd_0 - T(2451545)
-    jd_tt = jd + δt / T(86400)
-    D_tt = jd_tt - T(2451545)
+    # hours elapsed since the previous midnight (0h) UT1, and that midnight's day-count
+    H = fractional_hour(T, dt)
+    day_ut = julian_day_j2000(T, DateTime(year(dt), month(dt), day(dt), 0, 0, 0))
+    D_tt = D + δt / T(86400)
     t_cent = D_tt / T(36525)
 
     # Greenwich mean sidereal time [hours]

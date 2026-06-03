@@ -15,20 +15,6 @@ returned here equals `jd - 2451545.0` (days since J2000 noon) with no half-day o
 # J2000.0 epoch (noon) expressed in the same millisecond scale as `dt.instant.periods.value`.
 const J2000_EPOCH_MS = Dates.value(DateTime(2000, 1, 1, 12, 0, 0))
 
-# Julian Date epoch (JD 0 == -4713-11-24T12:00 proleptic Gregorian) in the same ms scale.
-const JULIAN_EPOCH_MS = Dates.value(DateTime(-4713, 11, 24, 12, 0, 0))
-
-"""
-    julian_date(T, dt) -> T
-
-Full Julian Date at precision `T`. For `Float64` this is bit-identical to
-`Dates.datetime2julian`. The large magnitude (~2.45e6) means low-precision `T` loses
-intra-day resolution; use [`julian_century`](@ref)/[`julian_day_j2000`](@ref) for those.
-"""
-@inline function julian_date(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
-    return T(dt.instant.periods.value - JULIAN_EPOCH_MS) / T(86_400_000)
-end
-
 # Exact integer (days since J2000 noon, milliseconds into that day). No floating point.
 @inline function _j2000_day_and_ms(dt::DateTime)
     return fldmod(dt.instant.periods.value - J2000_EPOCH_MS, 86_400_000)

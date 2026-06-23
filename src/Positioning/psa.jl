@@ -65,13 +65,12 @@ PSA() = PSA(2020)
 end
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
-    # Get parameters as tuple (allocation-free)
+    # Get parameters as tuple (allocation-free), at the observer's precision T
     p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 =
-        get_psa_params(alg.coeffs)
+        map(T, get_psa_params(alg.coeffs))
 
-    # elapsed julian days (n) since J2000.0
-    jd = datetime2julian(dt)
-    n = jd - 2451545.0                                                  # Eq. 2
+    # elapsed julian days (n) since J2000.0, at precision T
+    n = julian_day_j2000(T, dt)                                         # Eq. 2
 
     # ecliptic coordinates of the sun
     # ecliptic longitude (λₑ), and obliquity of the ecliptic (ϵ)
@@ -87,26 +86,26 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     (sin_λₑ, cos_λₑ) = sincos(λₑ)
     ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)                                   # Eq. 8
     ra = mod2pi(ra)
-    δ = asin(sin_ϵ * sin_λₑ)                                            # Eq. 9
+    δ = asin(unit_clamp(sin_ϵ * sin_λₑ))                                # Eq. 9
 
     # computes the local coordinates: azimuth (γ) and zenith angle (θz)
     λt = rad2deg(obs.longitude_rad)
     cos_lat = obs.cos_lat
     sin_lat = obs.sin_lat
 
-    hour = fractional_hour(dt)
+    hour = fractional_hour(T, dt)
     gmst = p14 + p15 * n + hour                                         # Eq. 10
     lmst = deg2rad(gmst * 15 + λt)                                      # Eq. 11
     ω = lmst - ra                                                       # Eq. 12
     (sin_δ, cos_δ) = sincos(δ)
     (sin_ω, cos_ω) = sincos(ω)
-    θz = acos(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat)                # Eq. 13
+    θz = acos(unit_clamp(cos_lat * cos_ω * cos_δ + sin_δ * sin_lat))    # Eq. 13
     γ = atan(-sin_ω, (tan(δ) * cos_lat - sin_lat * cos_ω))              # Eq. 14
 
     # parallax correction
-    θz = θz + (EMR / AU) * sin(θz)                                      # Eq. 15,16
+    θz = θz + T(EMR / AU) * sin(θz)                                     # Eq. 15,16
 
-    return SolPos{T}(mod(rad2deg(γ), 360.0), rad2deg(π / 2 - θz), rad2deg(θz))
+    return SolPos{T}(mod(rad2deg(γ), 360), rad2deg(T(π) / 2 - θz), rad2deg(θz))
 end
 
 function _solar_position(obs, dt, alg::PSA, ::DefaultRefraction)

@@ -37,22 +37,12 @@ jobs:
           version: "1"
       - name: Use Julia cache
         uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
       - name: Instantiate environment with development version of the package
-        run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
-      - name: Run doctest
-        run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta, doctest
-            using SolarPosition
-            using Dates
-            DocMeta.setdocmeta!(SolarPosition, :DocTestSetup, :(using SolarPosition; using Dates; obs = Observer(37.7749, -122.4194, 100.0); dt = DateTime(2023, 6, 21, 12, 0, 0)); recursive=true)
-            doctest(SolarPosition)'
+        shell: julia --color=yes --project=docs {0}
+        run: using Pkg; Pkg.instantiate()
       - name: Generate and deploy documentation
-        run: julia --project=docs docs/make.jl
+        run: julia --color=yes --project=docs docs/make.jl
         env:
           JULIA_PKG_SERVER: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

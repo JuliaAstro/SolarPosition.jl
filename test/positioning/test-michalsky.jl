@@ -84,35 +84,49 @@ function expected_michalsky_spencer_false()
     return DataFrame(reduce(hcat, values)', columns)
 end
 
-@testset "Michalsky (not implemented)" begin
-    @test_skip begin
-        # TODO: Implement Michalsky algorithm with options:
-        # - spencer_correction: true/false
-        # - julian_date: "original" or "pandas"
-        # struct Michalsky <: SolarAlgorithm
-        #     spencer_correction::Bool
-        #     julian_date::String
-        # end
+# Compare every condition against the expected actual and apparent angles. The default
+# refraction for Michalsky is the MICHALSKY model, so the result carries apparent angles.
+function check_michalsky(alg, df_expected)
+    conds = test_conditions()
+    @test size(df_expected, 1) == 19
+    @test size(df_expected, 2) == 5
+    for ((dt, lat, lon, alt), row) in zip(eachrow(conds), eachrow(df_expected))
+        obs = ismissing(alt) ? Observer(lat, lon) : Observer(lat, lon, altitude = alt)
+        res = solar_position(obs, dt, alg)
+        @test res isa ApparentSolPos
+        @test isapprox(res.elevation, row.elevation, atol = 1.0e-6)
+        @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1.0e-6)
+        @test isapprox(res.zenith, row.zenith, atol = 1.0e-6)
+        @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1.0e-6)
+        @test isapprox(res.azimuth, row.azimuth, atol = 1.0e-6)
+    end
+    return
+end
 
-        @testset "Original Julian Date" begin
-            df_expected = expected_michalsky_original_julian()
-            conds = test_conditions()
+@testset "Michalsky" begin
+    @testset "Original Julian Date" begin
+        check_michalsky(Michalsky(), expected_michalsky_original_julian())
+    end
 
-            # Test implementation would go here
-        end
+    @testset "Standard Julian Date" begin
+        check_michalsky(
+            Michalsky(julian_date = :standard),
+            expected_michalsky_pandas_julian(),
+        )
+    end
 
-        @testset "Pandas Julian Date" begin
-            df_expected = expected_michalsky_pandas_julian()
-            conds = test_conditions()
+    @testset "Spencer Correction False" begin
+        check_michalsky(
+            Michalsky(spencer_correction = false),
+            expected_michalsky_spencer_false(),
+        )
+    end
 
-            # Test implementation would go here
-        end
-
-        @testset "Spencer Correction False" begin
-            df_expected = expected_michalsky_spencer_false()
-            conds = test_conditions()
-
-            # Test implementation would go here
-        end
+    @testset "Invalid Julian date option" begin
+        @test_throws ArgumentError solar_position(
+            Observer(45.0, 10.0),
+            DateTime(2020, 10, 17, 12, 30),
+            Michalsky(julian_date = :bogus),
+        )
     end
 end

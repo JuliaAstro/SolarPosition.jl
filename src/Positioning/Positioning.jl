@@ -452,9 +452,13 @@ include("noaa.jl")
 include("walraven.jl")
 include("usno.jl")
 include("spa.jl")
+include("iqbal.jl")
+include("michalsky.jl")
+include("sg2.jl")
 
 export Observer,
-    PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
+    PSA, NOAA, Walraven, USNO, SPA, Iqbal, Michalsky, SG2,
+    solar_position, solar_position!, SolPos, ApparentSolPos
 export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos
 export calculate_deltat
 

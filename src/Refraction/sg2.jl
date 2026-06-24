@@ -1,9 +1,10 @@
 """
     $(TYPEDEF)
 
-SG2 refraction model.
+SG2 (Second Generation) atmospheric refraction model.
 
-Atmospheric refraction correction based on the algorithm in SG2.
+Atmospheric refraction correction based on the SG2 algorithm. The matching solar position
+algorithm is [`SG2`](@ref).
 
 This function calculates the atmospheric refraction correction of the solar
 elevation angle using the method developed by Ph. Blanc and L. Wald [1].
@@ -12,8 +13,8 @@ elevation angle using the method developed by Ph. Blanc and L. Wald [1].
 $(TYPEDFIELDS)
 
 # Constructor
-- `SG2()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C
-- `SG2(pressure, temperature)`: Specify custom pressure [Pa] and temperature [°C]
+- `SG2Refraction()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C
+- `SG2Refraction(pressure, temperature)`: Specify custom pressure [Pa] and temperature [°C]
 
 # Notes
 The equation to calculate the refraction correction is given by:
@@ -39,10 +40,10 @@ This method was described by [BW12](@cite).
 using SolarPosition
 
 # Create SG2 refraction model with default parameters
-sg2 = SG2()
+sg2 = SG2Refraction()
 
 # Or specify custom atmospheric conditions
-sg2_custom = SG2(101325.0, 25.0)  # 25°C temperature
+sg2_custom = SG2Refraction(101325.0, 25.0)  # 25°C temperature
 
 # Apply refraction correction to elevation angle
 elevation = 30.0  # degrees
@@ -50,16 +51,16 @@ refraction_correction = refraction(sg2, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-struct SG2{T} <: RefractionAlgorithm where {T <: AbstractFloat}
+struct SG2Refraction{T} <: RefractionAlgorithm where {T <: AbstractFloat}
     "Annual average atmospheric pressure [Pascal]"
     pressure::T
     "Annual average temperature [°C]"
     temperature::T
 end
 
-SG2() = SG2{Float64}(101325.0, 12.0)
+SG2Refraction() = SG2Refraction{Float64}(101325.0, 12.0)
 
-function _refraction(model::SG2{T}, elevation_deg::T) where {T <: AbstractFloat}
+function _refraction(model::SG2Refraction{T}, elevation_deg::T) where {T <: AbstractFloat}
     # Convert pressure from Pascal to hPa (hectopascal)
     pressure_hPa = model.pressure / T(100.0)
 

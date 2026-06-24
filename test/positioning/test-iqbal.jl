@@ -28,30 +28,22 @@ function expected_iqbal()
     return DataFrame(reduce(hcat, values)', columns)
 end
 
-@testset "Iqbal (not implemented)" begin
-    @test_skip begin
-        df_expected = expected_iqbal()
-        conds = test_conditions()
-        @test size(df_expected, 1) == 19
-        @test size(df_expected, 2) == 3
-        @test size(conds, 1) == 19
-        @test size(conds, 2) == 4
+@testset "Iqbal" begin
+    df_expected = expected_iqbal()
+    conds = test_conditions()
+    @test size(df_expected, 1) == 19
+    @test size(df_expected, 2) == 3
+    @test size(conds, 1) == 19
+    @test size(conds, 2) == 4
 
-        # TODO: Implement Iqbal algorithm
-        # struct Iqbal <: SolarAlgorithm end
+    for ((dt, lat, lon, alt), (exp_elev, exp_zen, exp_az)) in
+        zip(eachrow(conds), eachrow(df_expected))
+        obs = ismissing(alt) ? Observer(lat, lon) : Observer(lat, lon, altitude = alt)
 
-        # for ((dt, lat, lon, alt), (exp_elev, exp_zen, exp_az)) in
-        #     zip(eachrow(conds), eachrow(df_expected))
-        #     if ismissing(alt)
-        #         obs = Observer(lat, lon)
-        #     else
-        #         obs = Observer(lat, lon, altitude = alt)
-        #     end
-        #
-        #     res = solar_position(obs, dt, Iqbal())
-        #     @test isapprox(res.elevation, exp_elev, atol = 1e-8)
-        #     @test isapprox(res.zenith, exp_zen, atol = 1e-8)
-        #     @test isapprox(res.azimuth, exp_az, atol = 1e-8)
-        # end
+        res = solar_position(obs, dt, Iqbal())
+        @test res isa SolPos
+        @test isapprox(res.elevation, exp_elev, atol = 1.0e-6)
+        @test isapprox(res.zenith, exp_zen, atol = 1.0e-6)
+        @test isapprox(res.azimuth, exp_az, atol = 1.0e-6)
     end
 end

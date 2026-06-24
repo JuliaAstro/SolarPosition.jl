@@ -30,73 +30,51 @@ function expected_sg2()
     return DataFrame(reduce(hcat, values)', columns)
 end
 
-@testset "SG2 (not implemented)" begin
-    @test_skip begin
-        df_expected = expected_sg2()
-        conds = test_conditions()
-        @test size(df_expected, 1) == 19
-        @test size(df_expected, 2) == 5
-        @test size(conds, 1) == 19
-        @test size(conds, 2) == 4
+@testset "SG2" begin
+    df_expected = expected_sg2()
+    conds = test_conditions()
+    @test size(df_expected, 1) == 19
+    @test size(df_expected, 2) == 5
+    @test size(conds, 1) == 19
+    @test size(conds, 2) == 4
 
-        # TODO: Implement SG2 algorithm
-        # Note: SG2 is valid only between 1980 and 2030
-        # struct SG2 <: SolarAlgorithm end
+    # The reference values were generated with an independent SG2 implementation, so the
+    # tolerance matches the algorithm's stated accuracy of 0.003°.
+    for ((dt, lat, lon, alt), row) in zip(eachrow(conds), eachrow(df_expected))
+        obs = ismissing(alt) ? Observer(lat, lon) : Observer(lat, lon, altitude = alt)
 
-        # for ((dt, lat, lon, alt), row) in zip(eachrow(conds), eachrow(df_expected))
-        #     year_val = year(dt)
-        #
-        #     # Skip years outside valid range (1980-2030)
-        #     if year_val < 1980 || year_val > 2030
-        #         # These should return NaN or throw error
-        #         @test all(isnan.([row.elevation, row.zenith, row.azimuth]))
-        #         continue
-        #     end
-        #
-        #     if ismissing(alt)
-        #         obs = Observer(lat, lon)
-        #     else
-        #         obs = Observer(lat, lon, altitude = alt)
-        #     end
-        #
-        #     # SG2 includes built-in refraction correction
-        #     res = solar_position(obs, dt, SG2())
-        #     @test isapprox(res.elevation, row.elevation, atol = 1e-3)
-        #     @test isapprox(res.zenith, row.zenith, atol = 1e-3)
-        #     @test isapprox(res.azimuth, row.azimuth, atol = 1e-3)
-        #     @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1e-3)
-        #     @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1e-3)
-        # end
+        # SG2 is only defined for 1980–2030; out-of-range dates throw instead of returning.
+        if isnan(row.elevation)
+            @test_throws ArgumentError solar_position(obs, dt, SG2())
+            continue
+        end
+
+        res = solar_position(obs, dt, SG2())
+        @test res isa ApparentSolPos
+        @test isapprox(res.elevation, row.elevation, atol = 3.0e-3)
+        @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 3.0e-3)
+        @test isapprox(res.zenith, row.zenith, atol = 3.0e-3)
+        @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 3.0e-3)
+        @test isapprox(res.azimuth, row.azimuth, atol = 3.0e-3)
     end
 
     @testset "SG2 year validation" begin
-        @test_skip begin
-            # Test that SG2 throws error for years outside 1980-2030 range
-            obs = Observer(50.0, 10.0)
-
-            # Should throw error for 1960
-            dt_1960 = ZonedDateTime(1960, 1, 1, 12, 0, 0, tz"UTC")
-            @test_throws ArgumentError solar_position(obs, dt_1960, SG2())
-
-            # Should throw error for 2035
-            dt_2035 = ZonedDateTime(2035, 1, 1, 12, 0, 0, tz"UTC")
-            @test_throws ArgumentError solar_position(obs, dt_2035, SG2())
-        end
+        obs = Observer(50.0, 10.0)
+        @test_throws ArgumentError solar_position(
+            obs, ZonedDateTime(1960, 1, 1, 12, 0, 0, tz"UTC"), SG2(),
+        )
+        @test_throws ArgumentError solar_position(
+            obs, ZonedDateTime(2035, 1, 1, 12, 0, 0, tz"UTC"), SG2(),
+        )
     end
 
     @testset "SG2 site elevation" begin
-        @test_skip begin
-            # Make sure that site elevations are properly used by the SG2 algorithm
-            times = [ZonedDateTime(2020, 1, 1, 12, 0, 0, tz"UTC+2")]
-            latitude, longitude = 50.0, 10.0
+        # Make sure that site elevations are properly used by the SG2 algorithm
+        t = ZonedDateTime(2020, 1, 1, 12, 0, 0, tz"UTC+2")
+        obs_zero = Observer(50.0, 10.0, altitude = 0.0)
+        obs_high = Observer(50.0, 10.0, altitude = 4000.0)
 
-            obs_zero = Observer(latitude, longitude, altitude = 0.0)
-            obs_high = Observer(latitude, longitude, altitude = 4000.0)
-
-            zero_elevation = solar_position(obs_zero, times[1], SG2())
-            high_elevation = solar_position(obs_high, times[1], SG2())
-
-            @test zero_elevation.elevation ≠ high_elevation.elevation
-        end
+        @test solar_position(obs_zero, t, SG2()).elevation ≠
+            solar_position(obs_high, t, SG2()).elevation
     end
 end

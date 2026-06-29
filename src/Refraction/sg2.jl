@@ -57,7 +57,8 @@ struct SG2{T} <: RefractionAlgorithm where {T <: AbstractFloat}
     temperature::T
 end
 
-SG2() = SG2{Float64}(101325.0, 12.0)
+SG2{T}() where {T <: AbstractFloat} = SG2{T}(T(101325), T(12))
+SG2() = SG2{Float64}()
 
 function _refraction(model::SG2{T}, elevation_deg::T) where {T <: AbstractFloat}
     # Convert pressure from Pascal to hPa (hectopascal)

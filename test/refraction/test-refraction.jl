@@ -128,3 +128,15 @@ end
     @test pos isa ApparentSolPos
     @test pos.apparent_elevation != pos.elevation
 end
+
+@testset "Parametric default constructors" begin
+    # X{T}() builds the model with default pressure/temperature at precision T, and the
+    # refraction kernel stays in T.
+    for T in (Float32, Float64, BigFloat)
+        for M in (HUGHES, BENNETT, SG2)
+            model = M{T}()
+            @test model isa M{T}
+            @test refraction(model, T(10)) isa T
+        end
+    end
+end

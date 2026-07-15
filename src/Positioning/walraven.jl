@@ -19,7 +19,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     longitude = -obs.longitude
 
     # calculate fractional hour
-    hour_frac = fractional_hour(dt)
+    hour_frac = fractional_hour(T, dt)
     δ = year(dt) - 1980
 
     # leap year calculation (round towards zero)
@@ -34,17 +34,17 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     end
 
     # angular position in orbit [rad]
-    θ = 2 * T(π) * time / 365.25
+    θ = 2 * T(π) * time / T(365.25)
 
     # mean anomaly [rad]
-    g = -0.031271 - 4.53963e-7 * time + θ
+    g = T(-0.031271) - T(4.53963e-7) * time + θ
 
     # longitude of the sun [rad]
     lon_sun = (
-        4.900968 +
-            3.67474e-7 * time +
-            (0.033434 - 2.3e-9 * time) * sin(g) +
-            0.000349 * sin(2 * g) +
+        T(4.900968) +
+            T(3.67474e-7) * time +
+            (T(0.033434) - T(2.3e-9) * time) * sin(g) +
+            T(0.000349) * sin(2 * g) +
             θ
     )
 
@@ -60,10 +60,10 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     end
 
     # declination [rad]
-    d = asin(sin_lon_sun * sin_ϵ)
+    d = asin(unit_clamp(sin_lon_sun * sin_ϵ))
 
     # sidereal time [rad]
-    side_t = 1.759335 + 2 * T(π) * (time / 365.25 - δ) + 3.694e-7 * time
+    side_t = T(1.759335) + 2 * T(π) * (time / T(365.25) - δ) + T(3.694e-7) * time
     if side_t >= 2 * T(π)
         side_t -= 2 * T(π)
     end
@@ -80,11 +80,11 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     (sin_ha, cos_ha) = sincos(ha)
 
     # elevation [rad]
-    el = asin(obs.sin_lat * sin_d + obs.cos_lat * cos_d * cos_ha)
+    el = asin(unit_clamp(obs.sin_lat * sin_d + obs.cos_lat * cos_d * cos_ha))
     (sin_el, cos_el) = sincos(el)
 
     # azimuth [deg] - initial calculation
-    az = rad2deg(asin(cos_d * sin_ha / cos_el))
+    az = rad2deg(asin(unit_clamp(cos_d * sin_ha / cos_el)))
 
     # azimuth quadrant assignment - Spencer (1989) correction for all longitudes
     cos_az = sin_d - sin_el * obs.sin_lat

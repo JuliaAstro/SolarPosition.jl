@@ -16,3 +16,4 @@ SolarPosition = {path = ".."}
 
 [compat]
 CairoMakie = "0.15.13"
+DataFrames = "1.8.2"

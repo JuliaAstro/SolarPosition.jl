@@ -21,5 +21,6 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 SolarPosition = { path = ".." }
 
 [compat]
+CairoMakie = "0.15.13"
 Documenter = "1"
 DocumenterCitations = "1"

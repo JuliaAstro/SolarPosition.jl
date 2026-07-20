@@ -18,4 +18,5 @@ SolarPosition = { path = ".." }
 
 [compat]
 Aqua = "0.8"
+CairoMakie = "0.15.13"
 JET = "0.9, 0.10, 0.11"

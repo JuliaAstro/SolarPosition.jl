@@ -13,3 +13,9 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [sources]
 SolarPosition = {path = ".."}
+
+[compat]
+CairoMakie = "0.15.13"
+DataFrames = "1.8.2"
+ModelingToolkit = "11.34.1"
+Plots = "1.41.6"

@@ -94,8 +94,10 @@ end
 
 ### Key Implementation Notes
 
-1. **Use helper functions** from `utils.jl`:
-   - `fractional_hour(dt)` - Convert time to decimal hours
+1. **Use helper functions** from `utils.jl` and `timebase.jl`:
+   - `fractional_hour(T, dt)` - Convert time to decimal hours at precision `T`
+   - `julian_day_j2000(T, dt)` / `julian_century(T, dt)` - Magnitude-safe day/century counts since J2000.0
+   - `unit_clamp(x)` - Clamp inverse-trig arguments into `[-1, 1]`
    - `deg2rad(x)` / `rad2deg(x)` - Angle conversions
 
 2. **Observer properties** are pre-computed for efficiency:

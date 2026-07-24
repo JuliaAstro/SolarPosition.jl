@@ -85,7 +85,8 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::PSA) where {T}
     (sin_ϵ, cos_ϵ) = sincos(ϵ)
     (sin_λₑ, cos_λₑ) = sincos(λₑ)
     ra = atan(cos_ϵ * sin_λₑ, cos_λₑ)                                   # Eq. 8
-    ra = mod2pi(ra)
+    # wrap atan output [-π, π] to [0, 2π); type-generic unlike mod2pi (e.g. Float128)
+    ra = ifelse(ra < 0, ra + 2 * T(π), ra)
     δ = asin(unit_clamp(sin_ϵ * sin_λₑ))                                # Eq. 9
 
     # computes the local coordinates: azimuth (γ) and zenith angle (θz)

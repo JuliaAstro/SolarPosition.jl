@@ -39,8 +39,7 @@ end
     return julian_day_j2000(T, dt) / T(36525)
 end
 
-# Hours elapsed since civil midnight (range [0, 24)), at precision T. Type-generic counterpart
-# of the `fractional_hour(::DateTime)` in utils.jl.
+# Hours elapsed since civil midnight (range [0, 24)), at precision T.
 @inline function fractional_hour(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
     return T(dt.instant.periods.value % 86_400_000) / T(3_600_000)
 end

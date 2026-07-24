@@ -263,12 +263,17 @@ pos_noaa = solar_position(obs, dt, NOAA())
 The result element type follows the `Observer{T}` element type `T`, and the computation runs
 at that precision:
 - **`Float64`** (default): reference accuracy for every algorithm.
-- **`BigFloat`** (and other wide types, e.g. `Float128`): genuine extended precision for every
-  algorithm — use a higher `setprecision` for more correct digits.
+- **`BigFloat`**: genuine extended precision for every algorithm — use a higher
+  `setprecision` for more correct digits. Note that ΔT is always evaluated in `Float64` (it
+  is only known to ~seconds anyway), which bounds the achievable absolute accuracy
+  regardless of `T`.
+- **`Float128`** (Quadmath.jl): quad precision for `PSA`, `SPA`, and `Walraven` (~1e-30°).
+  `NOAA` and `USNO` currently give wrong results at `Float128` because Quadmath.jl's `rem`
+  uses round-to-nearest semantics, which breaks Base's `sind`/`cosd` degree reduction.
 - **`Float32`**: accurate and faster for every algorithm (a magnitude-safe time base keeps full
   intra-day resolution instead of riding on the ~2.45e6 Julian Date).
-- **`Float16`**: experimental — its range/precision is too small for these algorithms
-  (overflow and inverse-trig domain errors are likely). Use `Float32` or wider.
+- **`Float16`**: unusable — algorithm coefficients overflow its range, so results are silently
+  `NaN`. Use `Float32` or wider.
 
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """

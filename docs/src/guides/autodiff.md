@@ -104,19 +104,20 @@ annual irradiance than the best fixed panel from the previous example.
 
 One day of operation makes the behaviour concrete. The site is the Van Gogh Museum in
 Amsterdam with the tracker axis aimed due south. Negative rotation faces the panel
-east. All curves run from 00:00 to 24:00. The tracker stows flat overnight, so its
-rotation steps from the stow position to the morning limit at sunrise and back at
-sunset. The upper panel compares the tracker rotation against the analytical rotation
-computed from first principles with only the solstice declination, the latitude, and
-the hour angle, ignoring the equation of time. The dashed curve lies exactly on the
-solid one until the ±60° limits cut it off, while the analytical ideal keeps following
-the sun below the horizon and wraps at ±180° late in the evening when the sun passes
-due north. The lower panel shows the sun elevation, negative at night, and the angle
-of incidence between the panel normal and the sun. During the day the angle of
-incidence touches zero exactly when the sun crosses due east and due west, because
-only then does the sun lie in the tracker's rotation plane, and its local maximum at
-noon equals the solar zenith angle because the panel is flat at that moment. At night
-it exceeds 90° since the sun is behind the stowed panel:
+east. All curves run from 00:00 to 24:00, with the tracker holding its sunrise and
+sunset angles overnight. The upper panel compares the tracker rotation against the
+analytical rotation computed from first principles with only the solstice declination,
+the latitude, and the hour angle, ignoring the equation of time. The dashed curve lies
+exactly on the solid one until the ±60° limits cut it off, while the analytical ideal
+keeps following the sun below the horizon and wraps at ±180° late in the evening when
+the sun passes due north. The lower panel shows the sun elevation, negative at night,
+and the angle of incidence between the panel normal and the sun, for the tracker and
+for a fixed panel at 30° tilt facing south. The tracked angle of incidence touches
+zero exactly when the sun crosses due east and due west, because only then does the
+sun lie in the tracker's rotation plane, and its local maximum at noon equals the
+solar zenith angle because the panel is flat at that moment. The fixed panel aligns
+with the sun only once, near noon. At night both exceed 90° since the sun is behind
+the panels:
 
 ```@example autodiff
 using CairoMakie
@@ -128,19 +129,27 @@ day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 22))
 day_pos = solar_position(vgm, day, PSA(), NoRefraction())
 hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
 
-# tracker rotation, stowed flat while the sun is down
-rotation = [p.elevation > 0 ?
-    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0) : 0.0
-    for p in day_pos]
+# tracker rotation, held at its sunrise and sunset angles overnight
+rot(p) = clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0)
+sunup = [p.elevation > 0 for p in day_pos]
+first_up, last_up = findfirst(sunup), findlast(sunup)
+rotation = [rot(day_pos[clamp(i, first_up, last_up)]) for i in eachindex(day_pos)]
+
 elevation = [p.elevation for p in day_pos]
 
-# angle of incidence against the actual panel orientation, stowed flat at night
+# angle of incidence against the actual panel orientation
 function cos_aoi(p, R, axis_azimuth)
     panel_azimuth = axis_azimuth + (R < 0 ? -90 : 90)
     return cosd(p.zenith) * cosd(R) +
         sind(p.zenith) * sind(abs(R)) * cosd(p.azimuth - panel_azimuth)
 end
 aoi = [acosd(clamp(cos_aoi(p, R, axis_south), -1, 1)) for (p, R) in zip(day_pos, rotation)]
+
+# fixed reference panel at 30 degree tilt facing south
+aoi_fixed = [
+    acosd(clamp(cosd(p.zenith) * cosd(30) + sind(p.zenith) * sind(30) * cosd(p.azimuth - 180), -1, 1))
+        for p in day_pos
+]
 
 # analytical ideal rotation from declination, latitude, and hour angle alone,
 # with one NaN inserted at the 180 degree wrap
@@ -155,8 +164,8 @@ for i in 2:length(analytical)
     abs(analytical[i] - analytical[i - 1]) > 180 && (analytical[i - 1] = NaN)
 end
 
-# colorblind safe hues from the Wong palette, validated for each within panel pair
-blue, orange, green, vermilion = "#0072B2", "#E69F00", "#009E73", "#D55E00"
+# colorblind safe hues from the Wong palette, validated for each within panel group
+blue, orange, green, vermilion, skyblue = "#0072B2", "#E69F00", "#009E73", "#D55E00", "#56B4E9"
 
 fig = Figure(size = (700, 760))
 ax1 = Axis(fig[1, 1]; ylabel = "degrees", xticks = 0:3:24,
@@ -172,7 +181,11 @@ axislegend(ax1; position = :lt)
 
 ax2 = Axis(fig[2, 1]; xlabel = "hour of day, UTC", ylabel = "degrees", xticks = 0:3:24)
 lines!(ax2, hours, elevation; color = vermilion, linewidth = 3, label = "sun elevation")
-lines!(ax2, hours, aoi; color = green, linewidth = 3, label = "angle of incidence")
+lines!(ax2, hours, aoi; color = green, linewidth = 3, label = "angle of incidence, tracked")
+lines!(
+    ax2, hours, aoi_fixed;
+    color = skyblue, linewidth = 3, linestyle = :dot, label = "angle of incidence, fixed 30°",
+)
 hlines!(ax2, [0]; linestyle = :dash, color = :gray)
 xlims!(ax2, 0, 24)
 axislegend(ax2; position = :rb)

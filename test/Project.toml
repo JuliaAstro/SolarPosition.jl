@@ -3,6 +3,7 @@ Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
@@ -14,7 +15,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [sources]
-SolarPosition = { path = ".." }
+SolarPosition = {path = ".."}
 
 [compat]
 Aqua = "0.8"

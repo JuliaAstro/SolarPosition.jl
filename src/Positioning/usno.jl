@@ -31,7 +31,7 @@ end
 USNO() = USNO(67.0, 1)  # default delta_t value and gmst_option
 
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: AbstractFloat}
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: Real}
     δt::T = if alg.delta_t === nothing
         calculate_deltat(T, dt)
     else

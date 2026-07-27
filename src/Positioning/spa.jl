@@ -65,7 +65,7 @@ multiple times at the same location.
 # Internal Fields
 $(TYPEDFIELDS)
 """
-struct SPAObserver{T <: AbstractFloat} <: AbstractObserver{T}
+struct SPAObserver{T <: Real} <: AbstractObserver{T}
     "Geodetic latitude (+N)"
     latitude::T
     "Longitude (+E)"
@@ -87,7 +87,7 @@ struct SPAObserver{T <: AbstractFloat} <: AbstractObserver{T}
     "Cached y term for parallax correction"
     y::T
 
-    function SPAObserver{T}(lat::T, lon::T, alt::T = zero(T)) where {T <: AbstractFloat}
+    function SPAObserver{T}(lat::T, lon::T, alt::T = zero(T)) where {T <: Real}
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
         (sin_lat, cos_lat) = sincos(lat_rad)
@@ -102,9 +102,9 @@ struct SPAObserver{T <: AbstractFloat} <: AbstractObserver{T}
     end
 end
 
-SPAObserver(lat::T, lon::T; altitude = 0.0) where {T <: AbstractFloat} =
+SPAObserver(lat::T, lon::T; altitude = 0.0) where {T <: Real} =
     SPAObserver{T}(lat, lon, altitude)
-SPAObserver(lat::T, lon::T, alt::T) where {T <: AbstractFloat} = SPAObserver{T}(lat, lon, alt)
+SPAObserver(lat::T, lon::T, alt::T) where {T <: Real} = SPAObserver{T}(lat, lon, alt)
 
 
 # heliocentric longitude coefficients (L0-L5)
@@ -112,7 +112,7 @@ include("spa_coefficients.jl")
 
 
 # sum of A * cos(B + C*x); per-element T() keeps the accumulation in T (coeffs are Float64)
-@inline function sum_periodic_terms(coeffs::Matrix, x::T) where {T <: AbstractFloat}
+@inline function sum_periodic_terms(coeffs::Matrix, x::T) where {T <: Real}
     s = zero(T)
     for i in axes(coeffs, 1)
         s += T(coeffs[i, 1]) * cos(T(coeffs[i, 2]) + T(coeffs[i, 3]) * x)
@@ -321,7 +321,7 @@ end
 # - ε: true ecliptic obliquity (degrees)
 # - δψ: nutation in longitude (degrees)
 # - jme: Julian Ephemeris Millennium
-function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
+function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: Real}
     # magnitude-safe time base: day-count `n` split into integer + fraction (kept split for
     # the sidereal term), ΔT folded as a day-fraction
     (n_int, n_frac) = julian_day_j2000_split(T, dt)
@@ -365,7 +365,7 @@ function _solar_position(
         obs::SPAObserver{T},
         dt::DateTime,
         alg::SPA,
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     δt::T = if alg.delta_t === nothing
         calculate_deltat(T, dt)
     else
@@ -409,7 +409,7 @@ function _solar_position(
     return SolPos{T}(az, e0, θz0)
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: AbstractFloat}
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: Real}
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     return _solar_position(spa_obs, dt, alg)
 end
@@ -419,7 +419,7 @@ function _solar_position(
         dt,
         alg::SPA,
         ::DefaultRefraction,
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     return _solar_position(
         obs,
         dt,
@@ -438,7 +438,7 @@ function solar_position!(
         dts::AbstractVector{DateTime},
         alg::SPA,
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {S <: AbstractSolPos, T <: AbstractFloat}
+    ) where {S <: AbstractSolPos, T <: Real}
     spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
     @inbounds for i in eachindex(dts, pos)
         pos[i] = solar_position(spa_obs, dts[i], alg, refraction)

@@ -66,6 +66,29 @@ free, and costs roughly 100× `Float64`. `BigFloat` is arbitrary precision backe
 MPFR, allocates every intermediate result, and costs another 3× to 5× on top of
 `Float128` at 256 bits.
 
+## Automatic differentiation
+
+The element type is only constrained to `Real`, so dual numbers flow through every
+algorithm and solar positions are differentiable with
+[ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl). No extension package is
+needed. This gives exact derivatives of elevation or azimuth with respect to latitude,
+longitude, and altitude, which is useful for tracker and panel orientation
+optimization:
+
+```@example precision
+using ForwardDiff
+
+grad = ForwardDiff.gradient(
+    x -> solar_position(Observer(x[1], x[2]), dt, SPA(), NoRefraction()).elevation,
+    [45.0, 10.0],
+)
+```
+
+Gradients also pass through refraction models, and nested duals give second
+derivatives. Time is a `DateTime`, not a number, so derivatives with respect to time
+are not available through this route. Differentiate through a wrapper that maps a
+number to a `DateTime` if you need them.
+
 ## Combining precision with multithreading
 
 Precision and the [OhMyThreads extension](@ref parallel-computing) compose. Pass a

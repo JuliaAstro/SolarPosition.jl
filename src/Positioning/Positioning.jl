@@ -45,7 +45,7 @@ defined by inheriting from this abstract type, see for example [`SPAObserver`](@
 struct MyObserver <: AbstractObserver{Float64} end
 ```
 """
-abstract type AbstractObserver{T <: AbstractFloat} end
+abstract type AbstractObserver{T <: Real} end
 
 """
     $(TYPEDEF)
@@ -79,7 +79,7 @@ The `horizon` parameter can be specified as:
 - A number in degrees (e.g., `0.5667`)
 - A `degrees=>arcminutes` pair (e.g., `0=>34` for 34 arcminutes = 0.5667°)
 """
-struct Observer{T <: AbstractFloat} <: AbstractObserver{T}
+struct Observer{T <: Real} <: AbstractObserver{T}
     "Geodetic latitude (+N)"
     latitude::T
     "Longitude (+E)"
@@ -102,7 +102,7 @@ struct Observer{T <: AbstractFloat} <: AbstractObserver{T}
             lon::T,
             alt::T = zero(T),
             horiz::T = zero(T),
-        ) where {T <: AbstractFloat}
+        ) where {T <: Real}
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)
         (sin_lat, cos_lat) = sincos(lat_rad)
@@ -116,15 +116,21 @@ _horizon_to_degrees(h::Real) = h
 
 # converting constructor, so Observer{Float128}(1.0, 2.0) and Observer{Float32}(45, 10)
 # work without converting every argument at the call site
-Observer{T}(lat::Real, lon::Real, alt::Real = 0.0, horiz = 0.0) where {T <: AbstractFloat} =
+Observer{T}(lat::Real, lon::Real, alt::Real = 0.0, horiz = 0.0) where {T <: Real} =
     Observer{T}(T(lat), T(lon), T(alt), T(_horizon_to_degrees(horiz)))
 
-Observer(lat::T, lon::T; altitude = 0.0, horizon = 0.0) where {T} =
-    Observer{T}(lat, lon, T(altitude), T(_horizon_to_degrees(horizon)))
-Observer(lat::T, lon::T, alt::T) where {T} = Observer{T}(lat, lon, alt)
-Observer(lat::T, lon::T, alt::T, horiz::T) where {T} = Observer{T}(lat, lon, alt, horiz)
-Observer(lat::T, lon::T, alt::T, horiz::Pair{<:Real, <:Real}) where {T} =
-    Observer{T}(lat, lon, alt, T(_horizon_to_degrees(horiz)))
+# the element type promotes over lat/lon/alt and maps to a float type, so integer
+# arguments and mixed inputs such as a ForwardDiff.Dual latitude with a Float64
+# longitude both work
+_observer_eltype(args...) = float(promote_type(map(typeof, args)...))
+
+# the Bool default is promotion neutral, so Observer(45.0f0, 10.0f0) stays Float32
+Observer(lat::Real, lon::Real; altitude::Real = false, horizon = 0.0) =
+    Observer{_observer_eltype(lat, lon, altitude)}(lat, lon, altitude, horizon)
+Observer(lat::Real, lon::Real, alt::Real) =
+    Observer{_observer_eltype(lat, lon, alt)}(lat, lon, alt)
+Observer(lat::Real, lon::Real, alt::Real, horiz::Union{Real, Pair{<:Real, <:Real}}) =
+    Observer{_observer_eltype(lat, lon, alt)}(lat, lon, alt, horiz)
 
 Base.show(io::IO, obs::Observer) = print(
     io,
@@ -145,7 +151,7 @@ observer and time.
 # Fields
 $(TYPEDFIELDS)
 """
-struct SolPos{T} <: AbstractSolPos where {T <: AbstractFloat}
+struct SolPos{T} <: AbstractSolPos where {T <: Real}
     "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
     azimuth::T
     "Elevation (degrees, range [-90, 90])"
@@ -163,7 +169,7 @@ Also includes apparent elevation and zenith angles.
 # Fields
 $(TYPEDFIELDS)
 """
-struct ApparentSolPos{T} <: AbstractApparentSolPos where {T <: AbstractFloat}
+struct ApparentSolPos{T} <: AbstractApparentSolPos where {T <: Real}
     "Azimuth (degrees, 0=N, +clockwise, range [-180, 180])"
     azimuth::T
     "Elevation (degrees, range [-90, 90])"
@@ -285,6 +291,8 @@ at that precision:
   full intra-day resolution instead of riding on the ~2.45e6 Julian Date.
 - **`Float16`**: unusable — algorithm coefficients overflow its range, so results are silently
   `NaN`. Use `Float32` or wider.
+- **`ForwardDiff.Dual`** and other `Real` number types work too, so solar positions are
+  differentiable with respect to latitude, longitude, and altitude.
 
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """
@@ -316,7 +324,7 @@ function solar_position(
         dt::DateTime,
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     return _solar_position(obs, dt, alg, refraction)
 end
 
@@ -325,7 +333,7 @@ function solar_position(
         dt::ZonedDateTime,
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     return solar_position(obs, DateTime(dt, UTC), alg, refraction)
 end
 
@@ -373,7 +381,7 @@ function solar_position(
         dts::AbstractVector{Union{DateTime, ZonedDateTime}},
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
@@ -385,7 +393,7 @@ function solar_position(
         dts::AbstractVector{DateTime},
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
@@ -397,7 +405,7 @@ function solar_position(
         dts::AbstractVector{ZonedDateTime},
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     RetType = result_type(typeof(alg), typeof(refraction), T)
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
@@ -432,7 +440,7 @@ function solar_position!(
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction();
         dt_col::Symbol = :datetime,
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     tbl = Tables.columntable(table)
     if !haskey(tbl, dt_col)
         throw(ArgumentError("Input table must have a $(dt_col) column"))
@@ -461,7 +469,7 @@ function solar_position(
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction();
         kwargs...,
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     table_copy = copy(table)
     solar_position!(table_copy, obs, alg, refraction; kwargs...)
     return table_copy

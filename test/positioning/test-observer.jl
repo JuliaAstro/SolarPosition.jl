@@ -69,4 +69,30 @@
         obs3 = Observer(45.0, 10.0, 100.0, -1 => 0)
         @test obs3.horizon ≈ -1.0 atol = 1.0e-10
     end
+
+    @testset "Converting Observer{T} constructor" begin
+        # arguments of any Real type convert to the requested precision
+        obs1 = Observer{Float32}(45.0, 10.0)
+        @test obs1 isa Observer{Float32}
+        @test obs1.latitude === Float32(45.0)
+        @test obs1.sin_lat === sincos(deg2rad(Float32(45.0)))[1]
+
+        # integer arguments
+        obs2 = Observer{Float64}(45, 10)
+        @test obs2 isa Observer{Float64}
+        @test obs2.latitude === 45.0
+
+        # altitude and Pair horizon convert too
+        obs3 = Observer{BigFloat}(45.0, 10.0, 100.0, 0 => 34)
+        @test obs3 isa Observer{BigFloat}
+        @test obs3.horizon ≈ big"0.5666666666666667" atol = 1.0e-10
+
+        # arguments that already match T give the identical result
+        @test Observer{Float64}(45.0, 10.0) == Observer(45.0, 10.0)
+        @test Observer{Float32}(45.0, 10.0) == Observer(45.0f0, 10.0f0)
+
+        # integer horizon through the keyword constructor
+        obs4 = Observer(45.0, 10.0; horizon = 1)
+        @test obs4.horizon === 1.0
+    end
 end

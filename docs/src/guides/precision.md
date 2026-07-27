@@ -10,12 +10,16 @@ using Dates
 
 dt = DateTime(2024, 6, 21, 12, 0, 0)
 
-obs32 = Observer(45.0f0, 10.0f0)               # Float32
+obs32 = Observer{Float32}(45.0, 10.0)          # explicit precision
 obs64 = Observer(45.0, 10.0)                   # Float64, the default
-obsbig = Observer(big"45.0", big"10.0")        # BigFloat
+obsbig = Observer{BigFloat}(45.0, 10.0)
 
 solar_position(obs32, dt).elevation            # Float32 result
 ```
+
+The element type is taken from the arguments, so `Observer(45.0f0, 10.0f0)` also
+constructs an `Observer{Float32}`. The explicit `Observer{T}` form converts its
+arguments and avoids literal suffixes.
 
 A magnitude-safe time base keeps full intra-day resolution at every precision. Time is
 carried as an exact integer day count since J2000 plus a fraction of a day, so low
@@ -74,7 +78,7 @@ using OhMyThreads
 using Quadmath
 using Dates
 
-obs = Observer(Float128(45.0), Float128(10.0))
+obs = Observer{Float128}(45.0, 10.0)
 times = collect(DateTime(2024, 1, 1):Minute(1):DateTime(2024, 12, 31))
 
 positions = solar_position(obs, times, SPA(), NoRefraction(), DynamicScheduler())

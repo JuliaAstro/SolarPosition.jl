@@ -161,28 +161,41 @@ axis = optimize_axis(150.0)
 The optimum is a true north to south axis, and the tracker collects roughly 38 % more
 annual irradiance than the best fixed panel from the previous example.
 
-The rotation over one day makes the behaviour concrete. Negative rotation faces the
-panel east. The tracker sits at the −60° limit after sunrise, sweeps through flat at
-solar noon, and holds the +60° limit until sunset. At night the rotation is left
-undefined:
+One day of operation makes the behaviour concrete. The site is the Van Gogh Museum in
+Amsterdam with the tracker axis aimed due south. Negative rotation faces the panel
+east. The tracker sits at the −60° limit after sunrise, sweeps through flat at solar
+noon, and holds the +60° limit until sunset. The angle of incidence between the panel
+normal and the sun touches zero exactly when the sun crosses due east and due west,
+because only then does the sun lie in the tracker's rotation plane, and its local
+maximum at noon equals the solar zenith angle because the panel is flat at that
+moment. At night all three curves are left undefined:
 
 ```@example precision
 using CairoMakie
 
+vgm = Observer(52.35888, 4.88185; altitude = 100.0)
+axis_south = 180.0
+
 day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 21, 23, 59))
-day_pos = solar_position(obs64, day, PSA(), NoRefraction())
+day_pos = solar_position(vgm, day, PSA(), NoRefraction())
 
 rotation = [p.elevation > 0 ?
-    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis)), -60.0, 60.0) : NaN
+    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0) : NaN
+    for p in day_pos]
+elevation = [p.elevation > 0 ? p.elevation : NaN for p in day_pos]
+aoi = [p.elevation > 0 ? acosd(clamp(cos_aoi_tracked(p, axis_south), -1, 1)) : NaN
     for p in day_pos]
 hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
 
-fig = Figure(size = (700, 350))
-ax = Axis(fig[1, 1]; xlabel = "hour of day, UTC", ylabel = "tracker rotation in degrees",
-    title = "Horizontal single axis tracker on June 21 at 45°N 10°E", xticks = 0:3:24)
-lines!(ax, hours, rotation)
+fig = Figure(size = (700, 380))
+ax = Axis(fig[1, 1]; xlabel = "hour of day, UTC", ylabel = "degrees",
+    title = "South aimed tracker at the Van Gogh Museum on June 21", xticks = 0:3:24)
+lines!(ax, hours, rotation; label = "tracker rotation")
+lines!(ax, hours, elevation; label = "sun elevation")
+lines!(ax, hours, aoi; label = "angle of incidence")
 hlines!(ax, [-60, 60]; linestyle = :dash, color = :gray)
 xlims!(ax, 0, 24)
+axislegend(ax; position = :rb)
 fig
 ```
 

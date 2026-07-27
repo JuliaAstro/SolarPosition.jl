@@ -40,6 +40,7 @@ makedocs(;
         "Guides" => [
             "guides/getting-started.md",
             "guides/precision.md",
+            "guides/autodiff.md",
             "guides/plotting.md",
             "guides/parallel.md",
             "guides/modelingtoolkit.md",

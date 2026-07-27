@@ -161,6 +161,31 @@ axis = optimize_axis(150.0)
 The optimum is a true north to south axis, and the tracker collects roughly 38 % more
 annual irradiance than the best fixed panel from the previous example.
 
+The rotation over one day makes the behaviour concrete. Negative rotation faces the
+panel east. The tracker sits at the −60° limit after sunrise, sweeps through flat at
+solar noon, and holds the +60° limit until sunset. At night the rotation is left
+undefined:
+
+```@example precision
+using CairoMakie
+
+day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 21, 23, 59))
+day_pos = solar_position(obs64, day, PSA(), NoRefraction())
+
+rotation = [p.elevation > 0 ?
+    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis)), -60.0, 60.0) : NaN
+    for p in day_pos]
+hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
+
+fig = Figure(size = (700, 350))
+ax = Axis(fig[1, 1]; xlabel = "hour of day, UTC", ylabel = "tracker rotation in degrees",
+    title = "Horizontal single axis tracker on June 21 at 45°N 10°E", xticks = 0:3:24)
+lines!(ax, hours, rotation)
+hlines!(ax, [-60, 60]; linestyle = :dash, color = :gray)
+xlims!(ax, 0, 24)
+fig
+```
+
 ## Combining precision with multithreading
 
 Precision and the [OhMyThreads extension](@ref parallel-computing) compose. Pass a

@@ -1,3 +1,8 @@
+# slow government and DOI redirect sites regularly exceed the 20 s default and
+# flake CI, for example doi.org and aa.usno.navy.mil
+timeout = 60
+max_retries = 4
+
 exclude = [
   "@ref",
   "@cite",

@@ -9,7 +9,7 @@ _frac_to_dt(dt_midnight, frac) =
     dt_midnight + Dates.Second(round(Int, frac * 86_400))
 
 # Returns (ν, α, δ): apparent sidereal time, geocentric right ascension, declination (degrees).
-function _compute_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: AbstractFloat}
+function _compute_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: Real}
     srt = _compute_spa_srt_parameters(T, dt, δt)
     return (srt.ν, srt.α, srt.δ)
 end
@@ -19,7 +19,7 @@ function _transit_sunrise_sunset(
         obs::Observer{T},
         dt::DateTime,
         alg::SPA,
-    ) where {T <: AbstractFloat, R <: DateTime}
+    ) where {T <: Real, R <: DateTime}
     return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
 end
 
@@ -28,7 +28,7 @@ function _transit_sunrise_sunset(
         obs::Observer{T},
         dt::DateTime,
         alg::SPA,
-    ) where {T <: AbstractFloat}
+    ) where {T <: Real}
     return _transit_sunrise_sunset_impl(ZonedDateTime, obs, dt, alg, tz)
 end
 
@@ -38,7 +38,7 @@ function _transit_sunrise_sunset_impl(
         dt::DateTime,
         alg::SPA,
         tz::Union{Nothing, TimeZone},
-    ) where {T <: AbstractFloat, R <: Union{DateTime, ZonedDateTime}}
+    ) where {T <: Real, R <: Union{DateTime, ZonedDateTime}}
     """Calculate the sun transit, sunrise, and sunset
     for a given date at an Observer location using the SPA algorithm.
 

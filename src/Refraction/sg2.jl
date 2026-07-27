@@ -50,17 +50,17 @@ refraction_correction = refraction(sg2, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-struct SG2{T} <: RefractionAlgorithm where {T <: AbstractFloat}
+struct SG2{T} <: RefractionAlgorithm where {T <: Real}
     "Annual average atmospheric pressure [Pascal]"
     pressure::T
     "Annual average temperature [°C]"
     temperature::T
 end
 
-SG2{T}() where {T <: AbstractFloat} = SG2{T}(T(101325), T(12))
+SG2{T}() where {T <: Real} = SG2{T}(T(101325), T(12))
 SG2() = SG2{Float64}()
 
-function _refraction(model::SG2{T}, elevation_deg::T) where {T <: AbstractFloat}
+function _refraction(model::SG2{T}, elevation_deg::Real) where {T <: Real}
     # Convert pressure from Pascal to hPa (hectopascal)
     pressure_hPa = model.pressure / T(100.0)
 

@@ -43,7 +43,7 @@ This will depend on the solar position algorithm being used.
 struct DefaultRefraction <: RefractionAlgorithm end
 
 """
-    refraction(model::RefractionAlgorithm, elevation::T) where {T<:AbstractFloat}
+    refraction(model::RefractionAlgorithm, elevation::T) where {T<:Real}
 
 Apply atmospheric refraction correction to the given elevation angle(s).
 
@@ -63,7 +63,7 @@ correction = refraction(hughes, elevation)
 apparent_elevation = elevation + correction
 ```
 """
-function refraction(model::RefractionAlgorithm, elevation::T) where {T <: AbstractFloat}
+function refraction(model::RefractionAlgorithm, elevation::T) where {T <: Real}
     return _refraction(model, elevation)
 end
 

@@ -64,7 +64,7 @@ function transit_sunrise_sunset(
         obs::Observer{T},
         dt::DateTime,
         alg::SolarAlgorithm = SPA(),
-    )::TransitSunriseSunset{DateTime} where {T <: AbstractFloat}
+    )::TransitSunriseSunset{DateTime} where {T <: Real}
     return _transit_sunrise_sunset(DateTime, obs, dt, alg)
 end
 
@@ -72,7 +72,7 @@ function transit_sunrise_sunset(
         obs::Observer{T},
         dt::Date,
         alg::SolarAlgorithm = SPA(),
-    )::TransitSunriseSunset{DateTime} where {T <: AbstractFloat}
+    )::TransitSunriseSunset{DateTime} where {T <: Real}
     return transit_sunrise_sunset(obs, DateTime(dt), alg)
 end
 
@@ -80,7 +80,7 @@ function transit_sunrise_sunset(
         obs::Observer{T},
         zdt::ZonedDateTime,
         alg::SolarAlgorithm = SPA(),
-    )::TransitSunriseSunset{ZonedDateTime} where {T <: AbstractFloat}
+    )::TransitSunriseSunset{ZonedDateTime} where {T <: Real}
     return _transit_sunrise_sunset(timezone(zdt), obs, DateTime(zdt, UTC), alg)
 end
 

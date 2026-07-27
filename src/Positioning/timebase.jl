@@ -20,7 +20,7 @@ end
 
 # Days since J2000.0 (noon), i.e. jd - 2451545.0, at precision T. Integer day part is exact;
 # only the [0, 1) intra-day fraction carries T rounding.
-@inline function julian_day_j2000(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
+@inline function julian_day_j2000(::Type{T}, dt::DateTime) where {T <: Real}
     (day, msofday) = _j2000_day_and_ms(dt)
     return T(day) + T(msofday) / T(86_400_000)
 end
@@ -29,17 +29,17 @@ end
 # separately, so the fraction keeps full T precision instead of being swamped by the integer
 # part. Needed where the day-count is multiplied by a large factor (e.g. sidereal time) at low
 # precision.
-@inline function julian_day_j2000_split(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
+@inline function julian_day_j2000_split(::Type{T}, dt::DateTime) where {T <: Real}
     (day, msofday) = _j2000_day_and_ms(dt)
     return (T(day), T(msofday) / T(86_400_000))
 end
 
 # Julian centuries since J2000.0 (magnitude ~0.2 for dates near 2000), at precision T.
-@inline function julian_century(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
+@inline function julian_century(::Type{T}, dt::DateTime) where {T <: Real}
     return julian_day_j2000(T, dt) / T(36525)
 end
 
 # Hours elapsed since civil midnight (range [0, 24)), at precision T.
-@inline function fractional_hour(::Type{T}, dt::DateTime) where {T <: AbstractFloat}
+@inline function fractional_hour(::Type{T}, dt::DateTime) where {T <: Real}
     return T(dt.instant.periods.value % 86_400_000) / T(3_600_000)
 end

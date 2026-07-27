@@ -63,17 +63,17 @@ refraction_correction = refraction(hughes, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-struct HUGHES{T} <: RefractionAlgorithm where {T <: AbstractFloat}
+struct HUGHES{T} <: RefractionAlgorithm where {T <: Real}
     "Annual average atmospheric pressure [Pascal]"
     pressure::T
     "Annual average temperature [°C]"
     temperature::T
 end
 
-HUGHES{T}() where {T <: AbstractFloat} = HUGHES{T}(T(101325), T(10))
+HUGHES{T}() where {T <: Real} = HUGHES{T}(T(101325), T(10))
 HUGHES() = HUGHES{Float64}()
 
-function _refraction(model::HUGHES{T}, elevation_deg::T) where {T <: AbstractFloat}
+function _refraction(model::HUGHES{T}, elevation_deg::Real) where {T <: Real}
     # this avoids numerical instability at very high elevations
     if elevation_deg > T(85.0)
         return T(0.0)

@@ -53,7 +53,7 @@ refraction_correction = refraction(spa, elevation)
 apparent_elevation = elevation + refraction_correction
 ```
 """
-@kwdef struct SPARefraction{T <: AbstractFloat} <: RefractionAlgorithm
+@kwdef struct SPARefraction{T <: Real} <: RefractionAlgorithm
     "Annual average atmospheric pressure [Pascal]"
     pressure::T = 101325.0
     "Annual average temperature [°C]"
@@ -62,10 +62,10 @@ apparent_elevation = elevation + refraction_correction
     atmos_refract::T = -0.5667
 end
 
-SPARefraction(pressure::T, temperature::T) where {T <: AbstractFloat} =
+SPARefraction(pressure::T, temperature::T) where {T <: Real} =
     SPARefraction{T}(pressure, temperature, T(-0.5667))
 
-function _refraction(model::SPARefraction{T}, elevation_deg::T) where {T <: AbstractFloat}
+function _refraction(model::SPARefraction{T}, elevation_deg::Real) where {T <: Real}
     # Convert pressure from Pascal to hPa/mbar
     pressure_hPa = model.pressure / T(100.0)
 

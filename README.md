@@ -102,7 +102,7 @@ accuracy and implementation status.
 ## Numeric precision
 
 The computation runs at the precision of the `Observer{T}` element type, so
-`Observer(45.0f0, 10.0f0)` computes in `Float32` and `Observer(big"45.0", big"10.0")`
+`Observer{Float32}(45.0, 10.0)` computes in `Float32` and `Observer{BigFloat}(45.0, 10.0)`
 computes in `BigFloat`. A magnitude-safe time base keeps full intra-day resolution at
 every precision instead of riding on the ~2.45e6 Julian Date. `Float64` is the default
 and the reference. `Float32` trades a little accuracy for a modest speedup and stays

@@ -63,7 +63,12 @@ $(TYPEDFIELDS)
 Observer(latitude, longitude, altitude=0.0)
 Observer(latitude, longitude; altitude=0.0, horizon=0.0)
 Observer(latitude, longitude; altitude=0.0, horizon=0=>34)  # 34 arcminutes
+Observer{T}(latitude, longitude, altitude=0.0, horizon=0.0)  # compute at precision T
 ```
+
+The element type `T` is taken from the arguments, so `Observer(45.0f0, 10.0f0)` is an
+`Observer{Float32}`. The explicit form `Observer{Float32}(45.0, 10.0)` converts its
+arguments and avoids literal suffixes.
 
 The `horizon` parameter represents the angular depression/elevation of the horizon in
 degrees. It is commonly used for sunrise/sunset calculations to account for atmospheric
@@ -107,7 +112,12 @@ end
 
 # helper to convert horizon from different formats to degrees
 _horizon_to_degrees(h::Pair{<:Real, <:Real}) = h.first + h.second / 60.0
-_horizon_to_degrees(h::AbstractFloat) = h
+_horizon_to_degrees(h::Real) = h
+
+# converting constructor, so Observer{Float128}(1.0, 2.0) and Observer{Float32}(45, 10)
+# work without converting every argument at the call site
+Observer{T}(lat::Real, lon::Real, alt::Real = 0.0, horiz = 0.0) where {T <: AbstractFloat} =
+    Observer{T}(T(lat), T(lon), T(alt), T(_horizon_to_degrees(horiz)))
 
 Observer(lat::T, lon::T; altitude = 0.0, horizon = 0.0) where {T} =
     Observer{T}(lat, lon, T(altitude), T(_horizon_to_degrees(horizon)))

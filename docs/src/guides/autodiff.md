@@ -116,7 +116,10 @@ for a fixed panel at 30° tilt facing south. The tracked angle of incidence touc
 zero exactly when the sun crosses due east and due west, because only then does the
 sun lie in the tracker's rotation plane, and its local maximum at noon equals the
 solar zenith angle because the panel is flat at that moment. The fixed panel aligns
-with the sun only once, near noon. At night both exceed 90° since the sun is behind
+with the sun only once, near noon, where it beats the tracker: the horizontal axis
+cannot tilt the panel toward the south, so around midday the south facing fixed panel
+points closer to the sun. Recovering that noon deficit is why tilted single axis
+trackers exist. At night both angles of incidence exceed 90° since the sun is behind
 the panels:
 
 ```@example autodiff
@@ -188,6 +191,6 @@ lines!(
 )
 hlines!(ax2, [0]; linestyle = :dash, color = :gray)
 xlims!(ax2, 0, 24)
-axislegend(ax2; position = :rb)
+axislegend(ax2; position = :ct)
 fig
 ```

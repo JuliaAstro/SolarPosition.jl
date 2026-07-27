@@ -163,7 +163,7 @@ analytical = [
     atand(cosd(decl) * sind(w), cosd(lat) * cosd(decl) * cosd(w) + sind(lat) * sind(decl))
         for w in omega
 ]
-for i in 2:length(analytical)
+for i in eachindex(analytical)[2:end]
     abs(analytical[i] - analytical[i - 1]) > 180 && (analytical[i - 1] = NaN)
 end
 

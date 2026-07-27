@@ -15,11 +15,95 @@ grad = ForwardDiff.gradient(
     [45.0, 10.0],
 )</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2-element Vector{Float64}:
  -0.9209770850903363
- -0.2755706865807749</code></pre><p>Gradients also pass through refraction models, and nested duals give second derivatives. Time is a <code>DateTime</code>, not a number, so derivatives with respect to time are not available through this route. Differentiate through a wrapper that maps a number to a <code>DateTime</code> if you need them.</p><h2 id="Combining-precision-with-multithreading"><a class="docs-heading-anchor" href="#Combining-precision-with-multithreading">Combining precision with multithreading</a><a id="Combining-precision-with-multithreading-1"></a><a class="docs-heading-anchor-permalink" href="#Combining-precision-with-multithreading" title="Permalink"></a></h2><p>Precision and the <a href="../parallel/#parallel-computing">OhMyThreads extension</a> compose. Pass a scheduler as the last argument and the vectorized API parallelizes over timestamps at any precision:</p><pre><code class="language-julia hljs">using OhMyThreads
+ -0.2755706865807749</code></pre><p>Gradients also pass through refraction models, and nested duals give second derivatives. Time is a <code>DateTime</code>, not a number, so derivatives with respect to time are not available through this route. Differentiate through a wrapper that maps a number to a <code>DateTime</code> if you need them.</p><h3 id="Example:-optimizing-a-solar-panel-orientation"><a class="docs-heading-anchor" href="#Example:-optimizing-a-solar-panel-orientation">Example: optimizing a solar panel orientation</a><a id="Example:-optimizing-a-solar-panel-orientation-1"></a><a class="docs-heading-anchor-permalink" href="#Example:-optimizing-a-solar-panel-orientation" title="Permalink"></a></h3><p>Gradient ascent on a plane-of-array irradiance proxy finds the best fixed tilt and azimuth for a site. The objective sums the cosine of the angle of incidence over one year of solar positions whenever the sun is up:</p><pre><code class="language-julia hljs">times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31))
+year = solar_position(obs64, times, PSA(), NoRefraction())
+
+function annual_irradiance(angles)
+    tilt, panel_azimuth = angles
+    total = zero(eltype(angles))
+    for p in year
+        p.elevation &gt; 0 || continue
+        cos_aoi = cosd(p.zenith) * cosd(tilt) +
+            sind(p.zenith) * sind(tilt) * cosd(p.azimuth - panel_azimuth)
+        total += max(zero(cos_aoi), cos_aoi)
+    end
+    return total
+end
+
+function optimize(x)
+    for _ in 1:100
+        g = ForwardDiff.gradient(annual_irradiance, x)
+        x = x + g / sqrt(sum(abs2, g))
+    end
+    return x
+end
+
+best = optimize([10.0, 150.0])
+round.(best; digits = 1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2-element Vector{Float64}:
+  40.9
+ 181.5</code></pre><p>The result lands near the textbook rule of thumb for the site at 45°N: tilt a little below the latitude, facing just about due south, and it collects roughly 31 % more annual irradiance than a flat panel.</p><h3 id="Example:-a-horizontal-single-axis-tracker"><a class="docs-heading-anchor" href="#Example:-a-horizontal-single-axis-tracker">Example: a horizontal single axis tracker</a><a id="Example:-a-horizontal-single-axis-tracker-1"></a><a class="docs-heading-anchor-permalink" href="#Example:-a-horizontal-single-axis-tracker" title="Permalink"></a></h3><p>A horizontal single axis tracker rotates the panel about a horizontal axis to follow the sun east to west. The rotation angle is closed form, so the interesting free parameter is the azimuth of the axis itself, which field layouts do not always allow to be perfectly north to south. The rotation is limited to ±60°, a typical hardware range, and <code>clamp</code> differentiates fine:</p><pre><code class="language-julia hljs">function cos_aoi_tracked(p, axis_azimuth; limit = 60.0)
+    R = clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_azimuth)), -limit, limit)
+    panel_azimuth = axis_azimuth + (R &lt; 0 ? -90 : 90)
+    return cosd(p.zenith) * cosd(R) +
+        sind(p.zenith) * sind(abs(R)) * cosd(p.azimuth - panel_azimuth)
+end
+
+daylight = [p for p in year if p.elevation &gt; 0]
+tracked(axis) = sum(max(zero(axis), cos_aoi_tracked(p, axis)) for p in daylight)
+
+function optimize_axis(x)
+    for i in 1:40
+        g = ForwardDiff.derivative(tracked, x)
+        x += g / abs(g) * max(0.1, 40.0 / (i + 10))
+    end
+    return x
+end
+
+axis = optimize_axis(150.0)
+(axis = round(axis; digits = 1), gain_vs_fixed = round(tracked(axis) / annual_irradiance(best); digits = 3))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(axis = 180.0, gain_vs_fixed = 1.383)</code></pre><p>The optimum is a true north to south axis, and the tracker collects roughly 38 % more annual irradiance than the best fixed panel from the previous example.</p><p>One day of operation makes the behaviour concrete. The site is the Van Gogh Museum in Amsterdam with the tracker axis aimed due south. Negative rotation faces the panel east. The upper panel compares the tracker rotation against the analytical rotation computed from first principles with only the solstice declination, the latitude, and the hour angle, ignoring the equation of time. The dashed curve lies exactly on the solid one until the ±60° limits cut it off. The lower panel shows the sun elevation and the angle of incidence between the panel normal and the sun. The angle of incidence touches zero exactly when the sun crosses due east and due west, because only then does the sun lie in the tracker&#39;s rotation plane, and its local maximum at noon equals the solar zenith angle because the panel is flat at that moment. At night all curves are left undefined:</p><pre><code class="language-julia hljs">using CairoMakie
+
+vgm = Observer(52.35888, 4.88185; altitude = 100.0)
+axis_south = 180.0
+
+day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 21, 23, 59))
+day_pos = solar_position(vgm, day, PSA(), NoRefraction())
+hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
+sunup = [p.elevation &gt; 0 for p in day_pos]
+
+rotation = [up ?
+    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0) : NaN
+    for (p, up) in zip(day_pos, sunup)]
+elevation = [up ? p.elevation : NaN for (p, up) in zip(day_pos, sunup)]
+aoi = [up ? acosd(clamp(cos_aoi_tracked(p, axis_south), -1, 1)) : NaN
+    for (p, up) in zip(day_pos, sunup)]
+
+# unclamped rotation from declination, latitude, and hour angle alone
+decl = 23.437
+lat, lon = vgm.latitude, vgm.longitude
+omega = [15 * (h - 12) + lon for h in hours]
+analytical = [up ?
+    atand(cosd(decl) * sind(w), cosd(lat) * cosd(decl) * cosd(w) + sind(lat) * sind(decl)) : NaN
+    for (w, up) in zip(omega, sunup)]
+
+fig = Figure(size = (700, 760))
+ax1 = Axis(fig[1, 1]; ylabel = &quot;degrees&quot;, xticks = 0:3:24,
+    title = &quot;South aimed tracker at the Van Gogh Museum on June 21&quot;)
+lines!(ax1, hours, analytical; label = &quot;analytical rotation&quot;)
+lines!(ax1, hours, rotation; linestyle = :dash, label = &quot;tracker rotation&quot;)
+hlines!(ax1, [-60, 60]; linestyle = :dash, color = :gray)
+xlims!(ax1, 0, 24)
+axislegend(ax1; position = :lt)
+
+ax2 = Axis(fig[2, 1]; xlabel = &quot;hour of day, UTC&quot;, ylabel = &quot;degrees&quot;, xticks = 0:3:24)
+lines!(ax2, hours, elevation; color = Makie.wong_colors()[3], label = &quot;sun elevation&quot;)
+lines!(ax2, hours, aoi; color = Makie.wong_colors()[4], label = &quot;angle of incidence&quot;)
+xlims!(ax2, 0, 24)
+axislegend(ax2; position = :rb)
+fig</code></pre><img src="d9ba01e0.png" alt="Example block output"/><h2 id="Combining-precision-with-multithreading"><a class="docs-heading-anchor" href="#Combining-precision-with-multithreading">Combining precision with multithreading</a><a id="Combining-precision-with-multithreading-1"></a><a class="docs-heading-anchor-permalink" href="#Combining-precision-with-multithreading" title="Permalink"></a></h2><p>Precision and the <a href="../parallel/#parallel-computing">OhMyThreads extension</a> compose. Pass a scheduler as the last argument and the vectorized API parallelizes over timestamps at any precision:</p><pre><code class="language-julia hljs">using OhMyThreads
 using Quadmath
 
 obs = Observer{Float128}(45.0, 10.0)
 times = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 22))
 
 positions = solar_position(obs, times, SPA(), NoRefraction(), DynamicScheduler())
-positions[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SolPos(azimuth=9.3811243509767160759440916938436216°, elevation=-21.011598932136595209954880892522944°, zenith=111.01159893213659520995488089252295°)</code></pre><p>Measured on 16 Julia threads on an 8-core AMD Ryzen 7 8845HS with <code>DynamicScheduler()</code>:</p><table><tr><th style="text-align: right">Algorithm</th><th style="text-align: right"><code>T</code></th><th style="text-align: right">Serial</th><th style="text-align: right">Threaded</th><th style="text-align: right">Speedup</th></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float32</code></td><td style="text-align: right">0.084 µs</td><td style="text-align: right">0.024 µs</td><td style="text-align: right">3.6×</td></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float64</code></td><td style="text-align: right">0.114 µs</td><td style="text-align: right">0.045 µs</td><td style="text-align: right">2.5×</td></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float128</code></td><td style="text-align: right">9.71 µs</td><td style="text-align: right">1.07 µs</td><td style="text-align: right">9.1×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float32</code></td><td style="text-align: right">1.35 µs</td><td style="text-align: right">0.21 µs</td><td style="text-align: right">6.5×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float64</code></td><td style="text-align: right">1.94 µs</td><td style="text-align: right">0.30 µs</td><td style="text-align: right">6.4×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float128</code></td><td style="text-align: right">226 µs</td><td style="text-align: right">29.7 µs</td><td style="text-align: right">7.6×</td></tr></table><p>Times are per timestamp. The scaling follows arithmetic intensity. PSA at machine precision is so cheap that writing the output array dominates, and memory bandwidth limits the speedup to about 3×. SPA does enough trigonometry per timestamp to keep all cores busy and reaches the ideal scaling for 8 physical cores. <code>Float128</code> is pure software arithmetic and scales best of all, so threading recovers most of its cost: threaded <code>Float128</code> SPA is only about 15× slower than serial <code>Float64</code> SPA instead of 118×. Threading and reduced precision also compose in the other direction, since threaded <code>Float32</code> SPA is 9.4× faster than serial <code>Float64</code>.</p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>Quadmath.jl v1.0.1 implements <code>rem</code> with round-to-nearest instead of truncated semantics, which breaks the degree reduction in Base&#39;s <code>sind</code> and <code>cosd</code>, so <code>NOAA</code> and <code>USNO</code> give wrong results at <code>Float128</code> until that is fixed upstream.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting-started/">« Getting Started</a><a class="docs-footer-nextpage" href="../plotting/">Plotting with Makie.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 27 July 2026 21:48">Monday 27 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+positions[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SolPos(azimuth=9.3811243509767160759440916938436216°, elevation=-21.011598932136595209954880892522944°, zenith=111.01159893213659520995488089252295°)</code></pre><p>Measured on 16 Julia threads on an 8-core AMD Ryzen 7 8845HS with <code>DynamicScheduler()</code>:</p><table><tr><th style="text-align: right">Algorithm</th><th style="text-align: right"><code>T</code></th><th style="text-align: right">Serial</th><th style="text-align: right">Threaded</th><th style="text-align: right">Speedup</th></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float32</code></td><td style="text-align: right">0.084 µs</td><td style="text-align: right">0.024 µs</td><td style="text-align: right">3.6×</td></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float64</code></td><td style="text-align: right">0.114 µs</td><td style="text-align: right">0.045 µs</td><td style="text-align: right">2.5×</td></tr><tr><td style="text-align: right">PSA</td><td style="text-align: right"><code>Float128</code></td><td style="text-align: right">9.71 µs</td><td style="text-align: right">1.07 µs</td><td style="text-align: right">9.1×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float32</code></td><td style="text-align: right">1.35 µs</td><td style="text-align: right">0.21 µs</td><td style="text-align: right">6.5×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float64</code></td><td style="text-align: right">1.94 µs</td><td style="text-align: right">0.30 µs</td><td style="text-align: right">6.4×</td></tr><tr><td style="text-align: right">SPA</td><td style="text-align: right"><code>Float128</code></td><td style="text-align: right">226 µs</td><td style="text-align: right">29.7 µs</td><td style="text-align: right">7.6×</td></tr></table><p>Times are per timestamp. The scaling follows arithmetic intensity. PSA at machine precision is so cheap that writing the output array dominates, and memory bandwidth limits the speedup to about 3×. SPA does enough trigonometry per timestamp to keep all cores busy and reaches the ideal scaling for 8 physical cores. <code>Float128</code> is pure software arithmetic and scales best of all, so threading recovers most of its cost: threaded <code>Float128</code> SPA is only about 15× slower than serial <code>Float64</code> SPA instead of 118×. Threading and reduced precision also compose in the other direction, since threaded <code>Float32</code> SPA is 9.4× faster than serial <code>Float64</code>.</p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>Quadmath.jl v1.0.1 implements <code>rem</code> with round-to-nearest instead of truncated semantics, which breaks the degree reduction in Base&#39;s <code>sind</code> and <code>cosd</code>, so <code>NOAA</code> and <code>USNO</code> give wrong results at <code>Float128</code> until that is fixed upstream.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting-started/">« Getting Started</a><a class="docs-footer-nextpage" href="../plotting/">Plotting with Makie.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 27 July 2026 22:27">Monday 27 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

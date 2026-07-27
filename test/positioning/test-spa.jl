@@ -19,6 +19,10 @@
             # SPA includes refraction correction
             res = solar_position(obs, dt, SPA())
 
+            # SPA compares at 1e-8 while the other algorithms use 1e-10. The
+            # pvlib reference accumulates the unreduced sidereal term to
+            # ~2.6e7 deg by the year-2200 row, where a single ulp is ~4e-9,
+            # so the reference itself limits the tolerance.
             @test isapprox(res.elevation, row.elevation, atol = 1.0e-8)
             @test isapprox(res.zenith, row.zenith, atol = 1.0e-8)
             @test isapprox(res.azimuth, row.azimuth, atol = 1.0e-8)

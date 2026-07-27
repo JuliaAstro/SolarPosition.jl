@@ -163,12 +163,15 @@ annual irradiance than the best fixed panel from the previous example.
 
 One day of operation makes the behaviour concrete. The site is the Van Gogh Museum in
 Amsterdam with the tracker axis aimed due south. Negative rotation faces the panel
-east. The tracker sits at the −60° limit after sunrise, sweeps through flat at solar
-noon, and holds the +60° limit until sunset. The angle of incidence between the panel
-normal and the sun touches zero exactly when the sun crosses due east and due west,
-because only then does the sun lie in the tracker's rotation plane, and its local
-maximum at noon equals the solar zenith angle because the panel is flat at that
-moment. At night all three curves are left undefined:
+east. The upper panel compares the tracker rotation against the analytical rotation
+computed from first principles with only the solstice declination, the latitude, and
+the hour angle, ignoring the equation of time. The dashed curve lies exactly on the
+solid one until the ±60° limits cut it off. The lower panel shows the sun elevation
+and the angle of incidence between the panel normal and the sun. The angle of
+incidence touches zero exactly when the sun crosses due east and due west, because
+only then does the sun lie in the tracker's rotation plane, and its local maximum at
+noon equals the solar zenith angle because the panel is flat at that moment. At night
+all curves are left undefined:
 
 ```@example precision
 using CairoMakie
@@ -178,24 +181,38 @@ axis_south = 180.0
 
 day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 21, 23, 59))
 day_pos = solar_position(vgm, day, PSA(), NoRefraction())
-
-rotation = [p.elevation > 0 ?
-    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0) : NaN
-    for p in day_pos]
-elevation = [p.elevation > 0 ? p.elevation : NaN for p in day_pos]
-aoi = [p.elevation > 0 ? acosd(clamp(cos_aoi_tracked(p, axis_south), -1, 1)) : NaN
-    for p in day_pos]
 hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
+sunup = [p.elevation > 0 for p in day_pos]
 
-fig = Figure(size = (700, 380))
-ax = Axis(fig[1, 1]; xlabel = "hour of day, UTC", ylabel = "degrees",
-    title = "South aimed tracker at the Van Gogh Museum on June 21", xticks = 0:3:24)
-lines!(ax, hours, rotation; label = "tracker rotation")
-lines!(ax, hours, elevation; label = "sun elevation")
-lines!(ax, hours, aoi; label = "angle of incidence")
-hlines!(ax, [-60, 60]; linestyle = :dash, color = :gray)
-xlims!(ax, 0, 24)
-axislegend(ax; position = :rb)
+rotation = [up ?
+    clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0) : NaN
+    for (p, up) in zip(day_pos, sunup)]
+elevation = [up ? p.elevation : NaN for (p, up) in zip(day_pos, sunup)]
+aoi = [up ? acosd(clamp(cos_aoi_tracked(p, axis_south), -1, 1)) : NaN
+    for (p, up) in zip(day_pos, sunup)]
+
+# unclamped rotation from declination, latitude, and hour angle alone
+decl = 23.437
+lat, lon = vgm.latitude, vgm.longitude
+omega = [15 * (h - 12) + lon for h in hours]
+analytical = [up ?
+    atand(cosd(decl) * sind(w), cosd(lat) * cosd(decl) * cosd(w) + sind(lat) * sind(decl)) : NaN
+    for (w, up) in zip(omega, sunup)]
+
+fig = Figure(size = (700, 760))
+ax1 = Axis(fig[1, 1]; ylabel = "degrees", xticks = 0:3:24,
+    title = "South aimed tracker at the Van Gogh Museum on June 21")
+lines!(ax1, hours, analytical; label = "analytical rotation")
+lines!(ax1, hours, rotation; linestyle = :dash, label = "tracker rotation")
+hlines!(ax1, [-60, 60]; linestyle = :dash, color = :gray)
+xlims!(ax1, 0, 24)
+axislegend(ax1; position = :lt)
+
+ax2 = Axis(fig[2, 1]; xlabel = "hour of day, UTC", ylabel = "degrees", xticks = 0:3:24)
+lines!(ax2, hours, elevation; color = Makie.wong_colors()[3], label = "sun elevation")
+lines!(ax2, hours, aoi; color = Makie.wong_colors()[4], label = "angle of incidence")
+xlims!(ax2, 0, 24)
+axislegend(ax2; position = :rb)
 fig
 ```
 

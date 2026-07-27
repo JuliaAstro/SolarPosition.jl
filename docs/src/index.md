@@ -89,30 +89,10 @@ accuracy and implementation status.
 ## Numeric precision
 
 The computation runs at the precision of the
-[`Observer{T}`](@ref SolarPosition.Positioning.Observer) element type, so
-`Observer(45.0f0, 10.0f0)` computes in `Float32` and `Observer(big"45.0", big"10.0")`
-computes in `BigFloat`. A magnitude-safe time base keeps full intra-day resolution at
-every precision instead of riding on the ~2.45e6 Julian Date. `Float64` is the default
-and the reference. `Float32` trades a little accuracy for a modest speedup and stays
-within the algorithms' own claimed accuracy. `Float128` from Quadmath.jl and `BigFloat`
-give genuine extended precision at a large runtime cost. `Float16` is not supported
-because the algorithm coefficients overflow its range.
-
-The table below lists the maximum error against a 256-bit `BigFloat` reference and the
-runtime relative to `Float64`, measured over a grid of dates from 2015 to 2035 and
-latitudes from 70°N to 60°S:
-
-| Algorithm | `Float32` error | `Float32` runtime | `Float64` error | `Float128` error | `Float128` runtime | `BigFloat` runtime |
-| --------- | --------------- | ----------------- | --------------- | ---------------- | ------------------ | ------------------ |
-| PSA       | 0.011°          | 1.3× faster       | 1.3e-11°        | 7.1e-30°         | 93× slower         | 500× slower        |
-| NOAA      | 0.0019°         | 1.2× faster       | 3.5e-12°        | broken[^1]       | —                  | 330× slower        |
-| Walraven  | 0.0040°         | 1.3× faster       | 6.4e-12°        | 8.6e-30°         | 74× slower         | 400× slower        |
-| USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken[^1]       | —                  | 300× slower        |
-| SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
-
-[^1]: Quadmath.jl v1.0.1 implements `rem` with round-to-nearest instead of truncated
-    semantics, which breaks the degree reduction in Base's `sind` and `cosd`, so `NOAA`
-    and `USNO` give wrong results at `Float128` until that is fixed upstream.
+[`Observer{T}`](@ref SolarPosition.Positioning.Observer) element type. `Float32`,
+`Float64`, `Float128`, and `BigFloat` are supported. See the
+[Numeric Precision](@ref numeric-precision) guide for measured accuracy and runtime of
+every algorithm at each precision, including multithreaded benchmarks.
 
 ## Refraction correction algorithms
 

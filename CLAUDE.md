@@ -10,10 +10,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 julia --project -e "using Pkg; Pkg.test()"
 ```
 
-**Run a single test file:**
+**Fast test iteration:** test files are not standalone, they rely on imports and the
+`expected-values.jl` helpers loaded by `runtests.jl`. For a fast loop, activate the
+`test/` workspace project in a long-lived REPL once, then include the files you are
+working on. Iterations take seconds. Keep the full `Pkg.test()` as the pre-push gate
+and let CI run the full matrix.
 
-```bash
-julia --project test/positioning/test-psa.jl
+```julia
+using Pkg; Pkg.activate("test")
+using Test, Dates, SolarPosition
+include("test/positioning/expected-values.jl")
+@testset "targeted" begin
+    include("test/positioning/test-psa.jl")
+end
 ```
 
 **Format code (Runic.jl):**

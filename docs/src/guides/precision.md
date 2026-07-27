@@ -4,7 +4,7 @@ SolarPosition.jl computes at the precision of the
 [`Observer{T}`](@ref SolarPosition.Positioning.Observer) element type. Construct the
 observer with the float type you want and every algorithm runs at that precision:
 
-```julia
+```@example precision
 using SolarPosition
 using Dates
 
@@ -72,16 +72,15 @@ Precision and the [OhMyThreads extension](@ref parallel-computing) compose. Pass
 scheduler as the last argument and the vectorized API parallelizes over timestamps at
 any precision:
 
-```julia
-using SolarPosition
+```@example precision
 using OhMyThreads
 using Quadmath
-using Dates
 
 obs = Observer{Float128}(45.0, 10.0)
-times = collect(DateTime(2024, 1, 1):Minute(1):DateTime(2024, 12, 31))
+times = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 22))
 
 positions = solar_position(obs, times, SPA(), NoRefraction(), DynamicScheduler())
+positions[1]
 ```
 
 Measured on 16 Julia threads on an 8-core AMD Ryzen 7 8845HS with

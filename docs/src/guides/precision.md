@@ -127,6 +127,40 @@ The result lands near the textbook rule of thumb for the site at 45°N: tilt a l
 below the latitude, facing just about due south, and it collects roughly 31 % more
 annual irradiance than a flat panel.
 
+### Example: a horizontal single axis tracker
+
+A horizontal single axis tracker rotates the panel about a horizontal axis to follow
+the sun east to west. The rotation angle is closed form, so the interesting free
+parameter is the azimuth of the axis itself, which field layouts do not always allow
+to be perfectly north to south. The rotation is limited to ±60°, a typical hardware
+range, and `clamp` differentiates fine:
+
+```@example precision
+function cos_aoi_tracked(p, axis_azimuth; limit = 60.0)
+    R = clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_azimuth)), -limit, limit)
+    panel_azimuth = axis_azimuth + (R < 0 ? -90 : 90)
+    return cosd(p.zenith) * cosd(R) +
+        sind(p.zenith) * sind(abs(R)) * cosd(p.azimuth - panel_azimuth)
+end
+
+daylight = [p for p in year if p.elevation > 0]
+tracked(axis) = sum(max(zero(axis), cos_aoi_tracked(p, axis)) for p in daylight)
+
+function optimize_axis(x)
+    for i in 1:40
+        g = ForwardDiff.derivative(tracked, x)
+        x += g / abs(g) * max(0.1, 40.0 / (i + 10))
+    end
+    return x
+end
+
+axis = optimize_axis(150.0)
+(axis = round(axis; digits = 1), gain_vs_fixed = round(tracked(axis) / annual_irradiance(best); digits = 3))
+```
+
+The optimum is a true north to south axis, and the tracker collects roughly 38 % more
+annual irradiance than the best fixed panel from the previous example.
+
 ## Combining precision with multithreading
 
 Precision and the [OhMyThreads extension](@ref parallel-computing) compose. Pass a

@@ -368,12 +368,12 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         title = "Throughput at N=10,000",
         xlabel = "Algorithm",
         ylabel = "Positions per Second",
-        xticks = (1:5, algo_names),
+        xticks = (1:length(algo_names), algo_names),
         backgroundcolor = :transparent,
     )
 
     throughput_10k = filter(r -> r.N == 10_000, vector_benchmarks)
-    barplot!(ax2, 1:5, throughput_10k.Throughput ./ 1e6, color = colors)
+    barplot!(ax2, 1:length(algo_names), throughput_10k.Throughput ./ 1e6, color = colors)
     ax2.ylabel = "Million Positions / Second"
 
     nothing # hide
@@ -548,12 +548,12 @@ We benchmark both libraries across different input sizes:
         title = "Julia vs Python at N=1,000",
         xlabel = "Algorithm",
         ylabel = "Speedup Factor (×)",
-        xticks = (1:5, algo_names),
+        xticks = (1:length(algo_names), algo_names),
         backgroundcolor = :transparent,
     )
 
     speedup_1k = filter(r -> r.N == 1_000, comparison_results)
-    barplot!(ax2, 1:5, speedup_1k.Speedup, color = colors_julia)
+    barplot!(ax2, 1:length(algo_names), speedup_1k.Speedup, color = colors_julia)
     hlines!(ax2, [1.0], color = :gray, linestyle = :dash)
 
     nothing # hide

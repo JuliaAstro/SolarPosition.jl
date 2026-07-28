@@ -30,7 +30,11 @@ Construction requires Interpolations.jl to be loaded:
 - `tspan::Tuple`: the valid query span as a pair of `DateTime` or `ZonedDateTime`.
   Zoned times are converted to UTC.
 - `step::Period = Hour(1)`: the sampling grid spacing. Must be positive and at most 30
-  days so that right ascension advances much less than half a turn per step.
+  days so that right ascension advances much less than half a turn per step. Steps
+  above 3 days warn, because the interpolation error then exceeds the wrapped
+  algorithm's own accuracy: measured against direct SPA the maximum error is about
+  1e-10 degrees at `Hour(1)`, 4e-7 at `Day(1)`, 2e-4 at `Day(3)`, and 3e-2 at
+  `Day(30)`.
 - `out_of_range::Symbol = :error`: behaviour for queries outside `tspan`. `:error`
   throws an `ArgumentError`, `:fallback` silently calls the wrapped exact algorithm.
 
@@ -77,6 +81,12 @@ function Interpolated(
     # which the unwrap during construction relies on
     Dates.Millisecond(0) < stepms <= Dates.Millisecond(Dates.Day(30)) ||
         throw(ArgumentError("step must be positive and at most 30 days, got $step"))
+    # beyond 3 days the 13.7 day nutation ripple is sampled too coarsely and the
+    # interpolation error exceeds the wrapped algorithm's own accuracy
+    stepms > Dates.Millisecond(Dates.Day(3)) && @warn(
+        "Interpolated with step = $step has an interpolation error above the wrapped " *
+            "algorithm's own accuracy. Use a step of 3 days or less to stay below it.",
+    )
     (itp_α, itp_δ, itp_R, itp_eqeq) = _build_interpolants(algorithm, t0, t1, stepms)
     return Interpolated(
         algorithm, itp_α, itp_δ, itp_R, itp_eqeq, (t0, t1), stepms,

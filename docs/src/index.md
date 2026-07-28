@@ -85,6 +85,7 @@ accuracy and implementation status.
 | [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Walraven, 1978](https://doi.org/10.1016/0038-092X(78)90155-X)                                  | ±0.0100° | None                                             | ✅     |
 | [`USNO`](@ref SolarPosition.Positioning.USNO)         | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None                                             | ✅     |
 | [`SPA`](@ref SolarPosition.Positioning.SPA)           | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in                                         | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None                                             | ✅     |
 
 ## Numeric precision
 

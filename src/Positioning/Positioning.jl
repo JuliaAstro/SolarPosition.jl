@@ -484,6 +484,7 @@ include("utils.jl")
 include("timebase.jl")
 include("deltat.jl")
 include("psa.jl")
+include("iqbal.jl")
 include("noaa.jl")
 include("walraven.jl")
 include("usno.jl")
@@ -491,7 +492,8 @@ include("spa.jl")
 include("interpolated.jl")
 
 export Observer,
-    PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
+    PSA, NOAA, Walraven, USNO, SPA, Iqbal,
+    solar_position, solar_position!, SolPos, ApparentSolPos
 export Interpolated, solar_rate
 export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos
 export calculate_deltat

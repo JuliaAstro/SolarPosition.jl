@@ -122,7 +122,7 @@ latitudes from 70°N to 60°S:
 | USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken           | n/a                | 300× slower        |
 | SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
 
-See the [precision guide](https://juliaastro.org/SolarPosition/stable/guides/precision/)
+See the [precision guide](https://juliaastro.org/SolarPosition.jl/dev/guides/precision/)
 for details, including why `NOAA` and `USNO` are currently broken at `Float128`.
 
 ## Refraction correction algorithms

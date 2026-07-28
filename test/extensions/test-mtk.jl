@@ -11,7 +11,7 @@ using SolarPosition:
     SolarPositionBlock
 
 using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2
-using SolarPosition: Interpolated
+using SolarPosition: Interpolated, Iqbal
 using Interpolations
 using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
@@ -174,6 +174,7 @@ using CairoMakie
                 ("USNO", USNO(), expected_usno, NoRefraction(), false, 1.0e-10),
                 ("NOAA", NOAA(), expected_noaa, HUGHES(101325.0, 10.0), true, 1.0e-10),
                 ("SPA", SPA(), expected_spa, DefaultRefraction(), true, 1.0e-8),
+                ("Iqbal", Iqbal(), expected_iqbal, NoRefraction(), false, 1.0e-10),
             ]
             # Get expected values for all test cases
             df_expected = exp_func()

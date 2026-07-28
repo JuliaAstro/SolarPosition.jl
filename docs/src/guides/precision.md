@@ -33,8 +33,9 @@ precision types never ride on the ~2.45e6 Julian Date.
   algorithm's own claimed accuracy.
 - `Float128` from [Quadmath.jl](https://github.com/JuliaMath/Quadmath.jl) gives quad
   precision of roughly 1e-30 degrees for [`PSA`](@ref SolarPosition.Positioning.PSA),
-  [`SPA`](@ref SolarPosition.Positioning.SPA), and
-  [`Walraven`](@ref SolarPosition.Positioning.Walraven) at a large
+  [`SPA`](@ref SolarPosition.Positioning.SPA),
+  [`Walraven`](@ref SolarPosition.Positioning.Walraven), and
+  [`Iqbal`](@ref SolarPosition.Positioning.Iqbal) at a large
   runtime cost.
 - `BigFloat` gives arbitrary precision. Raise it with `setprecision(BigFloat, bits)`.
   This is the right tool for generating reference values.
@@ -58,6 +59,7 @@ over a grid of 125 combinations of dates from 2015 to 2035 and latitudes from 70
 | Walraven  | 0.0040°         | 1.3× faster       | 6.4e-12°        | 8.6e-30°         | 74× slower         | 400× slower        |
 | USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken[^1]       | n/a                | 300× slower        |
 | SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
+| Iqbal     | 2.2e-5°         | 1.1× faster       | 2.1e-14°        | 3.1e-32°         | 40× slower         | 180× slower        |
 
 [^1]: Quadmath.jl v1.0.1 implements `rem` with round-to-nearest instead of truncated
     semantics, which breaks the degree reduction in Base's `sind` and `cosd`, so

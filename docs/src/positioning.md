@@ -63,6 +63,7 @@ The following solar position algorithms are currently implemented in SolarPositi
 | [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Wal78](@cite)  | ±0.0100° | None                                             | ✅     |
 | [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500° | None                                             | ✅     |
 | [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003° | Built-in                                         | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqb83](@cite)  | ±0.0100° | None                                             | ✅     |
 
 In addition, [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wraps `SPA`
 with a precomputed spline of its geocentric coordinates for roughly 10x faster
@@ -125,6 +126,17 @@ position calculation with periodic terms for Earth heliocentric longitude and la
 
 ```@docs
 SolarPosition.Positioning.SPA
+```
+
+## [Iqbal](@id iqbal-algorithm)
+
+The Iqbal algorithm is a lightweight formulation that obtains the solar declination
+and equation of time from a truncated Fourier series in the day angle, following the
+compilation of [Iqb83](@cite) built on the Fourier series representation of
+[Spe71](@cite).
+
+```@docs
+SolarPosition.Positioning.Iqbal
 ```
 
 ## [Interpolated](@id interpolated-algorithm)

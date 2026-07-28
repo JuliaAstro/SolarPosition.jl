@@ -249,6 +249,97 @@ aborting the integration. The interpolant is observer independent and immutable,
 one instance can be shared by every `SolarPositionBlock` in a model and across
 threads.
 
+## Working with the Solver
+
+Two properties of solar forcing surprise people the first time: the solver seems to
+skip straight past the day unless `saveat` is given, and the adaptive error control
+seems unaware of the sun. Both have clean solutions.
+
+### Sampling outputs without saveat
+
+`saveat` does not make the solver take more steps. Save points are filled in from the
+solution's dense interpolant, so it only controls what gets recorded. For the bare
+`SolarPositionBlock` the compiled system has no differential states at all, so the
+solver correctly jumps from start to end in one step, and without `saveat` the
+solution object holds just the two endpoints.
+
+```@example mtk
+obs = Observer(52.35888, 4.88185, 100.0)
+t0 = DateTime(2024, 6, 21, 0, 0, 0)
+
+@named sun = SolarPositionBlock()
+sys = mtkcompile(sun)
+pmap = [
+    sys.observer => obs,
+    sys.t0 => t0,
+    sys.algorithm => PSA(),
+    sys.refraction => NoRefraction(),
+]
+sol = solve(ODEProblem(sys, pmap, (0.0, 86400.0)))
+length(sol.t)
+```
+
+The better tool is the solution object itself. The solar outputs are observed
+variables that depend only on parameters and time, so querying the solution
+re-evaluates the exact solar position at any requested time, at any resolution,
+independent of how coarsely the solver stepped:
+
+```@example mtk
+sol(0.0:600.0:86400.0; idxs = sys.elevation)
+```
+
+This is exact for the sun angles. For observed variables that also involve states the
+query uses the state interpolant, whose accuracy is set by the solver tolerances.
+
+### Making the error controller see the forcing
+
+The embedded error estimator only controls the error of integrating the states it is
+given. Two distinct failure modes follow, each with its own fix.
+
+The first is nonsmoothness. Solar forcing models clip at the horizon, typically with
+`max(0, ...)`, and a step that spans sunrise or sunset sees a kink, rejects, and
+thrashes. The fix is to tell the solver where the kinks are.
+[`transit_sunrise_sunset`](@ref) computes them, and `d_discontinuities` passes them
+in, converted to simulation seconds.
+
+The second is smooth blindness. A state with a large time constant filters the
+forcing, so the controller sees little state error and takes steps that under resolve
+the forcing's integral. The fix is to add the integral as a state, here `E_sol`, so
+the quadrature of the forcing enters the error budget directly:
+
+```@example mtk
+@parameters C = 5.0e5 k = 25.0
+@variables T_room(t) = 18.0 E_sol(t) = 0.0 Q(t)
+
+eqs = [
+    Q ~ 800 * max(0, sind(sun.elevation)),
+    D(T_room) ~ (Q - k * (T_room - 15.0)) / C,
+    D(E_sol) ~ Q,
+]
+@named house = System(eqs, t; systems = [sun])
+sys = mtkcompile(house)
+
+pmap = [
+    sys.sun.observer => obs,
+    sys.sun.t0 => t0,
+    sys.sun.algorithm => PSA(),
+    sys.sun.refraction => NoRefraction(),
+]
+prob = ODEProblem(sys, pmap, (0.0, 86400.0))
+
+events = transit_sunrise_sunset(obs, t0)
+kinks = [Dates.value(dt - t0) / 1000 for dt in (events.sunrise, events.sunset)]
+
+sol = solve(prob; d_discontinuities = kinks, reltol = 1.0e-8)
+(steps = length(sol.t), daily_insolation = sol[sys.E_sol][end])
+```
+
+A vector `abstol` matched to `unknowns(sys)` gives the quadrature state a tolerance
+in its own physical units when it should not share the default. Whatever combination
+you settle on, verify it once against a reference solve at `reltol = 1e-10` and
+compare the quantities you care about. That check, not the step count, is what shows
+the recipe is sufficient.
+
 ## Implementation Details
 
 The extension works by registering the [`solar_position`](@ref) function and helper functions as

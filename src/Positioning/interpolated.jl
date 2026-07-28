@@ -113,7 +113,8 @@ end
 function Base.show(io::IO, alg::Interpolated)
     print(
         io, "Interpolated(", alg.algorithm, "; tspan = ", alg.tspan,
-        ", step = ", alg.step, ", out_of_range = :", alg.out_of_range, ")",
+        ", step = ", Dates.canonicalize(alg.step),
+        ", out_of_range = :", alg.out_of_range, ")",
     )
     return nothing
 end

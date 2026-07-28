@@ -41,6 +41,13 @@ const INTERP_OBSERVERS = [
         @test_logs Interpolated(SPA(); tspan = span1y, step = Day(3))
         @test alg isa Interpolated{SPA}
         @test occursin("out_of_range = :error", string(alg))
+        @test occursin("step = 1 hour", string(alg))
+
+        # the extension only implements sampling for SPA, so any other algorithm
+        # reaches the stub that asks for Interpolations.jl
+        @test_throws ArgumentError SolarPosition.Positioning._build_interpolants(
+            PSA(), span1y[1], span1y[2], Millisecond(Hour(1)),
+        )
     end
 
     @testset "Accuracy against direct SPA" begin
@@ -111,6 +118,10 @@ const INTERP_OBSERVERS = [
 
         batch = solar_position(obs, dts, alg, NoRefraction())
         @test batch isa StructArrays.StructVector{SolPos{Float64}}
+
+        # the default refraction batch path resolves to ApparentSolPos like SPA
+        batch_ref = solar_position(obs, dts, alg)
+        @test batch_ref isa StructArrays.StructVector{ApparentSolPos{Float64}}
         @test all(
             batch[i].elevation === solar_position(obs, dts[i], alg, NoRefraction()).elevation
                 for i in eachindex(dts)

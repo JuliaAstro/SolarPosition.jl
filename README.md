@@ -98,32 +98,44 @@ accuracy and implementation status.
 | Walraven  | [Walraven, 1978](<https://doi.org/10.1016/0038-092X(78)90155-X>)                                | ±0.0100° | None               | ✅     |
 | USNO      | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None               | ✅     |
 | SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in           | ✅     |
+| Iqbal     | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None               | ✅     |
 
-## Numeric precision
+## Fast repeated evaluation
 
-The computation runs at the precision of the `Observer{T}` element type, so
-`Observer{Float32}(45.0, 10.0)` computes in `Float32` and `Observer{BigFloat}(45.0, 10.0)`
-computes in `BigFloat`. A magnitude-safe time base keeps full intra-day resolution at
-every precision instead of riding on the ~2.45e6 Julian Date. `Float64` is the default
-and the reference. `Float32` trades a little accuracy for a modest speedup and stays
-within the algorithms' own claimed accuracy. `Float128` from Quadmath.jl and `BigFloat`
-give genuine extended precision at a large runtime cost. `Float16` is not supported
-because the algorithm coefficients overflow its range.
+For dense time series, the `Interpolated` wrapper precomputes cubic B-splines of SPA's
+geocentric solar coordinates and reconstructs positions analytically, roughly 10× faster
+per query at matching accuracy. One interpolant serves every observer. It activates as a
+package extension when [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
+is loaded:
 
-The table below lists the maximum error against a 256-bit `BigFloat` reference and the
-runtime relative to `Float64`, measured over a grid of dates from 2015 to 2035 and
-latitudes from 70°N to 60°S:
+```julia
+using Interpolations
 
-| Algorithm | `Float32` error | `Float32` runtime | `Float64` error | `Float128` error | `Float128` runtime | `BigFloat` runtime |
-| --------- | --------------- | ----------------- | --------------- | ---------------- | ------------------ | ------------------ |
-| PSA       | 0.011°          | 1.3× faster       | 1.3e-11°        | 7.1e-30°         | 93× slower         | 500× slower        |
-| NOAA      | 0.0019°         | 1.2× faster       | 3.5e-12°        | broken           | n/a                | 330× slower        |
-| Walraven  | 0.0040°         | 1.3× faster       | 6.4e-12°        | 8.6e-30°         | 74× slower         | 400× slower        |
-| USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken           | n/a                | 300× slower        |
-| SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
+alg = Interpolated(SPA(); tspan = (DateTime(2024, 1, 1), DateTime(2025, 1, 1)))
+positions = solar_position(obs, times, alg)
+```
 
-See the [precision guide](https://juliaastro.org/SolarPosition.jl/dev/guides/precision/)
-for details, including why `NOAA` and `USNO` are currently broken at `Float128`.
+See the [interpolation guide](https://juliaastro.org/SolarPosition.jl/dev/guides/interpolation/)
+for accuracy figures and when the construction cost pays off.
+
+## Automatic differentiation
+
+All algorithms are generic over the number type, so solar positions are differentiable
+with [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) out of the box, with
+no extension package needed:
+
+```julia
+using ForwardDiff
+
+grad = ForwardDiff.gradient(
+    x -> solar_position(Observer(x[1], x[2]), dt).elevation,
+    [45.0, 10.0],
+)
+```
+
+The [autodiff guide](https://juliaastro.org/SolarPosition.jl/dev/guides/autodiff/) shows
+gradients through refraction models, panel orientation optimization, and a single axis
+tracker example.
 
 ## Refraction correction algorithms
 
@@ -148,6 +160,15 @@ import the corresponding packages:
 | Makie           | [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)                    | Plotting recipes for solar position visualization |
 | OhMyThreads     | [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)     | Parallel computation of solar positions           |
 | ModelingToolkit | [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)   | Symbolic solar position models for simulations    |
+| Interpolations  | [`Interpolations.jl`](https://github.com/JuliaMath/Interpolations.jl) | Fast `Interpolated` algorithm construction        |
+
+## Numeric precision
+
+The computation runs at the precision of the `Observer{T}` element type: `Float32`,
+`Float64`, `Float128` from Quadmath.jl, and `BigFloat` are supported, with a magnitude
+safe time base that keeps full intra-day resolution at every precision. The
+[precision guide](https://juliaastro.org/SolarPosition.jl/dev/guides/precision/) lists
+the measured accuracy and runtime of every algorithm at every precision.
 
 ## How to Cite
 

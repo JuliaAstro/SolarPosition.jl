@@ -361,20 +361,9 @@ function _compute_spa_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: R
     return (; ν, α, δ, R, ε, δψ, jme)
 end
 
-function _solar_position(
-        obs::SPAObserver{T},
-        dt::DateTime,
-        alg::SPA,
-    ) where {T <: Real}
-    δt::T = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
-
-    # Compute sidereal time, right ascension, declination, and related parameters
-    ν, α, δ, R, ε, δψ, jme = _compute_spa_srt_parameters(T, dt, δt)
-
+# Topocentric half of SPA, shared by SPA and Interpolated so both paths run the exact
+# same code from a given geocentric state (ν, α, δ, R).
+function _spa_topocentric(obs::SPAObserver{T}, ν::T, α::T, δ::T, R::T) where {T <: Real}
     # observer local hour angle
     H = local_hour_angle(ν, obs.longitude, α)
     H_rad = deg2rad(H)
@@ -407,6 +396,23 @@ function _solar_position(
     az = topocentric_azimuth_angle(H′_rad, δ′_rad, obs.sin_lat, obs.cos_lat)
 
     return SolPos{T}(az, e0, θz0)
+end
+
+function _solar_position(
+        obs::SPAObserver{T},
+        dt::DateTime,
+        alg::SPA,
+    ) where {T <: Real}
+    δt::T = if alg.delta_t === nothing
+        calculate_deltat(T, dt)
+    else
+        T(alg.delta_t)
+    end
+
+    # Compute sidereal time, right ascension, declination, and related parameters
+    (; ν, α, δ, R) = _compute_spa_srt_parameters(T, dt, δt)
+
+    return _spa_topocentric(obs, ν, α, δ, R)
 end
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: Real}

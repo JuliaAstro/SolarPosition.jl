@@ -5,13 +5,7 @@ using ForwardDiff
 @testset "ForwardDiff" begin
     dt = DateTime(2024, 6, 21, 9, 30)
 
-    @testset "Derivative matches finite differences: $name" for (name, alg) in [
-            ("PSA", PSA()),
-            ("NOAA", NOAA()),
-            ("Walraven", Walraven()),
-            ("USNO", USNO()),
-            ("SPA", SPA()),
-        ]
+    @testset "Derivative matches finite differences: $name" for (name, alg) in test_algorithms()
         # h = 1e-4: small enough for negligible truncation error, large enough
         # that the ~1e-12 deg Float64 wobble of the algorithms' internal
         # sidereal terms does not dominate the finite-difference reference

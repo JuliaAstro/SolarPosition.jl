@@ -7,7 +7,7 @@ using Dates: DateTime
 
 @testset "Type stability across precisions" begin
     dt = DateTime(2026, 6, 2, 18, 17, 23)
-    algorithms = (PSA(), NOAA(), Walraven(), USNO(), SPA())
+    algorithms = last.(test_algorithms())
 
     # The result element type must follow the Observer element type, and the call must be
     # type-stable (inferable to a concrete type) for every precision and algorithm.

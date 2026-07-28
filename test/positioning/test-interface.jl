@@ -7,6 +7,7 @@ using SolarPosition.Positioning:
     Walraven,
     USNO,
     SPA,
+    Iqbal,
     SolPos,
     ApparentSolPos,
     solar_position,
@@ -15,12 +16,7 @@ using Dates, TimeZones, Tables, DataFrames
 using StructArrays: StructVector
 using Dates: Hour, @dateformat_str
 
-@testset "$alg_name" for (alg_name, alg) in [
-        ("PSA", PSA()),
-        ("NOAA", NOAA()),
-        ("Walraven", Walraven()),
-        ("SPA", SPA()),
-    ]
+@testset "$alg_name" for (alg_name, alg) in test_algorithms()
 
     @testset "Scalar Interface" begin
         lat, lon, alt = 45.0, 10.0, 4000.0
@@ -239,12 +235,7 @@ end
     obs = Observer(45.0, 10.0, 100.0)
     dt = DateTime(2023, 6, 21, 12, 0, 0)
 
-    @testset "$alg_name with refraction" for (alg_name, alg) in [
-            ("PSA", PSA()),
-            ("NOAA", NOAA()),
-            ("Walraven", Walraven()),
-            ("USNO", USNO()),
-        ]
+    @testset "$alg_name with refraction" for (alg_name, alg) in test_algorithms()
         @testset "Returns ApparentSolPos with $refr_name" for (refr_name, refr) in [
                 ("BENNETT", BENNETT()),
                 ("HUGHES", HUGHES()),

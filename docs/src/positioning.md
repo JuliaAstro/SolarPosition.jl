@@ -64,6 +64,11 @@ The following solar position algorithms are currently implemented in SolarPositi
 | [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500° | None                                             | ✅     |
 | [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003° | Built-in                                         | ✅     |
 
+In addition, [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wraps `SPA`
+with a precomputed spline of its geocentric coordinates for roughly 10x faster
+repeated evaluation at matching accuracy. It is a wrapper rather than a standalone
+algorithm, see the [Interpolated Solar Position](@ref interpolated-position) guide.
+
 ## [PSA](@id psa-algorithm)
 
 The PSA (Plataforma Solar de Almería) algorithm is the default high-accuracy solar
@@ -120,4 +125,17 @@ position calculation with periodic terms for Earth heliocentric longitude and la
 
 ```@docs
 SolarPosition.Positioning.SPA
+```
+
+## [Interpolated](@id interpolated-algorithm)
+
+The Interpolated wrapper precomputes cubic B-splines of the geocentric solar
+coordinates of a wrapped exact algorithm over a fixed time span and reconstructs
+topocentric positions analytically at query time. See the
+[Interpolated Solar Position](@ref interpolated-position) guide for usage, accuracy,
+and benchmarks.
+
+```@docs
+SolarPosition.Positioning.Interpolated
+SolarPosition.Positioning.solar_rate
 ```

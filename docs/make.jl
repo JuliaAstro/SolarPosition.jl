@@ -43,6 +43,7 @@ makedocs(;
             "guides/autodiff.md",
             "guides/plotting.md",
             "guides/parallel.md",
+            "guides/interpolation.md",
             "guides/modelingtoolkit.md",
             "guides/benchmarking.md",
             "guides/new-algorithm.md",

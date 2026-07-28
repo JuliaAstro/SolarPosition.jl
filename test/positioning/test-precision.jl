@@ -8,7 +8,7 @@ using Dates: DateTime
 @testset "Arbitrary precision" begin
     dt = DateTime(2026, 6, 2, 18, 17, 23)
     mkobs(T) = Observer(T(40), T(-105); altitude = T(1600))
-    allalgs = (PSA(), NOAA(), Walraven(), USNO(), SPA())
+    allalgs = last.(test_algorithms())
 
     @testset "BigFloat carries genuine extra precision" begin
         # Recomputing at higher precision must keep refining the answer. If the computation

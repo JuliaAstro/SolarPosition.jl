@@ -3,6 +3,20 @@
 using DataFrames
 using TimeZones
 using Dates
+using SolarPosition: PSA, NOAA, Walraven, USNO, SPA, Iqbal
+
+# Every positioning algorithm under test, as name => instance pairs. Use
+# `last.(test_algorithms())` where only the instances are needed.
+function test_algorithms()
+    return [
+        "PSA" => PSA(),
+        "NOAA" => NOAA(),
+        "Walraven" => Walraven(),
+        "USNO" => USNO(),
+        "SPA" => SPA(),
+        "Iqbal" => Iqbal(),
+    ]
+end
 
 # Every UTC instant sits on the 84.375 s grid: its offset from noon is a multiple of
 # 84375 ms, the odd factor of 86_400_000 ms. The full Julian Date of such an instant

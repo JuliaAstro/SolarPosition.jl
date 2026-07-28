@@ -11,9 +11,11 @@ using SolarPosition:
     SolarPositionBlock
 
 using SolarPosition: HUGHES, BENNETT, ARCHER, MICHALSKY, SG2
+using SolarPosition: Interpolated
+using Interpolations
 using ModelingToolkit: @named, @variables, @parameters, unknowns, System, mtkcompile
 using ModelingToolkit: t_nounits as t, D_nounits as D
-using Dates: DateTime
+using Dates: Dates, DateTime
 using OrdinaryDiffEq
 using CairoMakie
 
@@ -210,6 +212,36 @@ using CairoMakie
                     @test isapprox(sol[sys.zenith][1], row.zenith; atol)
                 end
                 @test isapprox(sol[sys.azimuth][1], row.azimuth; atol)
+            end
+        end
+    end
+
+    @testset "Interpolated algorithm in the block" begin
+        # the interpolant is a drop in replacement for the wrapped SPA, so the block
+        # must produce the same outputs with either within interpolation error
+        t0_interp = DateTime(2024, 6, 21)
+        interp = Interpolated(
+            SPA();
+            tspan = (t0_interp - Dates.Day(1), t0_interp + Dates.Day(2)),
+        )
+        obs_interp = Observer(52.35888, 4.88185, 100.0)
+
+        @named sun = SolarPositionBlock()
+        sys = mtkcompile(sun)
+
+        for refr in (NoRefraction(), DefaultRefraction())
+            sols = map((interp, SPA())) do alg
+                pmap = [
+                    sys.observer => obs_interp,
+                    sys.t0 => t0_interp,
+                    sys.algorithm => alg,
+                    sys.refraction => refr,
+                ]
+                prob = ODEProblem(sys, pmap, (0.0, 86400.0))
+                solve(prob; saveat = 3600.0)
+            end
+            for output in (sys.azimuth, sys.elevation, sys.zenith)
+                @test maximum(abs.(sols[1][output] .- sols[2][output])) < 1.0e-8
             end
         end
     end

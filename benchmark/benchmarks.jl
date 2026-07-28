@@ -14,6 +14,7 @@ Or use the Julia API:
 
 using BenchmarkTools
 using SolarPosition
+using Interpolations
 using Dates
 
 # ============================================================================
@@ -44,6 +45,12 @@ const POSITION_ALGORITHMS = Dict(
     "Walraven" => Walraven(),
     "USNO" => USNO(),
     "SPA" => SPA(),
+    "Iqbal" => Iqbal(),
+    # spans every timestamp generate_times can produce, up to n = 100_000 hours
+    "Interpolated" => Interpolated(
+        SPA();
+        tspan = (DateTime(2024, 1, 1), DateTime(2035, 8, 1)),
+    ),
 )
 
 const REFRACTION_ALGORITHMS = Dict(

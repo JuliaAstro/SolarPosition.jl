@@ -11,7 +11,7 @@ Adding a new algorithm involves these steps:
 
 1. [**Create the algorithm struct**](@ref step-1-create-struct) - Define a type that subtypes [`SolarAlgorithm`](@ref SolarPosition.Positioning.SolarAlgorithm).
 2. [**Implement the core function**](@ref step-2-implement-core) - Write `_solar_position` for your algorithm.
-3. [**Handle refraction**](@ref step-3-handle-refraction) - Define how your algorithm interacts with `DefaultRefraction`.
+3. [**Handle refraction**](@ref step-3-handle-refraction) - Define how your algorithm interacts with [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction).
 4. [**Export the algorithm**](@ref step-4-export) - Make it available to users.
 5. [**Write tests**](@ref step-5-write-tests) - Validate correctness against reference values.
 6. [**Document**](@ref step-6-document) - Add docstrings and update documentation.

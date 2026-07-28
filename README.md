@@ -117,14 +117,13 @@ latitudes from 70°N to 60°S:
 | Algorithm | `Float32` error | `Float32` runtime | `Float64` error | `Float128` error | `Float128` runtime | `BigFloat` runtime |
 | --------- | --------------- | ----------------- | --------------- | ---------------- | ------------------ | ------------------ |
 | PSA       | 0.011°          | 1.3× faster       | 1.3e-11°        | 7.1e-30°         | 93× slower         | 500× slower        |
-| NOAA      | 0.0019°         | 1.2× faster       | 3.5e-12°        | broken[^1]       | n/a                | 330× slower        |
+| NOAA      | 0.0019°         | 1.2× faster       | 3.5e-12°        | broken           | n/a                | 330× slower        |
 | Walraven  | 0.0040°         | 1.3× faster       | 6.4e-12°        | 8.6e-30°         | 74× slower         | 400× slower        |
-| USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken[^1]       | n/a                | 300× slower        |
+| USNO      | 0.0036°         | 1.2× faster       | 9.5e-12°        | broken           | n/a                | 300× slower        |
 | SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
 
-[^1]: Quadmath.jl v1.0.1 implements `rem` with round-to-nearest instead of truncated
-    semantics, which breaks the degree reduction in Base's `sind` and `cosd`, so `NOAA`
-    and `USNO` give wrong results at `Float128` until that is fixed upstream.
+See the [precision guide](https://juliaastro.org/SolarPosition/stable/guides/precision/)
+for details, including why `NOAA` and `USNO` are currently broken at `Float128`.
 
 ## Refraction correction algorithms
 

@@ -203,7 +203,8 @@ fig
 
 ## High Accuracy Forcing with Interpolated
 
-The default `PSA()` is fast but carries its ±0.0083° accuracy. Passing `SPA()` gives
+The default [`PSA`](@ref SolarPosition.Positioning.PSA) is fast but carries its
+±0.0083° accuracy. Passing [`SPA`](@ref SolarPosition.Positioning.SPA) gives
 ±0.0003° at about 2 µs per evaluation, which the solver pays at every stage of every
 step. The [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wrapper keeps
 SPA accuracy at close to PSA cost, which makes it the right choice when a model needs

@@ -488,9 +488,11 @@ include("noaa.jl")
 include("walraven.jl")
 include("usno.jl")
 include("spa.jl")
+include("interpolated.jl")
 
 export Observer,
     PSA, NOAA, Walraven, USNO, SPA, solar_position, solar_position!, SolPos, ApparentSolPos
+export Interpolated, solar_rate
 export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos
 export calculate_deltat
 

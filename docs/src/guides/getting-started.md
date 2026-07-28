@@ -28,7 +28,7 @@ using DataFrames
 ## Defining a location
 
 We can observe the sun from anywhere on earth. To define an observer location, we use
-the `Observer` struct, which takes latitude, longitude, and optionally altitude
+the [`Observer`](@ref SolarPosition.Positioning.Observer) struct, which takes latitude, longitude, and optionally altitude
 (in meters) as arguments.
 
 ```@example getting-started

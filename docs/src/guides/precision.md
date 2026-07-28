@@ -32,7 +32,9 @@ precision types never ride on the ~2.45e6 Julian Date.
 - `Float32` trades a little accuracy for a modest speedup. The error stays within each
   algorithm's own claimed accuracy.
 - `Float128` from [Quadmath.jl](https://github.com/JuliaMath/Quadmath.jl) gives quad
-  precision of roughly 1e-30 degrees for `PSA`, `SPA`, and `Walraven` at a large
+  precision of roughly 1e-30 degrees for [`PSA`](@ref SolarPosition.Positioning.PSA),
+  [`SPA`](@ref SolarPosition.Positioning.SPA), and
+  [`Walraven`](@ref SolarPosition.Positioning.Walraven) at a large
   runtime cost.
 - `BigFloat` gives arbitrary precision. Raise it with `setprecision(BigFloat, bits)`.
   This is the right tool for generating reference values.
@@ -58,8 +60,10 @@ over a grid of 125 combinations of dates from 2015 to 2035 and latitudes from 70
 | SPA       | 0.012°          | 1.5× faster       | 1.8e-11°        | 1.1e-29°         | 118× slower        | 330× slower        |
 
 [^1]: Quadmath.jl v1.0.1 implements `rem` with round-to-nearest instead of truncated
-    semantics, which breaks the degree reduction in Base's `sind` and `cosd`, so `NOAA`
-    and `USNO` give wrong results at `Float128` until that is fixed upstream.
+    semantics, which breaks the degree reduction in Base's `sind` and `cosd`, so
+    [`NOAA`](@ref SolarPosition.Positioning.NOAA) and
+    [`USNO`](@ref SolarPosition.Positioning.USNO) give wrong results at `Float128`
+    until that is fixed upstream.
 
 `Float128` is a fixed 113-bit significand type backed by libquadmath, is allocation
 free, and costs roughly 100× `Float64`. `BigFloat` is arbitrary precision backed by

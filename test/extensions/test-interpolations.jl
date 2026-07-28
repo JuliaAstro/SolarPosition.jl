@@ -35,6 +35,10 @@ const INTERP_OBSERVERS = [
         @test_throws ArgumentError Interpolated(SPA(); tspan = (span1y[2], span1y[1]))
         @test_throws ArgumentError Interpolated(SPA(); tspan = span1y, step = Day(60))
         @test_throws ArgumentError Interpolated(SPA(); tspan = span1y, step = Hour(0))
+        @test_logs (:warn, r"interpolation error above") Interpolated(
+            SPA(); tspan = span1y, step = Day(10),
+        )
+        @test_logs Interpolated(SPA(); tspan = span1y, step = Day(3))
         @test alg isa Interpolated{SPA}
         @test occursin("out_of_range = :error", string(alg))
     end

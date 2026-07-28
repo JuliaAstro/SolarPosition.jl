@@ -80,6 +80,7 @@ times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
         ("NOAA", NOAA()),
         ("Walraven", Walraven()),
         ("USNO", USNO()),
+        ("Iqbal", Iqbal()),
     ]
 
     # Collect accuracy data
@@ -134,7 +135,7 @@ percentile) for each algorithm compared to SPA.
     )
 
     # Sort by algorithm order
-    algo_order = ["PSA", "NOAA", "Walraven", "USNO"]
+    algo_order = ["PSA", "NOAA", "Walraven", "USNO", "Iqbal"]
     algo_stats = algo_stats[sortperm([findfirst(==(algo), algo_order) for algo in algo_stats.Algorithm]), :]
 
     fig = Figure(size = (900, 400), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")

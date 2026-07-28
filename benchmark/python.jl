@@ -22,13 +22,14 @@ function create_pandas_times(n::Int)
 end
 
 # Map algorithm names to solposx functions
-# solposx functions: psa, noaa, walraven, usno, spa
+# solposx functions: psa, noaa, walraven, usno, spa, iqbal
 const SOLPOSX_ALGORITHMS = Dict(
     "PSA" => (sp.psa, Dict(:coefficients => 2020)),
     "NOAA" => (sp.noaa, Dict()),
     "Walraven" => (sp.walraven, Dict()),
     "USNO" => (sp.usno, Dict()),
     "SPA" => (sp.spa, Dict()),
+    "Iqbal" => (sp.iqbal, Dict()),
 )
 
 SUITE["solposx"] = BenchmarkGroup()

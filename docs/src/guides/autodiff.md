@@ -27,6 +27,24 @@ derivatives. Time is a `DateTime`, not a number, so derivatives with respect to 
 are not available through this route. Differentiate through a wrapper that maps a
 number to a `DateTime` if you need them.
 
+## DifferentiationInterface
+
+Because the differentiability comes from the code being generic rather than from any
+AD specific hooks, backend agnostic tooling composes with it out of the box.
+[DifferentiationInterface.jl](https://github.com/JuliaDiff/DifferentiationInterface.jl)
+lets you write the gradient call once and swap the backend freely. Here the
+ForwardDiff and finite difference backends agree to the finite difference accuracy:
+
+```@example autodiff
+import DifferentiationInterface as DI
+import FiniteDiff
+
+f(x) = solar_position(Observer(x[1], x[2]), dt, SPA(), NoRefraction()).elevation
+g_ad = DI.gradient(f, DI.AutoForwardDiff(), [45.0, 10.0])
+g_num = DI.gradient(f, DI.AutoFiniteDiff(), [45.0, 10.0])
+(g_ad, maximum(abs.(g_ad .- g_num)))
+```
+
 ## Example: optimizing a solar panel orientation
 
 Gradient ascent on a plane-of-array irradiance proxy finds the best fixed tilt and

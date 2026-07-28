@@ -71,7 +71,7 @@ expected = Dict(
 )
 
 # test configurations: (algorithm_name, constructor, expected_results)
-test_algorithms = [
+refraction_test_algorithms = [
     ("Hughes", () -> HUGHES(101325.0, 12.0), expected["Hughes"]),
     ("Archer", () -> ARCHER(), expected["Archer"]),
     ("Bennett", () -> BENNETT(101325.0, 12.0), expected["Bennett"]),
@@ -82,7 +82,7 @@ test_algorithms = [
 
 elevations = test_elevation_angles()
 
-@testset "Refraction: $name" for (name, constructor, expected) in test_algorithms
+@testset "Refraction: $name" for (name, constructor, expected) in refraction_test_algorithms
     algorithm = constructor()
 
     @testset "Scalar computation" begin

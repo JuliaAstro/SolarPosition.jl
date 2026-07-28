@@ -137,6 +137,7 @@ percentile) for each algorithm compared to SPA.
     # Sort by algorithm order
     algo_order = ["PSA", "NOAA", "Walraven", "USNO", "Iqbal"]
     algo_stats = algo_stats[sortperm([findfirst(==(algo), algo_order) for algo in algo_stats.Algorithm]), :]
+    xs = 1:nrow(algo_stats)
 
     fig = Figure(size = (900, 400), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -145,31 +146,31 @@ percentile) for each algorithm compared to SPA.
         title = "Elevation Error vs SPA (95% CI)",
         xlabel = "Algorithm",
         ylabel = "Error (degrees)",
-        xticks = (1:4, algo_stats.Algorithm),
+        xticks = (xs, algo_stats.Algorithm),
         backgroundcolor = :transparent,
     )
 
     # Error bars showing 95% interval
-    errorbars!(ax1, 1:4, algo_stats.Elev_Mean,
+    errorbars!(ax1, xs, algo_stats.Elev_Mean,
         algo_stats.Elev_Mean .- algo_stats.Elev_P2_5,
         algo_stats.Elev_P97_5 .- algo_stats.Elev_Mean,
         color = :steelblue, linewidth = 2, whiskerwidth = 10)
-    scatter!(ax1, 1:4, algo_stats.Elev_Mean, color = :steelblue, markersize = 12)
+    scatter!(ax1, xs, algo_stats.Elev_Mean, color = :steelblue, markersize = 12)
 
     # Azimuth error plot with error bars
     ax2 = Axis(fig[1, 2],
         title = "Azimuth Error vs SPA (95% CI)",
         xlabel = "Algorithm",
         ylabel = "Error (degrees)",
-        xticks = (1:4, algo_stats.Algorithm),
+        xticks = (xs, algo_stats.Algorithm),
         backgroundcolor = :transparent,
     )
 
-    errorbars!(ax2, 1:4, algo_stats.Azim_Mean,
+    errorbars!(ax2, xs, algo_stats.Azim_Mean,
         algo_stats.Azim_Mean .- algo_stats.Azim_P2_5,
         algo_stats.Azim_P97_5 .- algo_stats.Azim_Mean,
         color = :coral, linewidth = 2, whiskerwidth = 10)
-    scatter!(ax2, 1:4, algo_stats.Azim_Mean, color = :coral, markersize = 12)
+    scatter!(ax2, xs, algo_stats.Azim_Mean, color = :coral, markersize = 12)
 
     nothing # hide
     ```
@@ -250,12 +251,12 @@ fig_err # hide
             title = loc.name,
             xlabel = "Algorithm",
             ylabel = "Mean Elevation Error (°)",
-            xticks = (1:4, [a[1] for a in algorithms]),
+            xticks = (1:length(algorithms), [a[1] for a in algorithms]),
             backgroundcolor = :transparent,
         )
 
         loc_data = filter(r -> r.Location == loc.name, accuracy_results)
-        barplot!(ax, 1:4, loc_data.Elevation_Mean_Error, color = :teal)
+        barplot!(ax, 1:length(algorithms), loc_data.Elevation_Mean_Error, color = :teal)
     end
 
     Label(fig2[0, :], "Elevation Error by Location", fontsize = 14, font = :bold)
@@ -288,7 +289,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
     )
 
     for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                          ("USNO", USNO()), ("SPA", SPA())]
+                          ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
         b = @benchmark solar_position($obs, $dt, $algo) samples=100 evals=10
         push!(single_benchmarks, (
             Algorithm = name,
@@ -321,7 +322,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         times_vec = collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1) + Hour(n-1)))
 
         for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                              ("USNO", USNO()), ("SPA", SPA())]
+                              ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
             b = @benchmark solar_position($obs, $times_vec, $algo) samples=10 evals=1
             time_ms = median(b.times) / 1e6
             push!(vector_benchmarks, (
@@ -352,8 +353,8 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         backgroundcolor = :transparent,
     )
 
-    colors = [:blue, :orange, :green, :purple, :red]
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
+    colors = [:blue, :orange, :green, :purple, :red, :teal]
+    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA", "Iqbal"]
 
     for (i, algo) in enumerate(algo_names)
         data = filter(r -> r.Algorithm == algo, vector_benchmarks)
@@ -430,6 +431,7 @@ solposx_algorithms = Dict(
     "Walraven" => (sp.walraven, NamedTuple()),
     "USNO" => (sp.usno, NamedTuple()),
     "SPA" => (sp.spa, NamedTuple()),
+    "Iqbal" => (sp.iqbal, NamedTuple()),
 )
 
 lat, lon = 51.5074, -0.1278
@@ -459,7 +461,7 @@ We benchmark both libraries across different input sizes:
         py_times_idx = create_pandas_times(n)
 
         for (algo_name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                                   ("USNO", USNO()), ("SPA", SPA())]
+                                   ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
             # Julia benchmark
             julia_bench = @benchmark solar_position($obs, $julia_times_vec, $algo) samples=5 evals=1
             julia_time_ms = median(julia_bench.times) / 1e6
@@ -495,8 +497,8 @@ We benchmark both libraries across different input sizes:
     fig5 = Figure(size = (600, 750), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
     # Group by algorithm for plotting
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
-    colors_julia = [:blue, :green, :purple, :orange, :red]
+    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA", "Iqbal"]
+    colors_julia = [:blue, :green, :purple, :orange, :red, :teal]
 
     ax1 = Axis(fig5[1, 1],
         title = "Computation Time: Julia vs Python",
@@ -621,7 +623,8 @@ both Julia and Python implementations.
         "NOAA" => :orange,
         "Walraven" => :green,
         "USNO" => :purple,
-        "SPA" => :red
+        "SPA" => :red,
+        "Iqbal" => :teal
     )
 
     # Marker scheme for library

@@ -201,6 +201,53 @@ lines!(ax3, sol.t ./ 3600, sol[sys_building.sun.elevation])
 fig
 ```
 
+## High Accuracy Forcing with Interpolated
+
+The default `PSA()` is fast but carries its ±0.0083° accuracy. Passing `SPA()` gives
+±0.0003° at about 2 µs per evaluation, which the solver pays at every stage of every
+step. The [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wrapper keeps
+SPA accuracy at close to PSA cost, which makes it the right choice when a model needs
+the best available forcing. Load Interpolations.jl, build the interpolant to cover the
+simulation window with some margin, and pass it like any other algorithm:
+
+```@example mtk
+using Interpolations
+
+t0 = DateTime(2024, 6, 21, 0, 0, 0)
+interp = Interpolated(
+    SPA();
+    tspan = (t0 - Day(1), t0 + Day(2)),
+    out_of_range = :fallback,
+)
+
+@named sun = SolarPositionBlock()
+sys = mtkcompile(sun)
+
+pmap = [
+    sys.observer => Observer(37.7749, -122.4194, 100.0),
+    sys.t0 => t0,
+    sys.algorithm => interp,
+    sys.refraction => NoRefraction(),
+]
+
+prob = ODEProblem(sys, pmap, (0.0, 86400.0))
+sol = solve(prob; saveat = 3600.0)
+
+# identical model with direct SPA for comparison
+pmap_spa = [pmap[1], pmap[2], sys.algorithm => SPA(), pmap[4]]
+sol_spa = solve(ODEProblem(sys, pmap_spa, (0.0, 86400.0)); saveat = 3600.0)
+
+maximum(abs.(sol[sys.elevation] .- sol_spa[sys.elevation]))
+```
+
+Two practical notes. First, size `tspan` to cover the whole solve measured from `t0`
+and pad it generously, since construction costs milliseconds and a few hundred
+kilobytes per year. Second, `out_of_range = :fallback` is a good idea inside a solver,
+because a stray evaluation outside the span then degrades to exact SPA instead of
+aborting the integration. The interpolant is observer independent and immutable, so
+one instance can be shared by every `SolarPositionBlock` in a model and across
+threads.
+
 ## Implementation Details
 
 The extension works by registering the [`solar_position`](@ref) function and helper functions as

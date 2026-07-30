@@ -73,6 +73,11 @@ end
 HUGHES{T}() where {T <: Real} = HUGHES{T}(T(101325), T(10))
 HUGHES() = HUGHES{Float64}()
 
+# mixed argument types promote, so a ForwardDiff.Dual pressure alongside a Float64
+# temperature gives a dual valued model instead of a MethodError
+HUGHES(pressure::Real, temperature::Real) =
+    HUGHES{promote_type(typeof(pressure), typeof(temperature))}(pressure, temperature)
+
 function _refraction(model::HUGHES{T}, elevation_deg::Real) where {T <: Real}
     # this avoids numerical instability at very high elevations
     if elevation_deg > T(85.0)

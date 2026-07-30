@@ -54,6 +54,11 @@ end
 BENNETT{T}() where {T <: Real} = BENNETT{T}(T(101325), T(12))
 BENNETT() = BENNETT{Float64}()
 
+# mixed argument types promote, so a ForwardDiff.Dual pressure alongside a Float64
+# temperature gives a dual valued model instead of a MethodError
+BENNETT(pressure::Real, temperature::Real) =
+    BENNETT{promote_type(typeof(pressure), typeof(temperature))}(pressure, temperature)
+
 function _refraction(model::BENNETT{T}, elevation_deg::Real) where {T <: Real}
     # convert pressure from Pascal to hPa
     pressure_hPa = model.pressure / T(100.0)

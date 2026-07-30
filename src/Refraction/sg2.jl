@@ -60,6 +60,11 @@ end
 SG2{T}() where {T <: Real} = SG2{T}(T(101325), T(12))
 SG2() = SG2{Float64}()
 
+# mixed argument types promote, so a ForwardDiff.Dual pressure alongside a Float64
+# temperature gives a dual valued model instead of a MethodError
+SG2(pressure::Real, temperature::Real) =
+    SG2{promote_type(typeof(pressure), typeof(temperature))}(pressure, temperature)
+
 function _refraction(model::SG2{T}, elevation_deg::Real) where {T <: Real}
     # Convert pressure from Pascal to hPa (hectopascal)
     pressure_hPa = model.pressure / T(100.0)

@@ -99,6 +99,7 @@ accuracy and implementation status.
 | USNO      | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None               | ✅     |
 | SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in           | ✅     |
 | Iqbal     | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None               | ✅     |
+| Michalsky | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                               | ±0.0100° | MICHALSKY          | ✅     |
 
 ## Fast repeated evaluation
 
@@ -141,14 +142,14 @@ tracker example.
 
 Atmospheric refraction correction algorithms available in SolarPosition.jl.
 
-| Algorithm | Reference                                                                                        | Atmospheric Parameters | Status |
-| --------- | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
-| HUGHES    | [Hughes, 1985](https://pvpmc.sandia.gov/app/uploads/sites/243/2022/10/Engineering-Astronomy.pdf) | Pressure, Temperature  | ✅     |
-| ARCHER    | Archer et al., 1980                                                                              | None                   | ✅     |
-| BENNETT   | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  | ✅     |
-| MICHALSKY | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                                | None                   | ✅     |
-| SG2       | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
-| SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅     |
+| Algorithm     | Reference                                                                                        | Atmospheric Parameters | Status |
+| ------------- | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
+| HUGHES        | [Hughes, 1985](https://pvpmc.sandia.gov/app/uploads/sites/243/2022/10/Engineering-Astronomy.pdf) | Pressure, Temperature  | ✅     |
+| ARCHER        | Archer et al., 1980                                                                              | None                   | ✅     |
+| BENNETT       | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  | ✅     |
+| MICHALSKY     | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                                | None                   | ✅     |
+| SG2           | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
+| SPARefraction | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅     |
 
 ## Extensions
 
@@ -161,6 +162,11 @@ import the corresponding packages:
 | OhMyThreads     | [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)     | Parallel computation of solar positions           |
 | ModelingToolkit | [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)   | Symbolic solar position models for simulations    |
 | Interpolations  | [`Interpolations.jl`](https://github.com/JuliaMath/Interpolations.jl) | Fast `Interpolated` algorithm construction        |
+| TimeZones       | [`TimeZones.jl`](https://github.com/JuliaTime/TimeZones.jl)           | `ZonedDateTime` input and zoned sunrise/sunset    |
+
+Loading `TimeZones.jl` is what enables `ZonedDateTime` arguments. In practice this needs
+no thought, since a `ZonedDateTime` cannot be constructed without it, and it means users
+who only ever pass a `DateTime` do not pay for TZJData and its download stack.
 
 ## Numeric precision
 

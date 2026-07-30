@@ -88,6 +88,50 @@ accuracy and implementation status.
 | [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None                                                   | ✅     |
 | [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                                 | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY) | ✅     |
 
+Pass an algorithm as the third argument to pick one; the default is
+[`PSA`](@ref SolarPosition.Positioning.PSA).
+
+```@example srt
+solar_position(obs, DateTime(2023, 6, 21, 12), Michalsky())
+```
+
+## Fast repeated evaluation
+
+For dense time series, the [`Interpolated`](@ref SolarPosition.Positioning.Interpolated)
+wrapper precomputes cubic B-splines of SPA's geocentric solar coordinates and reconstructs
+positions analytically, roughly 10× faster per query at matching accuracy. One interpolant
+serves every observer. It activates as a package extension when
+[Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) is loaded:
+
+```@example srt
+using Interpolations
+
+alg = Interpolated(SPA(); tspan = (DateTime(2023, 1, 1), DateTime(2024, 1, 1)))
+solar_position(obs, times, alg)
+```
+
+See the [Interpolated Solar Position](@ref interpolated-position) guide for accuracy
+figures and when the construction cost pays off.
+
+## Automatic differentiation
+
+All algorithms are generic over the number type, so solar positions are differentiable
+with [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) out of the box, with no
+extension package needed:
+
+```@example srt
+using ForwardDiff
+
+ForwardDiff.gradient(
+    x -> solar_position(Observer(x[1], x[2]), DateTime(2023, 6, 21, 12)).elevation,
+    [52.35888, 4.88185],
+)
+```
+
+The [Automatic Differentiation](@ref automatic-differentiation) guide shows gradients
+through refraction models, panel orientation optimization, and a single axis tracker
+example.
+
 ## Numeric precision
 
 The computation runs at the precision of the
@@ -121,12 +165,19 @@ import the corresponding packages:
 | Makie           | [`Makie.jl`](https://github.com/MakieOrg/Makie.jl)                    | Plotting recipes for solar position visualization |
 | OhMyThreads     | [`OhMyThreads.jl`](https://github.com/JuliaFolds2/OhMyThreads.jl)     | Parallel computation of solar positions           |
 | ModelingToolkit | [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl)   | Symbolic solar position models for simulations    |
+| Interpolations  | [`Interpolations.jl`](https://github.com/JuliaMath/Interpolations.jl) | Fast `Interpolated` algorithm construction        |
+| TimeZones       | [`TimeZones.jl`](https://github.com/JuliaTime/TimeZones.jl)           | `ZonedDateTime` input and zoned sunrise/sunset    |
+
+Loading `TimeZones.jl` is what enables `ZonedDateTime` arguments. In practice this needs
+no thought, since a `ZonedDateTime` cannot be constructed without it, and it means users
+who only ever pass a `DateTime` do not pay for TZJData and its download stack.
 
 !!! note
     For more details on the extensions, see:
     - [ModelingToolkit Extension](guides/modelingtoolkit.md)
     - [Makie Extension](guides/plotting.md)
     - [OhMyThreads Extension](guides/parallel.md)
+    - [Interpolated Solar Position](@ref interpolated-position)
 
 ## How to Cite
 

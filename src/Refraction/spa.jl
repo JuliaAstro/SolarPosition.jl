@@ -62,8 +62,18 @@ apparent_elevation = elevation + refraction_correction
     atmos_refract::T = -0.5667
 end
 
-SPARefraction(pressure::T, temperature::T) where {T <: Real} =
-    SPARefraction{T}(pressure, temperature, T(-0.5667))
+# mixed argument types promote, so a ForwardDiff.Dual pressure alongside a Float64
+# temperature gives a dual valued model instead of a MethodError. The keyword constructor
+# that @kwdef generates routes through the three argument form, so it promotes too.
+function SPARefraction(pressure::Real, temperature::Real)
+    T = promote_type(typeof(pressure), typeof(temperature))
+    return SPARefraction{T}(pressure, temperature, T(-0.5667))
+end
+
+function SPARefraction(pressure::Real, temperature::Real, atmos_refract::Real)
+    T = promote_type(typeof(pressure), typeof(temperature), typeof(atmos_refract))
+    return SPARefraction{T}(pressure, temperature, atmos_refract)
+end
 
 function _refraction(model::SPARefraction{T}, elevation_deg::Real) where {T <: Real}
     # Convert pressure from Pascal to hPa/mbar

@@ -27,6 +27,21 @@ derivatives. Time is a `DateTime`, not a number, so derivatives with respect to 
 are not available through this route. Differentiate through a wrapper that maps a
 number to a `DateTime` if you need them.
 
+A refraction model's own parameters are differentiable inputs too. The model types and
+the result types promote, so a dual valued pressure needs no change to the observer:
+
+```@example autodiff
+ForwardDiff.derivative(
+    p -> solar_position(Observer(45.0, 10.0), dt, PSA(), HUGHES(p, 10.0)).apparent_elevation,
+    101325.0,
+)  # degrees of apparent elevation per pascal
+```
+
+[`Interpolated`](@ref SolarPosition.Positioning.Interpolated) differentiates as well. Its
+interpolants cover only the geocentric quantities, which depend on time alone, so the
+duals travel through the topocentric half it shares with the wrapped algorithm and the
+derivatives match that algorithm's to roundoff.
+
 ## DifferentiationInterface
 
 Because the differentiability comes from the code being generic rather than from any

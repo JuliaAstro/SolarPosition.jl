@@ -182,6 +182,30 @@ struct ApparentSolPos{T} <: AbstractApparentSolPos where {T <: Real}
     apparent_zenith::T
 end
 
+# the element type promotes over the fields, so a position whose apparent angles carry a
+# ForwardDiff.Dual from a differentiated refraction parameter can still be built from
+# geometric angles that do not
+SolPos(azimuth::Real, elevation::Real, zenith::Real) =
+    SolPos{promote_type(typeof(azimuth), typeof(elevation), typeof(zenith))}(
+    azimuth, elevation, zenith,
+)
+
+function ApparentSolPos(
+        azimuth::Real,
+        elevation::Real,
+        zenith::Real,
+        apparent_elevation::Real,
+        apparent_zenith::Real,
+    )
+    T = promote_type(
+        typeof(azimuth), typeof(elevation), typeof(zenith),
+        typeof(apparent_elevation), typeof(apparent_zenith),
+    )
+    return ApparentSolPos{T}(
+        azimuth, elevation, zenith, apparent_elevation, apparent_zenith,
+    )
+end
+
 Base.show(io::IO, obs::SolPos) = print(
     io,
     "SolPos(azimuth=$(obs.azimuth)°, elevation=$(obs.elevation)°, zenith=$(obs.zenith)°)",
@@ -292,7 +316,8 @@ at that precision:
 - **`Float16`**: unusable — algorithm coefficients overflow its range, so results are silently
   `NaN`. Use `Float32` or wider.
 - **`ForwardDiff.Dual`** and other `Real` number types work too, so solar positions are
-  differentiable with respect to latitude, longitude, and altitude.
+  differentiable with respect to latitude, longitude, and altitude, and with respect to a
+  refraction model's parameters such as pressure and temperature.
 
 See also: [`solar_position!`](@ref), [`Observer`](@ref), [`PSA`](@ref), [`NOAA`](@ref)
 """
@@ -382,7 +407,9 @@ function solar_position(
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: Real}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
+    RetType = result_type(
+        typeof(alg), typeof(refraction), _result_eltype(T, refraction),
+    )
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
     return pos
@@ -394,7 +421,9 @@ function solar_position(
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: Real}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
+    RetType = result_type(
+        typeof(alg), typeof(refraction), _result_eltype(T, refraction),
+    )
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
     return pos
@@ -406,7 +435,9 @@ function solar_position(
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: Real}
-    RetType = result_type(typeof(alg), typeof(refraction), T)
+    RetType = result_type(
+        typeof(alg), typeof(refraction), _result_eltype(T, refraction),
+    )
     pos = StructArrays.StructVector{RetType}(undef, length(dts))
     solar_position!(pos, obs, dts, alg, refraction)
     return pos
@@ -479,6 +510,13 @@ end
 result_type(::Type{<:SolarAlgorithm}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
 result_type(::Type{<:SolarAlgorithm}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} =
     ApparentSolPos{T}
+
+# element type of the container the vector paths preallocate. Differentiating with respect
+# to a refraction parameter makes the apparent angles duals while the observer stays
+# Float64, so the observer's precision alone would give a container the results cannot
+# convert into
+_result_eltype(::Type{T}, refraction::RefractionAlgorithm) where {T <: Real} =
+    promote_type(T, Refraction.refraction_eltype(typeof(refraction)))
 
 include("utils.jl")
 include("timebase.jl")

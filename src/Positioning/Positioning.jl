@@ -301,7 +301,11 @@ pos_noaa = solar_position(obs, dt, NOAA())
 
 # Floating-Point Precision
 The result element type follows the `Observer{T}` element type `T`, and the computation runs
-at that precision:
+at that precision. A refraction model carrying a wider parameter type widens the result with
+it, since the apparent angles are computed at the model's precision: `Observer{Float32}` with
+the default `HUGHES()` and its `Float64` pressure gives an `ApparentSolPos{Float64}`.
+Construct the model at the observer's precision, as in `HUGHES{Float32}()`, to keep the
+result narrow. Models without parameters such as `ARCHER` never widen anything.
 - **`Float64`**: the default, with reference accuracy for every algorithm.
 - **`BigFloat`**: genuine extended precision for every algorithm — use a higher
   `setprecision` for more correct digits. Note that ΔT is only known to about a second and

@@ -476,7 +476,7 @@ Against a `reltol = 1e-13` reference, where the error columns are the largest ro
 temperature deviation over the day and the relative error in daily insolation:
 
 | variant | steps | rejected | `f` evals | max ΔT_room | rel. err. insolation |
-|:---|---:|---:|---:|---:|---:|
+| :--- | ---: | ---: | ---: | ---: | ---: |
 | no kinks declared | 21 | 1 | 129 | 1.7e-2 K | — |
 | almanac kinks | 23 | 0 | 137 | 7.7e-3 K | — |
 | model kinks | 21 | 0 | 125 | 1.4e-4 K | — |

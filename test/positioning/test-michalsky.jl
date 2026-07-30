@@ -125,6 +125,33 @@ end
         )
     end
 
+    # The original quadrant assignment adds a full turn once the sun is below the critical
+    # elevation after solar noon. None of the shared conditions reaches that branch, so
+    # these two evening cases cover it in both hemispheres. Both sit on the 84.375 s grid.
+    @testset "Original quadrant below the critical elevation" begin
+        dt = DateTime(2020, 10, 17, 20, 3, 45)
+        expected = [
+            45.0 => [
+                -37.466479970035735, -36.90647997003573, 127.46647997003573,
+                126.90647997003573, 297.89774644810706,
+            ],
+            -45.0 => [
+                -21.800298915084763, -21.240298915084765, 111.80029891508477,
+                111.24029891508476, 310.93110357433807,
+            ],
+        ]
+        for (lat, (el, app_el, zen, app_zen, az)) in expected
+            res = solar_position(
+                Observer(lat, 10.0), dt, Michalsky(spencer_correction = false),
+            )
+            @test res.elevation ≈ el atol = 1.0e-10
+            @test res.apparent_elevation ≈ app_el atol = 1.0e-10
+            @test res.zenith ≈ zen atol = 1.0e-10
+            @test res.apparent_zenith ≈ app_zen atol = 1.0e-10
+            @test res.azimuth ≈ az atol = 1.0e-10
+        end
+    end
+
     @testset "Constructor" begin
         @test Michalsky() == Michalsky(true, :original)
         @test Michalsky(spencer_correction = false).spencer_correction === false

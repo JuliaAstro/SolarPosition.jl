@@ -15,6 +15,6 @@ node_modules
 .vscode/settings.json
 **.old
 play/Project.toml
-docs/.CondaPkg/
+**/.CondaPkg/
 *.mem
 **/Manifest-*.toml

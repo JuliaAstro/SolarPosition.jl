@@ -91,7 +91,9 @@ accuracy and implementation status.
 
 The computation runs at the precision of the
 [`Observer{T}`](@ref SolarPosition.Positioning.Observer) element type. `Float32`,
-`Float64`, `Float128`, and `BigFloat` are supported. See the
+`Float64`, `Float128`, and `BigFloat` are supported. A refraction model's own parameter
+type promotes with the observer's, so build the model at the same precision to keep a
+narrow result narrow. See the
 [Numeric Precision](@ref numeric-precision) guide for measured accuracy and runtime of
 every algorithm at each precision, including multithreaded benchmarks.
 

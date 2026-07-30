@@ -25,6 +25,24 @@ A magnitude-safe time base keeps full intra-day resolution at every precision. T
 carried as an exact integer day count since J2000 plus a fraction of a day, so low
 precision types never ride on the ~2.45e6 Julian Date.
 
+## Refraction models carry their own precision
+
+A refraction model's pressure and temperature have an element type of their own, and the
+apparent angles are computed at it. The result type is the promotion of the two, so a
+narrow observer paired with a default model widens:
+
+```@example precision
+(
+    typeof(solar_position(obs32, dt, PSA(), HUGHES())),          # Float64 pressure widens
+    typeof(solar_position(obs32, dt, PSA(), HUGHES{Float32}())), # matched, stays narrow
+    typeof(solar_position(obs32, dt, PSA(), ARCHER())),          # no parameters to widen
+)
+```
+
+Construct the model at the observer's precision to keep the result narrow. Models without
+parameters never widen anything, and `DefaultRefraction` builds its model at the observer's
+precision, so the default path is unaffected.
+
 ## Supported types
 
 - `Float64` is the default and the reference. Every algorithm agrees with a 256-bit

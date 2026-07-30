@@ -27,7 +27,7 @@ TransitSunriseSunset{ZonedDateTime}(
 # Fields
 $(TYPEDFIELDS)
 """
-struct TransitSunriseSunset{T <: Union{DateTime, ZonedDateTime}}
+struct TransitSunriseSunset{T}
     transit::T
     sunrise::T
     sunset::T
@@ -41,20 +41,6 @@ function TransitSunriseSunset{DateTime}(
         ::Nothing,
     )
     return TransitSunriseSunset{DateTime}(transit, sunrise, sunset)
-end
-
-# Constructor for ZonedDateTime (with timezone conversion)
-function TransitSunriseSunset{ZonedDateTime}(
-        transit::DateTime,
-        sunrise::DateTime,
-        sunset::DateTime,
-        tz::TimeZone,
-    )
-    return TransitSunriseSunset{ZonedDateTime}(
-        ZonedDateTime(transit, tz; from_utc = true),
-        ZonedDateTime(sunrise, tz; from_utc = true),
-        ZonedDateTime(sunset, tz; from_utc = true),
-    )
 end
 
 """Calculate the sun transit, sunrise, and sunset
@@ -74,14 +60,6 @@ function transit_sunrise_sunset(
         alg::SolarAlgorithm = SPA(),
     )::TransitSunriseSunset{DateTime} where {T <: Real}
     return transit_sunrise_sunset(obs, DateTime(dt), alg)
-end
-
-function transit_sunrise_sunset(
-        obs::Observer{T},
-        zdt::ZonedDateTime,
-        alg::SolarAlgorithm = SPA(),
-    )::TransitSunriseSunset{ZonedDateTime} where {T <: Real}
-    return _transit_sunrise_sunset(timezone(zdt), obs, DateTime(zdt, UTC), alg)
 end
 
 # Helper function for next_* functions
@@ -153,12 +131,6 @@ function next_sunrise(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return next_sunrise(obs, DateTime(dt), alg)
 end
 
-function next_sunrise(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = next_sunrise(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
-end
-
 """
     $(TYPEDSIGNATURES)
 
@@ -178,12 +150,6 @@ end
 
 function next_sunset(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return next_sunset(obs, DateTime(dt), alg)
-end
-
-function next_sunset(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = next_sunset(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
 end
 
 """
@@ -208,12 +174,6 @@ function next_solar_noon(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return next_solar_noon(obs, DateTime(dt), alg)
 end
 
-function next_solar_noon(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = next_solar_noon(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
-end
-
 """
     $(TYPEDSIGNATURES)
 
@@ -233,12 +193,6 @@ end
 
 function previous_sunrise(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return previous_sunrise(obs, DateTime(dt), alg)
-end
-
-function previous_sunrise(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = previous_sunrise(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
 end
 
 """
@@ -262,12 +216,6 @@ function previous_sunset(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return previous_sunset(obs, DateTime(dt), alg)
 end
 
-function previous_sunset(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = previous_sunset(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
-end
-
 """
     $(TYPEDSIGNATURES)
 
@@ -287,10 +235,4 @@ end
 
 function previous_solar_noon(obs::Observer, dt::Date, alg::SolarAlgorithm = SPA())
     return previous_solar_noon(obs, DateTime(dt), alg)
-end
-
-function previous_solar_noon(obs::Observer, zdt::ZonedDateTime, alg::SolarAlgorithm = SPA())
-    dt_utc = DateTime(zdt, UTC)
-    result_utc = previous_solar_noon(obs, dt_utc, alg)
-    return ZonedDateTime(result_utc, timezone(zdt); from_utc = true)
 end

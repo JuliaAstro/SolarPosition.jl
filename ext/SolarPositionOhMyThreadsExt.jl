@@ -7,7 +7,6 @@ using OhMyThreads
 using OhMyThreads: tmap, tmap!
 using StructArrays: StructArrays
 using Dates: DateTime
-using TimeZones: ZonedDateTime
 using DocStringExtensions: TYPEDSIGNATURES
 
 """
@@ -57,7 +56,7 @@ function SolarPosition.solar_position!(
         alg::SolarAlgorithm,
         refraction::RefractionAlgorithm,
         executor::OhMyThreads.Scheduler,
-    ) where {T <: AbstractSolPos, Z <: Union{DateTime, ZonedDateTime}}
+    ) where {T <: AbstractSolPos, Z}
     f = dt -> SolarPosition.solar_position(obs, dt, alg, refraction)
     tmap!(f, pos, dts; scheduler = executor)
     return pos
@@ -108,7 +107,7 @@ function SolarPosition.solar_position(
         alg::SolarAlgorithm,
         refraction::RefractionAlgorithm,
         executor::OhMyThreads.Scheduler,
-    ) where {T <: AbstractFloat, Z <: Union{DateTime, ZonedDateTime}}
+    ) where {T <: AbstractFloat, Z}
     f = dt -> SolarPosition.solar_position(obs, dt, alg, refraction)
     results = tmap(f, dts; scheduler = executor)
     return StructArrays.StructVector(results)
@@ -118,7 +117,7 @@ function SolarPosition.solar_position(
         obs::Observer{T},
         dts::AbstractVector{Z},
         executor::OhMyThreads.Scheduler,
-    ) where {T <: AbstractFloat, Z <: Union{DateTime, ZonedDateTime}}
+    ) where {T <: AbstractFloat, Z}
     return SolarPosition.solar_position(
         obs,
         dts,

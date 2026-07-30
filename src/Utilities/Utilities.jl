@@ -3,7 +3,6 @@ module Utilities
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS, TYPEDSIGNATURES
 using ..Positioning: Observer, SPA, SolarAlgorithm, calculate_deltat
 import Dates: DateTime, Date, Day
-import TimeZones: ZonedDateTime, timezone, UTC
 
 include("spa.jl")
 include("srt.jl")

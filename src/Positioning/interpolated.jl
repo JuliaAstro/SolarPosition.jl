@@ -66,7 +66,7 @@ end
 
 function Interpolated(
         algorithm::SPA = SPA();
-        tspan::Tuple{<:Union{DateTime, ZonedDateTime}, <:Union{DateTime, ZonedDateTime}},
+        tspan::Tuple{Any, Any},
         step::Dates.Period = Dates.Hour(1),
         out_of_range::Symbol = :error,
     )
@@ -95,7 +95,6 @@ function Interpolated(
 end
 
 _as_utc(dt::DateTime) = dt
-_as_utc(zdt::ZonedDateTime) = DateTime(zdt, UTC)
 
 # Extension hook. SolarPositionInterpolationsExt defines the working method for SPA;
 # this fallback exists so construction without the extension fails with a clear message.
@@ -215,8 +214,4 @@ function solar_rate(
     # 1800 converts the difference over a two second baseline to degrees per hour
     daz = mod(p2.azimuth - p1.azimuth + 180, 360) - 180
     return (dazimuth_dt = daz * 1800, delevation_dt = (p2.elevation - p1.elevation) * 1800)
-end
-
-function solar_rate(obs::AbstractObserver, dt::ZonedDateTime, alg::Interpolated)
-    return solar_rate(obs, DateTime(dt, UTC), alg)
 end

@@ -1,7 +1,6 @@
 """SPA sunrise/sunset calculations."""
 
 using Dates: Dates
-using TimeZones: TimeZone
 
 using ..Positioning: _compute_spa_srt_parameters
 
@@ -23,22 +22,13 @@ function _transit_sunrise_sunset(
     return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
 end
 
-function _transit_sunrise_sunset(
-        tz::TimeZone,
-        obs::Observer{T},
-        dt::DateTime,
-        alg::SPA,
-    ) where {T <: Real}
-    return _transit_sunrise_sunset_impl(ZonedDateTime, obs, dt, alg, tz)
-end
-
 function _transit_sunrise_sunset_impl(
         ::Type{R},
         obs::Observer{T},
         dt::DateTime,
         alg::SPA,
-        tz::Union{Nothing, TimeZone},
-    ) where {T <: Real, R <: Union{DateTime, ZonedDateTime}}
+        tz,
+    ) where {T <: Real, R}
     """Calculate the sun transit, sunrise, and sunset
     for a given date at an Observer location using the SPA algorithm.
 

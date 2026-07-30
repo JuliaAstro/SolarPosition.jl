@@ -8,10 +8,13 @@ using SolarPosition.Positioning:
     USNO,
     SPA,
     Iqbal,
+    Michalsky,
     SolPos,
     ApparentSolPos,
     solar_position,
-    solar_position!
+    solar_position!,
+    result_type
+using SolarPosition.Refraction: DefaultRefraction
 using Dates, TimeZones, Tables, DataFrames
 using StructArrays: StructVector
 using Dates: Hour, @dateformat_str
@@ -49,39 +52,12 @@ using Dates: Hour, @dateformat_str
         single_result = solar_position(obs, single_dt, alg)
 
         @testset "In place" begin
-            if alg isa SPA
-                PosType = ApparentSolPos{Float64}
-                pos = StructVector{ApparentSolPos{Float64}}(
-                    (
-                        azimuth = zeros(n_dts),
-                        elevation = zeros(n_dts),
-                        zenith = zeros(n_dts),
-                        apparent_elevation = zeros(n_dts),
-                        apparent_zenith = zeros(n_dts),
-                    )
-                )
-            elseif alg isa NOAA
-                PosType = ApparentSolPos{Float64}
-                pos = StructVector{ApparentSolPos{Float64}}(
-                    (
-                        azimuth = zeros(n_dts),
-                        elevation = zeros(n_dts),
-                        zenith = zeros(n_dts),
-                        apparent_elevation = zeros(n_dts),
-                        apparent_zenith = zeros(n_dts),
-                    )
-                )
-            else
-                PosType = SolPos{Float64}
-                pos = StructVector{SolPos{Float64}}(
-                    (
-                        azimuth = zeros(n_dts),
-                        elevation = zeros(n_dts),
-                        zenith = zeros(n_dts),
-                    )
-                )
-            end
-
+            # the buffer must match whatever the package returns for a default-refraction
+            # call, so both the type and its fields are derived rather than enumerated
+            PosType = result_type(typeof(alg), DefaultRefraction, Float64)
+            pos = StructVector{PosType}(
+                NamedTuple(f => zeros(n_dts) for f in fieldnames(PosType)),
+            )
             solar_position!(pos, obs, dts, alg)
             @test all(pos.azimuth .!= 0.0)
             @test pos[1] == single_result
@@ -99,14 +75,9 @@ using Dates: Hour, @dateformat_str
         end
 
         @testset "Return new" begin
-            # Determine result type based on algorithm
-            PosType = if alg isa SPA
-                ApparentSolPos{Float64}
-            elseif alg isa NOAA
-                ApparentSolPos{Float64}
-            else
-                SolPos{Float64}
-            end
+            # the package decides which result type a default-refraction call yields,
+            # so ask it rather than keeping a second copy of that mapping here
+            PosType = result_type(typeof(alg), DefaultRefraction, Float64)
 
             # DateTime
             pos1 = solar_position(obs, dts, alg)

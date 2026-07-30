@@ -3,7 +3,7 @@
 using DataFrames
 using TimeZones
 using Dates
-using SolarPosition: PSA, NOAA, Walraven, USNO, SPA, Iqbal
+using SolarPosition: PSA, NOAA, Walraven, USNO, SPA, Iqbal, Michalsky
 
 # Every positioning algorithm under test, as name => instance pairs. Use
 # `last.(test_algorithms())` where only the instances are needed.
@@ -15,6 +15,7 @@ function test_algorithms()
         "USNO" => USNO(),
         "SPA" => SPA(),
         "Iqbal" => Iqbal(),
+        "Michalsky" => Michalsky(),
     ]
 end
 

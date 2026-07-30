@@ -78,14 +78,15 @@ Here we provide an overview of the solar positioning algorithms currently implem
 in SolarPosition.jl. Each algorithm is described with its reference paper, claimed
 accuracy and implementation status.
 
-| Algorithm                                             | Reference                                                                                       | Accuracy | Default Refraction                               | Status |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------ | ------ |
-| [`PSA`](@ref SolarPosition.Positioning.PSA)           | [Blanco-Muriel et al.](https://www.sciencedirect.com/science/article/abs/pii/S0038092X00001560) | ±0.0083° | None                                             | ✅     |
-| [`NOAA`](@ref SolarPosition.Positioning.NOAA)         | [Global Monitoring Laboratory](https://gml.noaa.gov/grad/solcalc/calcdetails.html)              | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES) | ✅     |
-| [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Walraven, 1978](https://doi.org/10.1016/0038-092X(78)90155-X)                                  | ±0.0100° | None                                             | ✅     |
-| [`USNO`](@ref SolarPosition.Positioning.USNO)         | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None                                             | ✅     |
-| [`SPA`](@ref SolarPosition.Positioning.SPA)           | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in                                         | ✅     |
-| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None                                             | ✅     |
+| Algorithm                                               | Reference                                                                                       | Accuracy | Default Refraction                                     | Status |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------ | ------ |
+| [`PSA`](@ref SolarPosition.Positioning.PSA)             | [Blanco-Muriel et al.](https://www.sciencedirect.com/science/article/abs/pii/S0038092X00001560) | ±0.0083° | None                                                   | ✅     |
+| [`NOAA`](@ref SolarPosition.Positioning.NOAA)           | [Global Monitoring Laboratory](https://gml.noaa.gov/grad/solcalc/calcdetails.html)              | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)       | ✅     |
+| [`Walraven`](@ref SolarPosition.Positioning.Walraven)   | [Walraven, 1978](https://doi.org/10.1016/0038-092X(78)90155-X)                                  | ±0.0100° | None                                                   | ✅     |
+| [`USNO`](@ref SolarPosition.Positioning.USNO)           | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None                                                   | ✅     |
+| [`SPA`](@ref SolarPosition.Positioning.SPA)             | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in                                               | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None                                                   | ✅     |
+| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                                 | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY) | ✅     |
 
 ## Numeric precision
 

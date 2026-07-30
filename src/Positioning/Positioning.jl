@@ -15,7 +15,8 @@ using StructArrays: StructArrays
 using Tables: Tables
 using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
 import ..Refraction
-using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction, SPARefraction
+using ..Refraction: RefractionAlgorithm, NoRefraction, DefaultRefraction, SPARefraction,
+    MICHALSKY
 
 """
     $(TYPEDEF)
@@ -527,6 +528,7 @@ include("timebase.jl")
 include("deltat.jl")
 include("psa.jl")
 include("iqbal.jl")
+include("michalsky.jl")
 include("noaa.jl")
 include("walraven.jl")
 include("usno.jl")
@@ -534,7 +536,7 @@ include("spa.jl")
 include("interpolated.jl")
 
 export Observer,
-    PSA, NOAA, Walraven, USNO, SPA, Iqbal,
+    PSA, NOAA, Walraven, USNO, SPA, Iqbal, Michalsky,
     solar_position, solar_position!, SolPos, ApparentSolPos
 export Interpolated, solar_rate
 export SolarAlgorithm, AbstractSolPos, AbstractApparentSolPos

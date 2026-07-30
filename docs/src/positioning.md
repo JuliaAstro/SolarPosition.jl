@@ -56,14 +56,15 @@ fig
 
 The following solar position algorithms are currently implemented in SolarPosition.jl:
 
-| Algorithm                                             | Reference       | Accuracy | Default Refraction                               | Status |
-| ----------------------------------------------------- | --------------- | -------- | ------------------------------------------------ | ------ |
-| [`PSA`](@ref SolarPosition.Positioning.PSA)           | [BALL01](@cite) | ±0.0083° | None                                             | ✅     |
-| [`NOAA`](@ref SolarPosition.Positioning.NOAA)         | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES) | ✅     |
-| [`Walraven`](@ref SolarPosition.Positioning.Walraven) | [Wal78](@cite)  | ±0.0100° | None                                             | ✅     |
-| [`USNO`](@ref SolarPosition.Positioning.USNO)         | [USNO](@cite)   | ±0.0500° | None                                             | ✅     |
-| [`SPA`](@ref SolarPosition.Positioning.SPA)           | [RA04](@cite)   | ±0.0003° | Built-in                                         | ✅     |
-| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)       | [Iqb83](@cite)  | ±0.0100° | None                                             | ✅     |
+| Algorithm                                               | Reference       | Accuracy | Default Refraction                                     | Status |
+| ------------------------------------------------------- | --------------- | -------- | ------------------------------------------------------ | ------ |
+| [`PSA`](@ref SolarPosition.Positioning.PSA)             | [BALL01](@cite) | ±0.0083° | None                                                   | ✅     |
+| [`NOAA`](@ref SolarPosition.Positioning.NOAA)           | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)       | ✅     |
+| [`Walraven`](@ref SolarPosition.Positioning.Walraven)   | [Wal78](@cite)  | ±0.0100° | None                                                   | ✅     |
+| [`USNO`](@ref SolarPosition.Positioning.USNO)           | [USNO](@cite)   | ±0.0500° | None                                                   | ✅     |
+| [`SPA`](@ref SolarPosition.Positioning.SPA)             | [RA04](@cite)   | ±0.0003° | Built-in                                               | ✅     |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqb83](@cite)  | ±0.0100° | None                                                   | ✅     |
+| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Mic88](@cite)  | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY) | ✅     |
 
 In addition, [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wraps `SPA`
 with a precomputed spline of its geocentric coordinates for roughly 10x faster
@@ -137,6 +138,18 @@ compilation of [Iqb83](@cite) built on the Fourier series representation of
 
 ```@docs
 SolarPosition.Positioning.Iqbal
+```
+
+## [Michalsky](@id michalsky-algorithm)
+
+The Michalsky algorithm evaluates the approximate solar position series of the
+Astronomical Almanac, as presented by [Mic88](@cite). The azimuth quadrant is resolved
+with the correction of [Spe89](@cite), so the result is valid in both hemispheres, and the
+Julian date can be computed either as the original paper does or exactly, which matters
+outside the 1950 to 2050 window that the paper's accuracy claim covers.
+
+```@docs
+SolarPosition.Positioning.Michalsky
 ```
 
 ## [Interpolated](@id interpolated-algorithm)

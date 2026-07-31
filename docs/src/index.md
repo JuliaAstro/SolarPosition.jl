@@ -136,7 +136,8 @@ example.
 
 The same genericity makes the algorithms work with
 [Measurements.jl](https://github.com/JuliaPhysics/Measurements.jl), again with no
-extension package needed:
+extension package needed. Give the coordinates an uncertainty and it reaches every
+returned angle:
 
 ```@example srt
 using Measurements
@@ -151,8 +152,25 @@ derived from elevation, and their sum therefore carries no uncertainty at all:
 pos.elevation + pos.zenith
 ```
 
-Refraction parameters take uncertainties in the same way, for example
-`HUGHES(101325.0 ± 500.0, 12.0 ± 2.0)`.
+Treating the two as independent would instead report about `± 0.014`. Everything else the
+package offers behaves the same way: `Measurement{Float32}` stays `Float32`, and the
+vectorized, in-place, and table interfaces all carry uncertainties through unchanged.
+
+### Refraction parameters
+
+Pressure and temperature are measured quantities too, and refraction models accept them
+with uncertainties in the same way. Pairing an exact observer with an uncertain atmosphere
+isolates what the weather alone contributes:
+
+```@example srt
+low = DateTime(2023, 12, 21, 8)  # a low winter sun, where refraction is largest
+
+solar_position(obs, low, PSA(), HUGHES(101325.0 ± 500.0, 12.0 ± 2.0))
+```
+
+The geometric angles come back exact, since they do not depend on the atmosphere, while
+the apparent ones carry the pressure and temperature uncertainty. Making the observer
+uncertain as well widens both, and the two contributions combine in the apparent angles.
 
 !!! note
     [`transit_sunrise_sunset`](@ref) and the `next_`/`previous_` helpers return a

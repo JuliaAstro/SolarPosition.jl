@@ -80,7 +80,6 @@ times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
         ("NOAA", NOAA()),
         ("Walraven", Walraven()),
         ("USNO", USNO()),
-        ("Iqbal", Iqbal()),
     ]
 
     # Collect accuracy data
@@ -135,7 +134,7 @@ percentile) for each algorithm compared to SPA.
     )
 
     # Sort by algorithm order
-    algo_order = ["PSA", "NOAA", "Walraven", "USNO", "Iqbal"]
+    algo_order = ["PSA", "NOAA", "Walraven", "USNO"]
     algo_stats = algo_stats[sortperm([findfirst(==(algo), algo_order) for algo in algo_stats.Algorithm]), :]
     xs = 1:nrow(algo_stats)
 
@@ -289,7 +288,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
     )
 
     for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                          ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
+                          ("USNO", USNO()), ("SPA", SPA())]
         b = @benchmark solar_position($obs, $dt, $algo) samples=100 evals=10
         push!(single_benchmarks, (
             Algorithm = name,
@@ -322,7 +321,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         times_vec = collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1) + Hour(n-1)))
 
         for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                              ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
+                              ("USNO", USNO()), ("SPA", SPA())]
             b = @benchmark solar_position($obs, $times_vec, $algo) samples=10 evals=1
             time_ms = median(b.times) / 1e6
             push!(vector_benchmarks, (
@@ -353,8 +352,8 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         backgroundcolor = :transparent,
     )
 
-    colors = [:blue, :orange, :green, :purple, :red, :teal]
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA", "Iqbal"]
+    colors = [:blue, :orange, :green, :purple, :red]
+    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
 
     for (i, algo) in enumerate(algo_names)
         data = filter(r -> r.Algorithm == algo, vector_benchmarks)
@@ -431,7 +430,6 @@ solposx_algorithms = Dict(
     "Walraven" => (sp.walraven, NamedTuple()),
     "USNO" => (sp.usno, NamedTuple()),
     "SPA" => (sp.spa, NamedTuple()),
-    "Iqbal" => (sp.iqbal, NamedTuple()),
 )
 
 lat, lon = 51.5074, -0.1278
@@ -461,7 +459,7 @@ We benchmark both libraries across different input sizes:
         py_times_idx = create_pandas_times(n)
 
         for (algo_name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                                   ("USNO", USNO()), ("SPA", SPA()), ("Iqbal", Iqbal())]
+                                   ("USNO", USNO()), ("SPA", SPA())]
             # Julia benchmark
             julia_bench = @benchmark solar_position($obs, $julia_times_vec, $algo) samples=5 evals=1
             julia_time_ms = median(julia_bench.times) / 1e6
@@ -497,8 +495,8 @@ We benchmark both libraries across different input sizes:
     fig5 = Figure(size = (600, 750), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
     # Group by algorithm for plotting
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA", "Iqbal"]
-    colors_julia = [:blue, :green, :purple, :orange, :red, :teal]
+    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
+    colors_julia = [:blue, :green, :purple, :orange, :red]
 
     ax1 = Axis(fig5[1, 1],
         title = "Computation Time: Julia vs Python",
@@ -623,8 +621,7 @@ both Julia and Python implementations.
         "NOAA" => :orange,
         "Walraven" => :green,
         "USNO" => :purple,
-        "SPA" => :red,
-        "Iqbal" => :teal
+        "SPA" => :red
     )
 
     # Marker scheme for library

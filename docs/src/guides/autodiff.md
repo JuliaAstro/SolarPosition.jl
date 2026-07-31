@@ -135,25 +135,10 @@ annual irradiance than the best fixed panel from the previous example.
 
 ## One day of tracker operation
 
-One day of operation makes the behaviour concrete. The site is the Van Gogh Museum in
-Amsterdam with the tracker axis aimed due south. Negative rotation faces the panel
-east. All curves run from 00:00 to 24:00, with the tracker holding its sunrise and
-sunset angles overnight. The upper panel compares the tracker rotation against the
-analytical rotation computed from first principles with only the solstice declination,
-the latitude, and the hour angle, ignoring the equation of time. The dashed curve lies
-exactly on the solid one until the ±60° limits cut it off, while the analytical ideal
-keeps following the sun below the horizon and wraps at ±180° late in the evening when
-the sun passes due north. The lower panel shows the sun elevation, negative at night,
-and the angle of incidence between the panel normal and the sun, for the tracker and
-for a fixed panel at 30° tilt facing south. The tracked angle of incidence touches
-zero exactly when the sun crosses due east and due west, because only then does the
-sun lie in the tracker's rotation plane, and its local maximum at noon equals the
-solar zenith angle because the panel is flat at that moment. The fixed panel aligns
-with the sun only once, near noon, where it beats the tracker: the horizontal axis
-cannot tilt the panel toward the south, so around midday the south facing fixed panel
-points closer to the sun. Recovering that noon deficit is why tilted single axis
-trackers exist. At night both angles of incidence exceed 90° since the sun is behind
-the panels:
+A full day makes the behaviour concrete: the Van Gogh Museum in Amsterdam, tracker axis
+aimed due south, negative rotation facing the panel east.
+
+Start with the sun's position at one minute resolution across the whole day.
 
 ```@example autodiff
 using CairoMakie
@@ -164,16 +149,24 @@ axis_south = 180.0
 day = collect(DateTime(2024, 6, 21):Minute(1):DateTime(2024, 6, 22))
 day_pos = solar_position(vgm, day, PSA(), NoRefraction())
 hours = [Dates.value(t - day[1]) / 3_600_000 for t in day]
+elevation = [p.elevation for p in day_pos]
+nothing # hide
+```
 
-# tracker rotation, held at its sunrise and sunset angles overnight
+The tracker rotation, clamped to ±60° and held at its sunrise and sunset angles overnight.
+
+```@example autodiff
 rot(p) = clamp(atand(tand(p.zenith) * sind(p.azimuth - axis_south)), -60.0, 60.0)
 sunup = [p.elevation > 0 for p in day_pos]
 first_up, last_up = findfirst(sunup), findlast(sunup)
 rotation = [rot(day_pos[clamp(i, first_up, last_up)]) for i in eachindex(day_pos)]
+nothing # hide
+```
 
-elevation = [p.elevation for p in day_pos]
+The angle between the sun and the panel normal, for the tracker and for a fixed reference
+panel at 30° tilt facing south.
 
-# angle of incidence against the actual panel orientation
+```@example autodiff
 function cos_aoi(p, R, axis_azimuth)
     panel_azimuth = axis_azimuth + (R < 0 ? -90 : 90)
     return cosd(p.zenith) * cosd(R) +
@@ -181,14 +174,17 @@ function cos_aoi(p, R, axis_azimuth)
 end
 aoi = [acosd(clamp(cos_aoi(p, R, axis_south), -1, 1)) for (p, R) in zip(day_pos, rotation)]
 
-# fixed reference panel at 30 degree tilt facing south
 aoi_fixed = [
     acosd(clamp(cosd(p.zenith) * cosd(30) + sind(p.zenith) * sind(30) * cosd(p.azimuth - 180), -1, 1))
         for p in day_pos
 ]
+nothing # hide
+```
 
-# analytical ideal rotation from declination, latitude, and hour angle alone,
-# with one NaN inserted at the 180 degree wrap
+The analytical ideal, from the solstice declination, latitude, and hour angle alone,
+ignoring the equation of time. A `NaN` marks where it wraps at ±180°.
+
+```@example autodiff
 decl = 23.437
 lat, lon = vgm.latitude, vgm.longitude
 omega = [15 * (h - 12) + lon for h in hours]
@@ -199,7 +195,12 @@ analytical = [
 for i in eachindex(analytical)[2:end]
     abs(analytical[i] - analytical[i - 1]) > 180 && (analytical[i - 1] = NaN)
 end
+nothing # hide
+```
 
+Finally the figure, rotation above and angles below.
+
+```@example autodiff
 # colorblind safe hues from the Wong palette, validated for each within panel group
 blue, orange, green, vermilion, skyblue = "#0072B2", "#E69F00", "#009E73", "#D55E00", "#56B4E9"
 
@@ -227,3 +228,11 @@ xlims!(ax2, 0, 24)
 axislegend(ax2; position = :ct)
 fig
 ```
+
+Three things to read from it. The tracker rotation lies exactly on the analytical curve
+until the ±60° limits cut it off, while the ideal keeps following the sun below the horizon
+and wraps when it passes due north. The tracked angle of incidence touches zero exactly when
+the sun crosses due east and due west, the only moments the sun lies in the tracker's
+rotation plane, and its local maximum at noon equals the solar zenith because the panel is
+flat then. The fixed panel beats the tracker around midday, since a horizontal axis cannot
+tilt the panel south; recovering that noon deficit is why tilted single axis trackers exist.

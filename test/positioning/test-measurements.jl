@@ -120,6 +120,22 @@ using StructArrays: StructArrays
             @test uncertainty(ev.sunrise) ≈ hypot(∂lat * σ, ∂lon * σ) rtol = 1.0e-3
         end
 
+        @testset "a Date is accepted and matches midnight of that day" begin
+            from_date = transit_sunrise_sunset_seconds(loose, Date(2024, 6, 21))
+            from_datetime = transit_sunrise_sunset_seconds(loose, day)
+            @test from_date.transit == from_datetime.transit
+            @test from_date.sunrise == from_datetime.sunrise
+            @test from_date.sunset == from_datetime.sunset
+        end
+
+        # the polar branch returns midnight for every event, and has to do so at the
+        # requested element type rather than falling back to a DateTime
+        @testset "polar day returns midnight at the element type" begin
+            polar = transit_sunrise_sunset_seconds(Observer(78.0 ± σ, 15.0 ± σ), day)
+            @test polar isa TransitSunriseSunset{Measurement{Float64}}
+            @test all(iszero, (polar.transit, polar.sunrise, polar.sunset))
+        end
+
         # the two variants must describe the same instant, the seconds one simply keeps
         # the sub-second part that rounding to a DateTime throws away
         @testset "the variants agree for a Float64 observer" begin

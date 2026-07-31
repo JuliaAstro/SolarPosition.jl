@@ -75,22 +75,28 @@ Here's the basic structure:
 
 ```julia
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::SimpleAlgorithm) where {T}
-    # 1. Convert datetime to Julian date
-    jd = datetime2julian(dt)
+    # 1. Take the time base at the observer's precision
+    n = julian_day_j2000(T, dt)    # days since J2000.0
+    hour = fractional_hour(T, dt)  # decimal hours
 
-    # 2. Calculate days since J2000.0 epoch
-    n = jd - 2451545.0
-
-    # 3. Compute solar coordinates (declination, hour angle, etc.)
+    # 2. Compute solar coordinates (declination, hour angle, etc.)
     # ... your algorithm's calculations here ...
 
-    # 4. Calculate local horizontal coordinates
-    # ... azimuth and elevation calculations ...
+    # 3. Calculate local horizontal coordinates, clamping the inverse trig argument
+    elevation = asind(unit_clamp(sin_δ * obs.sin_lat + cos_δ * obs.cos_lat * cos_ω))
+    # ... azimuth calculation ...
 
-    # 5. Return the result
+    # 4. Return the result
     return SolPos{T}(azimuth_deg, elevation_deg, zenith_deg)
 end
 ```
+
+!!! warning "Never call `datetime2julian` inside an algorithm"
+    A full Julian Date is around 2.45e6. Materializing that at `T` spends most of the
+    mantissa on the epoch offset and leaves `Float32` with no useful precision. Always go
+    through `julian_day_j2000`, `julian_century`, or `fractional_hour` from `timebase.jl`,
+    which count from J2000.0 and stay small. No algorithm in the package uses
+    `datetime2julian`.
 
 ### Key Implementation Notes
 
@@ -108,7 +114,7 @@ end
 3. **Type parameter `T`** ensures numerical precision is preserved from the `Observer`
 
 4. **Angle conventions**:
-   - Azimuth: 0° = North, positive clockwise, range [0°, 360°]
+   - Azimuth: 0° = North, positive clockwise, normalized to [0°, 360°)
    - Elevation: angle above horizon, range [-90°, 90°]
    - Zenith: 90° - elevation, range [0°, 180°]
 
@@ -138,8 +144,8 @@ If your algorithm should apply a specific refraction model by default:
 ```julia
 using ..Refraction: HUGHES, DefaultRefraction
 
-function _solar_position(obs, dt, alg::SimpleAlgorithm, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, HUGHES())
+function _solar_position(obs::Observer{T}, dt, alg::SimpleAlgorithm, ::DefaultRefraction) where {T}
+    return _solar_position(obs, dt, alg, HUGHES{T}())
 end
 
 # Return type for DefaultRefraction
@@ -149,6 +155,11 @@ result_type(::Type{SimpleAlgorithm}, ::Type{DefaultRefraction}, ::Type{T}) where
 
 The `result_type` function tells the system what return type to expect, enabling
 type-stable code for vectorized operations.
+
+!!! tip "Build the default model at `T`"
+    Write `HUGHES{T}()` rather than `HUGHES()`. The latter is `HUGHES{Float64}`, which
+    promotes the result back to `Float64` and quietly undoes a `Float32` or `BigFloat`
+    observer. See [`NOAA`](@ref SolarPosition.Positioning.NOAA) for the working pattern.
 
 ## [Step 4: Export the Algorithm](@id step-4-export)
 
@@ -166,28 +177,34 @@ include("simple.jl")  # Add your new file
 export SimpleAlgorithm
 ```
 
-### 4.2 Export from Main Module
+### 4.2 Nothing to Do in the Main Module
 
-Edit `src/SolarPosition.jl` to re-export your algorithm:
-
-```julia
-using .Positioning:
-    Observer, PSA, NOAA, Walraven, USNO, SPA, SimpleAlgorithm, solar_position, solar_position!
-
-# ... later in exports ...
-export PSA, NOAA, Walraven, USNO, SPA, SimpleAlgorithm
-```
+`src/SolarPosition.jl` pulls the submodules in with `@reexport using .Positioning`, so
+anything the `Positioning` module exports is available from `SolarPosition` automatically.
+Exporting from `src/Positioning/Positioning.jl` in step 4.1 is the only export you need.
 
 ## [Step 5: Write Tests](@id step-5-write-tests)
 
-Create a test file following the naming convention `test/test-simple.jl`.
+Create a test file following the naming convention `test/positioning/test-simple.jl`. Any
+file matching `test-*.jl` anywhere under `test/` is discovered automatically and wrapped in
+a `@testset` named after the file.
+
+Add your algorithm to `test_algorithms()` in `test/positioning/expected-values.jl` as well.
+That list is shared, so a single entry enrolls it in the type stability, precision,
+automatic differentiation, and uncertainty testsets without touching any of them.
 
 !!! warning "Generating Validation Data"
-    It is required to validate your algorithm against known reference values. You
-    can use a reference implementation of your algorithm (if available) or compare against
-    trusted solar position calculators. Store these reference values in your test file
-    and use `@test` statements to ensure your implementation matches them. See the
-    existing test files like `test/test-psa.jl` for examples of how to structure these tests.
+    Validate against known reference values, either from a reference implementation of your
+    algorithm or from a trusted solar position calculator. Store them in your test file and
+    compare with `@test`. See `test/positioning/test-psa.jl` for the structure.
+
+!!! tip "Put reference timestamps on the 84.375 s grid"
+    The existing reference tables are exact `Float64` output from the Python package
+    solposx, generated at instants whose offset from noon UTC is a multiple of 84.375 s. The
+    full Julian Date of such an instant is exactly representable in `Float64`, so the
+    references carry no time-base quantization artifact and the tests can compare at
+    `atol = 1e-10`, or `1e-8` for SPA. Use whole seconds only, because solposx's `usno()`
+    mishandles sub-second times, and paste full round-trip digits.
 
 ### Running Tests
 
@@ -210,7 +227,13 @@ Pkg.test()
 ### Add to Documentation Pages
 
 Update `docs/src/positioning.md` to include your algorithm in the algorithm reference
-section.
+section, and add a row to the algorithm tables in `docs/src/index.md` and `README.md`.
+
+### Record it in the Changelog
+
+Add an entry under `## unreleased` in `CHANGELOG.md`. A pull request that touches no
+changelog fails the `Enforce changelog` workflow unless it carries the `skip-changelog`
+label, and a new algorithm is exactly the kind of change the file exists to record.
 
 ### Add Literature References
 
@@ -281,11 +304,15 @@ Before submitting your algorithm for review, ensure you've completed the followi
 | `_solar_position`  | Function implemented with correct signature                                                 |
 | Default refraction | Handling defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
 | `result_type`      | Function defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
-| Export             | Algorithm exported from both modules                                                        |
+| Time base          | Uses `timebase.jl` helpers, never `datetime2julian`                                         |
+| Inverse trig       | `asin`/`acos` arguments guarded with `unit_clamp`                                           |
+| Export             | Algorithm exported from `Positioning`, which re-exports automatically                       |
+| Shared test list   | Added to `test_algorithms()` in `test/positioning/expected-values.jl`                       |
 | Tests              | Cover basic functionality, refraction, vectors, and edge cases                              |
 | Test coverage      | Ensure tests cover all new code paths                                                       |
 | Pre-commit         | Checks pass (recommended locally, required in CI)                                           |
-| Documentation      | Update algorithm lists in `positioning.md`, `README.md`, and `refraction.md`                |
+| Documentation      | Update algorithm lists in `positioning.md`, `index.md`, and `README.md`                     |
+| Changelog          | Entry added under `## unreleased` in `CHANGELOG.md`                                         |
 | Literature         | References added to `refs.bib` and cited in docstrings                                      |
 
 ## Additional Resources

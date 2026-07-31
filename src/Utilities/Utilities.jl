@@ -9,6 +9,7 @@ include("srt.jl")
 
 export TransitSunriseSunset,
     transit_sunrise_sunset,
+    transit_sunrise_sunset_seconds,
     next_sunrise,
     next_sunset,
     next_solar_noon,

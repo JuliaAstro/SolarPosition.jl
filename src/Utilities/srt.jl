@@ -43,6 +43,16 @@ function TransitSunriseSunset{DateTime}(
     return TransitSunriseSunset{DateTime}(transit, sunrise, sunset)
 end
 
+# Constructor for a real element type, where the events are seconds since midnight UTC
+function TransitSunriseSunset{T}(
+        transit::T,
+        sunrise::T,
+        sunset::T,
+        ::Nothing,
+    ) where {T <: Real}
+    return TransitSunriseSunset{T}(transit, sunrise, sunset)
+end
+
 """Calculate the sun transit, sunrise, and sunset
 for a given date at an Observer location.
 """
@@ -60,6 +70,41 @@ function transit_sunrise_sunset(
         alg::SolarAlgorithm = SPA(),
     )::TransitSunriseSunset{DateTime} where {T <: Real}
     return transit_sunrise_sunset(obs, DateTime(dt), alg)
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Calculate the sun transit, sunrise, and sunset as seconds since midnight UTC.
+
+[`transit_sunrise_sunset`](@ref) rounds to a whole second in order to return a `DateTime`.
+This variant keeps the event times at the observer's element type instead, so sub-second
+precision survives, and so does anything the element type carries beyond a value. A
+`Measurement` observer therefore yields event times with an uncertainty, and a dual-valued
+observer yields differentiable ones.
+
+# Arguments
+- `obs`: Observer location
+- `dt`: date of interest, any time of day is ignored
+- `alg`: Solar algorithm to use (default: SPA())
+
+# Returns
+- `TransitSunriseSunset{T}` whose fields are seconds since midnight UTC
+"""
+function transit_sunrise_sunset_seconds(
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SolarAlgorithm = SPA(),
+    )::TransitSunriseSunset{T} where {T <: Real}
+    return _transit_sunrise_sunset(T, obs, dt, alg)
+end
+
+function transit_sunrise_sunset_seconds(
+        obs::Observer{T},
+        dt::Date,
+        alg::SolarAlgorithm = SPA(),
+    )::TransitSunriseSunset{T} where {T <: Real}
+    return transit_sunrise_sunset_seconds(obs, DateTime(dt), alg)
 end
 
 # Helper function for next_* functions

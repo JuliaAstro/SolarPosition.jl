@@ -50,6 +50,23 @@ using StructArrays: StructArrays
         @test ad ≈ fd atol = 1.0e-8
     end
 
+    # only the seconds variant is differentiable. The DateTime one rounds to a whole
+    # second, which flattens the derivative to zero almost everywhere and makes it a step
+    # function elsewhere, so the finite-difference reference uses the seconds variant too
+    @testset "Sunrise and sunset derivatives" begin
+        day = DateTime(2024, 6, 21)
+        h = 0.05
+        @testset "$field" for field in (:transit, :sunrise, :sunset)
+            f = lat -> getproperty(
+                transit_sunrise_sunset_seconds(Observer(lat, 10.0), day), field,
+            )
+            ad = ForwardDiff.derivative(f, 45.0)
+            fd = (f(45.0 + h) - f(45.0 - h)) / 2h
+            @test isfinite(ad)
+            @test ad ≈ fd rtol = 1.0e-3
+        end
+    end
+
     @testset "Second derivatives via nested duals" begin
         f = x -> solar_position(Observer(x[1], x[2]), dt, PSA(), NoRefraction()).elevation
         hess = ForwardDiff.hessian(f, [45.0, 10.0])

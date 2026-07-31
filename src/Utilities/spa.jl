@@ -7,6 +7,12 @@ using ..Positioning: _compute_spa_srt_parameters
 _frac_to_dt(dt_midnight, frac) =
     dt_midnight + Dates.Second(round(Int, frac * 86_400))
 
+# Render a fraction of the day as the requested event type. Rounding to a whole second
+# discards the sub-second part and anything the element type carries beyond a value, such
+# as an uncertainty or a derivative, so a real-valued request keeps the number instead.
+_frac_to_event(::Type{R}, dt_midnight, frac) where {R} = _frac_to_dt(dt_midnight, frac)
+_frac_to_event(::Type{R}, _, frac) where {R <: Real} = frac * 86_400
+
 # Returns (ν, α, δ): apparent sidereal time, geocentric right ascension, declination (degrees).
 function _compute_srt_parameters(::Type{T}, dt::DateTime, δt) where {T <: Real}
     srt = _compute_spa_srt_parameters(T, dt, δt)
@@ -19,6 +25,15 @@ function _transit_sunrise_sunset(
         dt::DateTime,
         alg::SPA,
     ) where {T <: Real, R <: DateTime}
+    return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
+end
+
+function _transit_sunrise_sunset(
+        ::Type{R},
+        obs::Observer{T},
+        dt::DateTime,
+        alg::SPA,
+    ) where {T <: Real, R <: Real}
     return _transit_sunrise_sunset_impl(R, obs, dt, alg, nothing)
 end
 
@@ -86,7 +101,8 @@ function _transit_sunrise_sunset_impl(
             "polar day (sun above horizon)"
         @warn "Sun does not rise or set on this date at the given location: $polar_condition. Returning midnight UTC for all events." _group =
             :polar_day_night maxlog = 1
-        return TransitSunriseSunset{R}(dt_midnight, dt_midnight, dt_midnight, tz)
+        midnight = _frac_to_event(R, dt_midnight, zero(obs.latitude))
+        return TransitSunriseSunset{R}(midnight, midnight, midnight, tz)
     end
 
     H0 = acosd(cos_H0_arg)
@@ -168,12 +184,11 @@ function _transit_sunrise_sunset_impl(
         S_frac += 1
     end
 
-    # Convert fractions of day to DateTime
-    # Each fraction represents seconds into the day from midnight UTC
+    # Each fraction represents the offset into the day from midnight UTC
     return TransitSunriseSunset{R}(
-        _frac_to_dt(dt_midnight, T_frac),
-        _frac_to_dt(dt_midnight, R_frac),
-        _frac_to_dt(dt_midnight, S_frac),
+        _frac_to_event(R, dt_midnight, T_frac),
+        _frac_to_event(R, dt_midnight, R_frac),
+        _frac_to_event(R, dt_midnight, S_frac),
         tz,
     )
 end

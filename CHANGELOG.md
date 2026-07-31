@@ -9,6 +9,8 @@ Releases before v0.5.0 predate this file. See the
 
 ## unreleased
 
+## v0.5.0 - 2026-07-31
+
 ### Added
 
 - `Michalsky` positioning algorithm, covering both the original and the standard Julian date
@@ -61,3 +63,7 @@ Releases before v0.5.0 predate this file. See the
 - The `Observer` inner constructor derives its zero defaults from an argument instead of the
   element type, lifting the requirement that `zero` be defined on the bare type
   [#122](https://github.com/JuliaAstro/SolarPosition.jl/pull/122)
+- Corrected the `ARCHER` bibliography entry, which pointed at an unrelated 1980 conference
+  paper. The model comes from Archer's comment on Walraven's "Calculating the position of the
+  sun", now cited with its DOI
+  [#123](https://github.com/JuliaAstro/SolarPosition.jl/pull/123)

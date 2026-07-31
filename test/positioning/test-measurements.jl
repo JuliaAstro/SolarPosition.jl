@@ -11,7 +11,7 @@ using StructArrays: StructArrays
     # latitude and longitude enter as independent inputs, so the propagated uncertainty
     # must equal the magnitude of the finite-difference gradient scaled by σ
     @testset "Propagated uncertainty matches finite differences: $name" for (name, alg) in
-            test_algorithms()
+        test_algorithms()
         h = 1.0e-4
         obs = Observer(45.0 ± σ, 10.0 ± σ)
         for field in (:elevation, :azimuth)

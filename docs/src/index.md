@@ -132,6 +132,33 @@ The [Automatic Differentiation](@ref automatic-differentiation) guide shows grad
 through refraction models, panel orientation optimization, and a single axis tracker
 example.
 
+## Uncertainty propagation
+
+The same genericity makes the algorithms work with
+[Measurements.jl](https://github.com/JuliaPhysics/Measurements.jl), again with no
+extension package needed:
+
+```@example srt
+using Measurements
+
+pos = solar_position(Observer(52.35888 ± 0.01, 4.88185 ± 0.01), DateTime(2023, 6, 21, 12))
+```
+
+Correlations are tracked, so results that share an input stay consistent. Zenith is
+derived from elevation, and their sum therefore carries no uncertainty at all:
+
+```@example srt
+pos.elevation + pos.zenith
+```
+
+Refraction parameters take uncertainties in the same way, for example
+`HUGHES(101325.0 ± 500.0, 12.0 ± 2.0)`.
+
+!!! note
+    [`transit_sunrise_sunset`](@ref) and the `next_`/`previous_` helpers return a
+    `DateTime`, which cannot carry an uncertainty. They compute from the nominal
+    coordinates and drop it.
+
 ## Numeric precision
 
 The computation runs at the precision of the

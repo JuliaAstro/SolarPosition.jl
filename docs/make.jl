@@ -41,6 +41,7 @@ makedocs(;
             "guides/getting-started.md",
             "guides/precision.md",
             "guides/autodiff.md",
+            "guides/uncertainty.md",
             "guides/plotting.md",
             "guides/parallel.md",
             "guides/interpolation.md",

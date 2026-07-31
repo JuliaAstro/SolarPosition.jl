@@ -136,8 +136,7 @@ example.
 
 The same genericity makes the algorithms work with
 [Measurements.jl](https://github.com/JuliaPhysics/Measurements.jl), again with no
-extension package needed. Give the coordinates an uncertainty and it reaches every
-returned angle:
+extension package needed:
 
 ```@example srt
 using Measurements
@@ -152,41 +151,9 @@ derived from elevation, and their sum therefore carries no uncertainty at all:
 pos.elevation + pos.zenith
 ```
 
-Treating the two as independent would instead report about `± 0.014`. Everything else the
-package offers behaves the same way: `Measurement{Float32}` stays `Float32`, and the
-vectorized, in-place, and table interfaces all carry uncertainties through unchanged.
-
-### Refraction parameters
-
-Pressure and temperature are measured quantities too, and refraction models accept them
-with uncertainties in the same way. Pairing an exact observer with an uncertain atmosphere
-isolates what the weather alone contributes:
-
-```@example srt
-low = DateTime(2023, 12, 21, 8)  # a low winter sun, where refraction is largest
-
-solar_position(obs, low, PSA(), HUGHES(101325.0 ± 500.0, 12.0 ± 2.0))
-```
-
-The geometric angles come back exact, since they do not depend on the atmosphere, while
-the apparent ones carry the pressure and temperature uncertainty. Making the observer
-uncertain as well widens both, and the two contributions combine in the apparent angles.
-
-### Sunrise and sunset
-
-Event times are a special case, because a `DateTime` cannot carry an uncertainty.
-[`transit_sunrise_sunset`](@ref) rounds to a whole second and so returns the nominal
-times. [`transit_sunrise_sunset_seconds`](@ref) keeps the observer's element type
-instead, giving seconds since midnight UTC:
-
-```@example srt
-transit_sunrise_sunset_seconds(Observer(52.35888 ± 0.01, 4.88185 ± 0.01), Date(2023, 6, 21))
-```
-
-Rounding to a whole second also costs the sub-second part, so this variant is the more
-precise one even with ordinary numbers, and it is the one to use with ForwardDiff. The
-`next_`/`previous_` helpers return a `DateTime` and drop the uncertainty in the same way
-[`transit_sunrise_sunset`](@ref) does.
+The [Uncertainty Propagation](@ref uncertainty-propagation) guide covers uncertain
+refraction parameters and the sunrise and sunset event times, which need
+[`transit_sunrise_sunset_seconds`](@ref) to keep their uncertainty.
 
 ## Numeric precision
 
@@ -205,7 +172,7 @@ Atmospheric refraction correction algorithms available in SolarPosition.jl.
 | Algorithm                                                          | Reference                                                                                        | Atmospheric Parameters | Status |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
 | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)                   | [Hughes, 1985](https://pvpmc.sandia.gov/app/uploads/sites/243/2022/10/Engineering-Astronomy.pdf) | Pressure, Temperature  | ✅     |
-| [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)                   | Archer et al., 1980                                                                              | None                   | ✅     |
+| [`ARCHER`](@ref SolarPosition.Refraction.ARCHER)                   | [Archer, 1980](https://doi.org/10.1016/0038-092X(80)90410-7)                                     | None                   | ✅     |
 | [`BENNETT`](@ref SolarPosition.Refraction.BENNETT)                 | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  | ✅     |
 | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)             | [Michalsky, 1988](https://doi.org/10.1016/0038-092X(88)90045-X)                                  | None                   | ✅     |
 | [`SG2`](@ref SolarPosition.Refraction.SG2)                         | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |

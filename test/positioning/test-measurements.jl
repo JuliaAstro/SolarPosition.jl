@@ -87,17 +87,50 @@ using StructArrays: StructArrays
         @test df.elevation == pos.elevation
     end
 
-    # a DateTime cannot carry an uncertainty, so the sunrise and sunset utilities compute
-    # from the nominal coordinates and drop it. This test pins that down as deliberate
-    # behaviour rather than leaving it to be rediscovered.
-    @testset "Sunrise and sunset drop the uncertainty" begin
+    @testset "Sunrise and sunset" begin
+        day = DateTime(2024, 6, 21)
         nominal = Observer(45.0, 10.0)
-        loose = Observer(45.0 ± 5.0, 10.0 ± 5.0)
-        for f in (next_sunrise, next_sunset, next_solar_noon)
-            @test f(loose, dt) == f(nominal, dt)
+        loose = Observer(45.0 ± σ, 10.0 ± σ)
+
+        # a DateTime cannot carry an uncertainty, so this API computes from the nominal
+        # coordinates and drops it
+        @testset "the DateTime variant drops it" begin
+            wide = Observer(45.0 ± 5.0, 10.0 ± 5.0)
+            for f in (next_sunrise, next_sunset, next_solar_noon)
+                @test f(wide, dt) == f(nominal, dt)
+            end
+            a = transit_sunrise_sunset(wide, Date(2024, 6, 21))
+            b = transit_sunrise_sunset(nominal, Date(2024, 6, 21))
+            @test (a.transit, a.sunrise, a.sunset) == (b.transit, b.sunrise, b.sunset)
         end
-        a = transit_sunrise_sunset(loose, Date(2024, 6, 21))
-        b = transit_sunrise_sunset(nominal, Date(2024, 6, 21))
-        @test (a.transit, a.sunrise, a.sunset) == (b.transit, b.sunrise, b.sunset)
+
+        @testset "the seconds variant keeps it" begin
+            ev = transit_sunrise_sunset_seconds(loose, day)
+            @test ev isa TransitSunriseSunset{Measurement{Float64}}
+            for field in (:transit, :sunrise, :sunset)
+                @test uncertainty(getfield(ev, field)) > 0
+            end
+
+            # the reference gradient is built from the seconds variant as well, since a
+            # step small enough for the DateTime variant is swamped by its rounding
+            h = 0.05
+            sr(lat, lon) = transit_sunrise_sunset_seconds(Observer(lat, lon), day).sunrise
+            ∂lat = (sr(45.0 + h, 10.0) - sr(45.0 - h, 10.0)) / 2h
+            ∂lon = (sr(45.0, 10.0 + h) - sr(45.0, 10.0 - h)) / 2h
+            @test uncertainty(ev.sunrise) ≈ hypot(∂lat * σ, ∂lon * σ) rtol = 1.0e-3
+        end
+
+        # the two variants must describe the same instant, the seconds one simply keeps
+        # the sub-second part that rounding to a DateTime throws away
+        @testset "the variants agree for a Float64 observer" begin
+            ev = transit_sunrise_sunset_seconds(nominal, day)
+            ref = transit_sunrise_sunset(nominal, day)
+            midnight = DateTime(Date(day))
+            for field in (:transit, :sunrise, :sunset)
+                secs = getfield(ev, field)
+                @test midnight + Second(round(Int, secs)) == getfield(ref, field)
+                @test secs != round(secs)
+            end
+        end
     end
 end

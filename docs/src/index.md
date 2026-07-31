@@ -172,10 +172,21 @@ The geometric angles come back exact, since they do not depend on the atmosphere
 the apparent ones carry the pressure and temperature uncertainty. Making the observer
 uncertain as well widens both, and the two contributions combine in the apparent angles.
 
-!!! note
-    [`transit_sunrise_sunset`](@ref) and the `next_`/`previous_` helpers return a
-    `DateTime`, which cannot carry an uncertainty. They compute from the nominal
-    coordinates and drop it.
+### Sunrise and sunset
+
+Event times are a special case, because a `DateTime` cannot carry an uncertainty.
+[`transit_sunrise_sunset`](@ref) rounds to a whole second and so returns the nominal
+times. [`transit_sunrise_sunset_seconds`](@ref) keeps the observer's element type
+instead, giving seconds since midnight UTC:
+
+```@example srt
+transit_sunrise_sunset_seconds(Observer(52.35888 ± 0.01, 4.88185 ± 0.01), Date(2023, 6, 21))
+```
+
+Rounding to a whole second also costs the sub-second part, so this variant is the more
+precise one even with ordinary numbers, and it is the one to use with ForwardDiff. The
+`next_`/`previous_` helpers return a `DateTime` and drop the uncertainty in the same way
+[`transit_sunrise_sunset`](@ref) does.
 
 ## Numeric precision
 

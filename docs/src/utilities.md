@@ -289,5 +289,6 @@ SolarPosition.Utilities.previous_solar_noon
 
 ```@docs
 SolarPosition.Utilities.transit_sunrise_sunset
+SolarPosition.Utilities.transit_sunrise_sunset_seconds
 SolarPosition.Utilities.TransitSunriseSunset
 ```

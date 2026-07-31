@@ -97,11 +97,14 @@ struct Observer{T <: Real} <: AbstractObserver{T}
     "cos(latitude)"
     cos_lat::T
 
+    # the zero defaults are taken from lat rather than from T, because a Real subtype may
+    # carry information that only an instance has. DynamicQuantities.RealQuantity is such
+    # a type, where zero of the bare type is undefined since the dimensions are unknown.
     function Observer{T}(
             lat::T,
             lon::T,
-            alt::T = zero(T),
-            horiz::T = zero(T),
+            alt::T = zero(lat),
+            horiz::T = zero(lat),
         ) where {T <: Real}
         lat_rad = deg2rad(lat)
         lon_rad = deg2rad(lon)

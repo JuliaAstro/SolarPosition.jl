@@ -3,12 +3,17 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
+permissions:
+  contents: read
+
 jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: dangoslen/changelog-enforcer@v3
+      # pinned to a commit rather than a tag, since a tag on a third party action
+      # can be moved to point at different code
+      - uses: dangoslen/changelog-enforcer@8b5e9dc3121363bb7c0115f8533404d92af382de # v3.7.0
         with:
           changeLogPath: 'CHANGELOG.md'
           skipLabels: 'skip-changelog'

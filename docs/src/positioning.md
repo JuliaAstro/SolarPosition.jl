@@ -12,7 +12,7 @@ Figure 1: Visualization of solar position angles: azimuth and zenith. Image sour
 [Haputhanthri et al.](@cite haputhanthri2021solar).
 
 The solar azimuth angle is typically measured clockwise from true north. The solar
-zenith angle is the angle between the sun and the vertical direction directly overhead.
+zenith angle is the angle between the sun, and the vertical direction directly overhead.
 The solar elevation angle is the complement of the zenith angle (i.e., elevation = 90°- zenith).
 
 Typically solar position algorithms can take the following set of inputs:

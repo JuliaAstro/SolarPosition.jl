@@ -56,15 +56,15 @@ fig
 
 The following solar position algorithms are currently implemented in SolarPosition.jl:
 
-| Algorithm                                               | Reference       | Accuracy | Default Refraction                                     | Status |
-| ------------------------------------------------------- | --------------- | -------- | ------------------------------------------------------ | ------ |
-| [`PSA`](@ref SolarPosition.Positioning.PSA)             | [BALL01](@cite) | ±0.0083° | None                                                   | ✅     |
-| [`NOAA`](@ref SolarPosition.Positioning.NOAA)           | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)       | ✅     |
-| [`Walraven`](@ref SolarPosition.Positioning.Walraven)   | [Wal78](@cite)  | ±0.0100° | None                                                   | ✅     |
-| [`USNO`](@ref SolarPosition.Positioning.USNO)           | [USNO](@cite)   | ±0.0500° | None                                                   | ✅     |
-| [`SPA`](@ref SolarPosition.Positioning.SPA)             | [RA04](@cite)   | ±0.0003° | Built-in                                               | ✅     |
-| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqb83](@cite)  | ±0.0100° | None                                                   | ✅     |
-| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Mic88](@cite)  | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY) | ✅     |
+| Algorithm                                               | Reference       | Accuracy | Default Refraction                                             |
+| ------------------------------------------------------- | --------------- | -------- | -------------------------------------------------------------- |
+| [`SPA`](@ref SolarPosition.Positioning.SPA)             | [RA04](@cite)   | ±0.0003° | [`SPARefraction`](@ref SolarPosition.Refraction.SPARefraction) |
+| [`PSA`](@ref SolarPosition.Positioning.PSA)             | [BALL01](@cite) | ±0.0083° | None                                                           |
+| [`Walraven`](@ref SolarPosition.Positioning.Walraven)   | [Wal78](@cite)  | ±0.0100° | None                                                           |
+| [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqb83](@cite)  | ±0.0100° | None                                                           |
+| [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Mic88](@cite)  | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         |
+| [`NOAA`](@ref SolarPosition.Positioning.NOAA)           | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)               |
+| [`USNO`](@ref SolarPosition.Positioning.USNO)           | [USNO](@cite)   | ±0.0500° | None                                                           |
 
 In addition, [`Interpolated`](@ref SolarPosition.Positioning.Interpolated) wraps `SPA`
 with a precomputed spline of its geocentric coordinates for roughly 10x faster

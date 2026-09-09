@@ -1,6 +1,5 @@
 module SolarPosition
 
-using DocStringExtensions: TYPEDSIGNATURES
 using Reexport: @reexport
 
 include("Refraction/Refraction.jl")
@@ -15,7 +14,7 @@ include("Utilities/Utilities.jl")
 export analemmas!
 
 """
-    $(TYPEDSIGNATURES)
+    analemmas!
 
 Plot analemmas (figure-8 patterns showing the sun's position at each hour throughout the
 year) for a given observer location and year.
@@ -76,7 +75,7 @@ function analemmas! end
 export SolarPositionBlock
 
 """
-    $(TYPEDSIGNATURES)
+    SolarPositionBlock
 
 Return a [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl) component
 that computes solar position as a function of time and can be integrated into symbolic

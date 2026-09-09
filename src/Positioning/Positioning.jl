@@ -219,7 +219,7 @@ Base.show(io::IO, obs::ApparentSolPos) = print(
 )
 
 """
-    $(TYPEDSIGNATURES)
+    solar_position
 
 Calculate solar position(s) for given observer location(s) and time(s).
 

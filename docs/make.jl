@@ -2,6 +2,7 @@ using SolarPosition
 using Documenter
 using DocStringExtensions
 using DocumenterCitations
+using DocumenterCodeBlocks
 
 DocMeta.setdocmeta!(
     SolarPosition,
@@ -34,7 +35,7 @@ makedocs(;
         size_threshold = 2^20, # 1 MB
         assets = String["assets/citations.css"],
     ),
-    plugins = [bib],
+    plugins = [bib, CodeBlocks()],
     pages = [
         "index.md",
         "Guides" => [

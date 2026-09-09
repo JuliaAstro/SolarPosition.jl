@@ -53,8 +53,10 @@ function TransitSunriseSunset{T}(
     return TransitSunriseSunset{T}(transit, sunrise, sunset)
 end
 
-"""Calculate the sun transit, sunrise, and sunset
-for a given date at an Observer location.
+"""
+    $(TYPEDSIGNATURES)
+
+Calculate the sun transit, sunrise, and sunset for a given date at an Observer location.
 """
 function transit_sunrise_sunset(
         obs::Observer{T},

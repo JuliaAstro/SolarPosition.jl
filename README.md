@@ -12,11 +12,11 @@
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![tested with JET.jl](https://img.shields.io/badge/%F0%9F%9B%A9%EF%B8%8F_tested_with-JET.jl-233f9a)](https://github.com/aviatesk/JET.jl)
 
-SolarPosition.jl provides a simple, unified interface to a collection of validated solar position
+`SolarPosition.jl` provides a simple, unified interface to a collection of validated solar position
 algorithms written in pure, performant julia.
 
-Solar positioning algorithms are commonly used to calculate the solar zenith and
-azimuth angles, which are essential for various applications where the sun is important, such as:
+Solar positioning algorithms are commonly used to calculate the solar zenith and azimuth
+angles, which are essential for various applications where the sun is important, such as:
 
 - Solar energy systems
 - Building design
@@ -29,8 +29,9 @@ This package is based on the work done by researchers in the field of solar phot
 in the packages [solposx](https://github.com/assessingsolar/solposx) and
 [pvlib-python](https://github.com/pvlib/pvlib-python). In particular the positioning and
 refraction methods have been adapted from [solposx](https://github.com/assessingsolar/solposx),
-while the SPA algorithm and the deltat calculation are ported from [pvlib-python](https://github.com/pvlib/pvlib-python). These packages also provide validation data necessary to ensure
-correctness of the algorithm implementations.
+while the SPA algorithm and the deltat calculation are ported from [pvlib-python](https://github.com/pvlib/pvlib-python).
+These packages also provide validation data necessary to ensure correctness of the
+algorithm implementations.
 
 ## Example Usage
 
@@ -87,27 +88,27 @@ julia> next_sunset(obs, DateTime(2023, 6, 21, 12, 30))
 
 ## Solar positioning algorithms
 
-Here we provide an overview of the solar positioning algorithms currently implemented
-in SolarPosition.jl. Each algorithm is described with its reference paper, claimed
-accuracy and implementation status.
+`SolarPosition.jl` implements most of the solar position algorithms commonly found in
+literature and industrial applications. If your preferred algorithm is not listed here,
+please open an issue or submit a pull request.
 
-| Algorithm | Reference                                                                                       | Accuracy | Default Refraction | Status |
-| --------- | ----------------------------------------------------------------------------------------------- | -------- | ------------------ | ------ |
-| PSA       | [Blanco-Muriel et al.](https://www.sciencedirect.com/science/article/abs/pii/S0038092X00001560) | ±0.0083° | None               | ✅     |
-| NOAA      | [Global Monitoring Laboratory](https://gml.noaa.gov/grad/solcalc/calcdetails.html)              | ±0.0167° | HUGHES             | ✅     |
-| Walraven  | [Walraven, 1978](<https://doi.org/10.1016/0038-092X(78)90155-X>)                                | ±0.0100° | None               | ✅     |
-| USNO      | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None               | ✅     |
-| SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | Built-in           | ✅     |
-| Iqbal     | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None               | ✅     |
-| Michalsky | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                               | ±0.0100° | MICHALSKY          | ✅     |
+| Algorithm | Reference                                                                                       | Accuracy | Default Refraction |
+| --------- | ----------------------------------------------------------------------------------------------- | -------- | ------------------ |
+| SPA       | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                           | ±0.0003° | SPA                |
+| PSA       | [Blanco-Muriel et al.](https://www.sciencedirect.com/science/article/abs/pii/S0038092X00001560) | ±0.0083° | None               |
+| Walraven  | [Walraven, 1978](<https://doi.org/10.1016/0038-092X(78)90155-X>)                                | ±0.0100° | None               |
+| Iqbal     | [Iqbal, 1983](https://doi.org/10.1016/B978-0-12-373750-2.X5001-0)                               | ±0.0100° | None               |
+| Michalsky | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                               | ±0.0100° | MICHALSKY          |
+| NOAA      | [Global Monitoring Laboratory](https://gml.noaa.gov/grad/solcalc/calcdetails.html)              | ±0.0167° | HUGHES             |
+| USNO      | [U.S. Naval Observatory](https://aa.usno.navy.mil/faq/sun_approx)                               | ±0.0500° | None               |
 
 ## Fast repeated evaluation
 
 For dense time series, the `Interpolated` wrapper precomputes cubic B-splines of SPA's
 geocentric solar coordinates and reconstructs positions analytically, roughly 10× faster
-per query at matching accuracy. One interpolant serves every observer. It activates as a
-package extension when [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
-is loaded:
+per query while maintaining SPA's accuracy. Conveniently the same interpolant can be reused
+for every new observer. It's provided through a package extension for
+[Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl).
 
 ```julia
 using Interpolations
@@ -142,19 +143,19 @@ tracker example.
 
 Atmospheric refraction correction algorithms available in SolarPosition.jl.
 
-| Algorithm     | Reference                                                                                        | Atmospheric Parameters | Status |
-| ------------- | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
-| HUGHES        | [Hughes, 1985](https://pvpmc.sandia.gov/app/uploads/sites/243/2022/10/Engineering-Astronomy.pdf) | Pressure, Temperature  | ✅     |
-| ARCHER        | Archer et al., 1980                                                                              | None                   | ✅     |
-| BENNETT       | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  | ✅     |
-| MICHALSKY     | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                                | None                   | ✅     |
-| SG2           | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  | ✅     |
-| SPARefraction | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  | ✅     |
+| Algorithm     | Reference                                                                                        | Atmospheric Parameters |
+| ------------- | ------------------------------------------------------------------------------------------------ | ---------------------- |
+| HUGHES        | [Hughes, 1985](https://pvpmc.sandia.gov/app/uploads/sites/243/2022/10/Engineering-Astronomy.pdf) | Pressure, Temperature  |
+| ARCHER        | Archer et al., 1980                                                                              | None                   |
+| BENNETT       | [Bennett, 1982](https://doi.org/10.1017/S0373463300022037)                                       | Pressure, Temperature  |
+| MICHALSKY     | [Michalsky, 1988](<https://doi.org/10.1016/0038-092X(88)90045-X>)                                | None                   |
+| SG2           | [Blanc & Wald, 2012](https://doi.org/10.1016/j.solener.2012.07.018)                              | Pressure, Temperature  |
+| SPARefraction | [Reda & Andreas, 2004](https://doi.org/10.1016/j.solener.2003.12.003)                            | Pressure, Temperature  |
 
 ## Extensions
 
 SolarPosition.jl provides optional extensions that are automatically loaded when you
-import the corresponding packages:
+have the corresponding package installed.
 
 | Extension       | Trigger Package                                                       | Features                                          |
 | --------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
@@ -164,17 +165,12 @@ import the corresponding packages:
 | Interpolations  | [`Interpolations.jl`](https://github.com/JuliaMath/Interpolations.jl) | Fast `Interpolated` algorithm construction        |
 | TimeZones       | [`TimeZones.jl`](https://github.com/JuliaTime/TimeZones.jl)           | `ZonedDateTime` input and zoned sunrise/sunset    |
 
-Loading `TimeZones.jl` is what enables `ZonedDateTime` arguments. In practice this needs
-no thought, since a `ZonedDateTime` cannot be constructed without it, and it means users
-who only ever pass a `DateTime` do not pay for TZJData and its download stack.
-
 ## Numeric precision
 
-The computation runs at the precision of the `Observer{T}` element type: `Float32`,
-`Float64`, `Float128` from Quadmath.jl, and `BigFloat` are supported, with a magnitude
-safe time base that keeps full intra-day resolution at every precision. The
+The computation runs at the precision of the `Observer{T}` element type. `Float32`,
+`Float64`, `Float128` from Quadmath.jl, and `BigFloat` are all supported. The
 [precision guide](https://juliaastro.org/SolarPosition.jl/dev/guides/precision/) lists
-the measured accuracy and runtime of every algorithm at every precision.
+the measured accuracy and runtime of every algorithm at every precision we tested.
 
 ## How to Cite
 

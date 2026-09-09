@@ -9,6 +9,12 @@ Releases before v0.5.0 predate this file. See the
 
 ## unreleased
 
+### Changed
+
+- Documentation code blocks now render with syntax highlighting, line numbers with
+  linkable permalinks, and hover tooltips on identifiers that link to their docstrings,
+  via [DocumenterCodeBlocks.jl](https://github.com/fredrikekre/DocumenterCodeBlocks.jl)
+
 ## v0.5.0 - 2026-07-31
 
 ### Added

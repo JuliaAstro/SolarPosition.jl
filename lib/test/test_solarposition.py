@@ -214,7 +214,8 @@ def test_delta_t_does_not_leak_into_other_arguments(algorithm):
     passed as a struct split across an integer and a floating-point half, which is
     exactly the shape ctypes/libffi is most likely to place wrongly. One such libffi
     bug silently put `delta_t` where `latitude` belongs on `solar_position`;
-    see `solar_position` in `lib/python/_extras.py`.
+    see `solar_position` in `lib/python/_extras.py`. `solar_position_threaded` has
+    the same signature shape, so it is checked here too.
     """
     lat, lon, alt = 52.35888, 4.88185, 100.0
     times = np.linspace(1687348800.0, 1687435200.0, 64)
@@ -230,33 +231,41 @@ def test_delta_t_does_not_leak_into_other_arguments(algorithm):
         threaded = [np.empty(len(times)) for _ in range(5)]
         sp.solar_position_inplace_threaded(lat, lon, times, *threaded,
                                            delta_t=delta_t, **kwargs)
-        return one.azimuth, many, inplace, threaded
+        many_threaded = sp.solar_position_threaded(lat, lon, times,
+                                                   delta_t=delta_t, **kwargs)
+        return one.azimuth, many, inplace, threaded, many_threaded
 
-    one_a, many_a, inplace_a, threaded_a = sample(67.0)
-    one_b, many_b, inplace_b, threaded_b = sample(0.0)
+    one_a, many_a, inplace_a, threaded_a, many_threaded_a = sample(67.0)
+    one_b, many_b, inplace_b, threaded_b, many_threaded_b = sample(0.0)
 
     assert one_a == one_b, "solar_position_single"
     np.testing.assert_array_equal(many_a, many_b, err_msg="solar_position")
+    np.testing.assert_array_equal(many_threaded_a, many_threaded_b,
+                                  err_msg="solar_position_threaded")
     for col, (a, b) in enumerate(zip(inplace_a, inplace_b)):
         np.testing.assert_array_equal(a, b, err_msg=f"inplace column {col}")
     for col, (a, b) in enumerate(zip(threaded_a, threaded_b)):
         np.testing.assert_array_equal(a, b, err_msg=f"threaded column {col}")
 
-    # And all four must agree with each other, not merely be self-consistent.
+    # And all of them must agree with each other, not merely be self-consistent.
     np.testing.assert_array_equal(many_a[:, 0], inplace_a[0])
     np.testing.assert_array_equal(many_a[:, 0], threaded_a[0])
+    np.testing.assert_array_equal(many_a, many_threaded_a)
     assert many_a[0, 0] == one_a
 
 
-def test_solar_position_uses_the_hand_maintained_wrapper():
-    """`solar_position` must come from `_extras`, not from the generated façade.
+@pytest.mark.parametrize(
+    "entrypoint", [sp.solar_position, sp.solar_position_threaded]
+)
+def test_allocating_entrypoints_use_the_hand_maintained_wrapper(entrypoint):
+    """These must come from `_extras`, not from the generated façade.
 
-    The generated binding for this one entrypoint is mismarshalled by some builds of
-    libffi, so the override is the fix rather than a convenience. If a build stops
-    installing it, every result from this function silently becomes wrong, and this
+    The generated bindings for the two allocating entrypoints are mismarshalled by
+    some builds of libffi, so the override is the fix rather than a convenience. If a
+    build stops installing it, every result from them silently becomes wrong, and this
     is the tripwire for that.
     """
-    assert sp.solar_position.__module__.endswith("_extras")
+    assert entrypoint.__module__.endswith("_extras")
 
 
 def test_inplace_rejects_short_buffers():
@@ -276,8 +285,11 @@ def test_inplace_writes_through_to_caller_arrays():
         assert np.all(np.isfinite(buf))
 
 
-def test_empty_input_is_allowed():
-    m = sp.solar_position(40.0, -105.0, np.zeros(0))
+@pytest.mark.parametrize(
+    "entrypoint", [sp.solar_position, sp.solar_position_threaded]
+)
+def test_empty_input_is_allowed(entrypoint):
+    m = entrypoint(40.0, -105.0, np.zeros(0))
     assert m.shape == (0, 5)
 
 
@@ -327,9 +339,12 @@ def _hourly(n=5):
     return seconds, [dt.datetime.fromtimestamp(t, dt.timezone.utc) for t in seconds]
 
 
-def test_solar_position_accepts_datetime_sequences():
+@pytest.mark.parametrize(
+    "entrypoint", [sp.solar_position, sp.solar_position_threaded]
+)
+def test_solar_position_accepts_datetime_sequences(entrypoint):
     seconds, datetimes = _hourly()
-    ref = sp.solar_position(40.0, -105.0, seconds)
+    ref = entrypoint(40.0, -105.0, seconds)
     for label, times in [
         ("list of datetime", datetimes),
         ("tuple of datetime", tuple(datetimes)),
@@ -341,7 +356,7 @@ def test_solar_position_accepts_datetime_sequences():
         ),
         ("object array", np.array(datetimes, dtype=object)),
     ]:
-        got = sp.solar_position(40.0, -105.0, times)
+        got = entrypoint(40.0, -105.0, times)
         np.testing.assert_array_equal(got, ref, err_msg=label)
 
 
@@ -551,6 +566,10 @@ def test_threaded_matches_serial(fx):
             np.testing.assert_array_equal(
                 buf, serial[:, col], err_msg=f"{alg} col {col}"
             )
+        allocating = sp.solar_position_threaded(
+            lat, lon, times, altitude=alt, algorithm=alg
+        )
+        np.testing.assert_array_equal(allocating, serial, err_msg=str(alg))
 
 
 def test_threaded_rejects_short_buffers():

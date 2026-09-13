@@ -50,7 +50,10 @@ def test_threaded_results_match_serial_with_runtime_threads():
         " algorithm=sp.Algorithm.SPA)\n"
         "sp.solar_position_inplace_threaded(52.35888, 4.88185, t, *b,"
         " algorithm=sp.Algorithm.SPA)\n"
-        "print(all(np.array_equal(x, y) for x, y in zip(a, b)))\n"
+        "c = sp.solar_position_threaded(52.35888, 4.88185, t,"
+        " algorithm=sp.Algorithm.SPA)\n"
+        "print(all(np.array_equal(x, y) for x, y in zip(a, b))"
+        " and all(np.array_equal(x, c[:, i]) for i, x in enumerate(a)))\n"
     )
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "True"

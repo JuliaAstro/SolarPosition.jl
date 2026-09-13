@@ -3,12 +3,13 @@
 `build.jl` copies this module into the generated Python package and appends an import to
 `_facade.py` so these definitions override the generated ones.
 
-Why this file exists: two entrypoints must be declared with all-positional arguments
-the Julia side, because reached through `@api`'s keyword-argument wrapper the
+Why this file exists: three entrypoints must be declared with all-positional arguments
+on the Julia side, because reached through `@api`'s keyword-argument wrapper the
 `juliac --trim` verifier cannot resolve the call ("unresolved call from statement
 Core.kwcall(...)") and the build fails.
 
-- ``solar_position_inplace_threaded`` — ``Threads.@threads`` builds a closure.
+- ``solar_position_inplace_threaded`` and ``solar_position_threaded`` —
+  ``Threads.@threads`` builds a closure.
 - ``transit_sunrise_sunset`` — the seconds-returning sunrise/sunset path takes a
   different ``_frac_to_event`` specialisation than the ``DateTime`` one, and only the
   former trips the verifier. ``sun_event`` goes through the ``DateTime`` path and keeps
@@ -17,8 +18,9 @@ Core.kwcall(...)") and the build fails.
 Declaring those arguments positionally keeps the entrypoints trimmable, and the
 wrappers here restore the keyword-only signatures the rest of the API has.
 
-``solar_position`` is here for an unrelated reason: the generated binding for it
-is miscompiled by some builds of libffi. See its docstring.
+``solar_position`` is here for a second reason: the generated binding for it is
+miscompiled by some builds of libffi. See its docstring — ``solar_position_threaded``
+has the same signature shape and takes the same detour.
 
 Every entrypoint that takes a time accepts datetimes as well as Unix seconds — see
 ``_unix_seconds``. The C side takes only ``Float64``, so that conversion has to happen
@@ -49,6 +51,7 @@ __all__ = [
     "solar_position_inplace",
     "solar_position_inplace_threaded",
     "solar_position_single",
+    "solar_position_threaded",
     "sun_event",
     "transit_sunrise_sunset",
 ]
@@ -475,6 +478,67 @@ def solar_position(
     # write into directly. The layout matches what the generated binding returned.
     out = np.empty((n, 5), dtype=np.float64, order="F")
     _lowlevel.libsolarposition_solar_position_inplace(
+        latitude,
+        longitude,
+        CVector_borrowed_Float64.from_numpy(times),
+        CVector_borrowed_Float64.from_numpy(out[:, 0]),
+        CVector_borrowed_Float64.from_numpy(out[:, 1]),
+        CVector_borrowed_Float64.from_numpy(out[:, 2]),
+        CVector_borrowed_Float64.from_numpy(out[:, 3]),
+        CVector_borrowed_Float64.from_numpy(out[:, 4]),
+        altitude,
+        _enum_coerce(Algorithm, algorithm),
+        _enum_coerce(RefractionModel, refraction),
+        pressure,
+        temperature,
+        COpt_Float64.from_optional(delta_t),
+        atmos_refract,
+        refraction_limit,
+        psa_coeffs,
+        gmst_option,
+        spencer_correction,
+        _enum_coerce(JulianDateMode, julian_date),
+    )
+    return out
+
+
+def solar_position_threaded(
+    latitude,
+    longitude,
+    unix_seconds,
+    *,
+    altitude=0.0,
+    algorithm=Algorithm.PSA,
+    refraction=RefractionModel.DEFAULT,
+    pressure=101325.0,
+    temperature=12.0,
+    delta_t=67.0,
+    atmos_refract=0.5667,
+    refraction_limit=-0.5667,
+    psa_coeffs=2020,
+    gmst_option=1,
+    spencer_correction=True,
+    julian_date=JulianDateMode.ORIGINAL,
+):
+    """Solar position for many instants, computed in parallel into a new array.
+
+    ``solar_position`` and ``solar_position_inplace_threaded`` in one: the columns are
+    azimuth, elevation, zenith, apparent elevation and apparent zenith, the result is
+    allocated for you, and the loop runs across the Julia threads the library was
+    compiled with. Call ``julia_nthreads()`` to find out how many that is; a
+    single-threaded build runs this serially and gives the same answers.
+
+    ``unix_seconds`` accepts the same datetime types as ``solar_position``, and the
+    keyword arguments are ``solar_position_single``'s.
+
+    Like ``solar_position``, this routes through the in-place entrypoint rather than the
+    generated binding for the allocating one, because that signature is miscompiled by
+    some builds of libffi. See ``solar_position`` for the details.
+    """
+    times = _unix_seconds_array(unix_seconds)
+    n = len(times)
+    out = np.empty((n, 5), dtype=np.float64, order="F")
+    _lowlevel.libsolarposition_solar_position_inplace_threaded(
         latitude,
         longitude,
         CVector_borrowed_Float64.from_numpy(times),

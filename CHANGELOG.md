@@ -11,6 +11,20 @@ Releases before v0.5.0 predate this file. See the
 
 ## unreleased
 
+### Added
+
+- Python bindings, as a `lib/` subproject compiled with `juliac --trim` and wrapped by
+  [JuliaLibWrapping.jl](https://github.com/JuliaInterop/JuliaLibWrapping.jl). Every
+  positioning algorithm and refraction model is exposed, along with sunrise, sunset and
+  transit, and an opt-in multithreaded build. The bindings are validated against both the
+  solposx reference tables and this package's own output for all 56 algorithm/refraction
+  pairs, and the thread count is selectable at run time via `set_num_threads()`.
+  Times may be given as `datetime`, `date`, `numpy.datetime64` or a pandas
+  `DatetimeIndex`/`Series` as well as Unix seconds; naive datetimes are read as UTC.
+  Nothing in `src/` changed. Building needs Julia 1.13, so `lib/` is intentionally
+  outside the root `[workspace]` and the package keeps its 1.10 LTS floor. See
+  `lib/README.md`
+
 ### Changed
 
 - Documentation code blocks now render with syntax highlighting, line numbers with

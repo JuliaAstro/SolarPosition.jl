@@ -1,0 +1,8 @@
+[deps]
+JuliaC = "acedd4c2-ced6-4a15-accc-2607eb759ba2"
+JuliaLibWrapping = "d61f35a8-f6af-436f-bc10-cee6b101f7bd"
+
+[compat]
+JuliaC = "0.3.10"
+JuliaLibWrapping = "0.2"
+julia = "1.13"

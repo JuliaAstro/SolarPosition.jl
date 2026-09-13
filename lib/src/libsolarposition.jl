@@ -532,6 +532,28 @@ function _fill_threaded!(
     return nothing
 end
 
+# The same barrier for the allocating entrypoint, writing the five columns of one matrix
+# instead of five separate buffers.
+function _fill_threaded!(
+        obs::SP.Observer{Float64},
+        n::Int,
+        unix_seconds::Vector{Float64},
+        out::Matrix{Float64},
+        algorithm::Algorithm,
+        refraction::RefractionModel,
+        o::Opts,
+    )
+    Threads.@threads for i in 1:n
+        a = _compute(obs, unix2datetime(unix_seconds[i]), algorithm, refraction, o)
+        out[i, 1] = a.azimuth
+        out[i, 2] = a.elevation
+        out[i, 3] = a.zenith
+        out[i, 4] = a.apparent_elevation
+        out[i, 5] = a.apparent_zenith
+    end
+    return nothing
+end
+
 """
 Threaded `solar_position_inplace`, using the threads the library was compiled with.
 
@@ -601,8 +623,61 @@ end
     julian_date::JulianDateMode,
 )::Nothing
 
-# `solar_position` hands an owned array to the caller, so the generated bindings
-# need the release entrypoints to give it back.
+"""
+Threaded `solar_position`, returning a freshly allocated `n x 5` matrix.
+
+Identical to `solar_position` except that the loop runs across the Julia threads the
+library was compiled with; with a single-threaded build it is the serial loop. Declared
+with positional arguments for the same reason as `solar_position_inplace_threaded`.
+"""
+function solar_position_threaded(
+        latitude::Float64,
+        longitude::Float64,
+        unix_seconds::Vector{Float64},
+        altitude::Float64,
+        algorithm::Algorithm,
+        refraction::RefractionModel,
+        pressure::Float64,
+        temperature::Float64,
+        delta_t::Union{Float64, Nothing},
+        atmos_refract::Float64,
+        refraction_limit::Float64,
+        psa_coeffs::Int64,
+        gmst_option::Int64,
+        spencer_correction::Bool,
+        julian_date::JulianDateMode,
+    )
+    n = length(unix_seconds)
+    obs = SP.Observer(latitude, longitude, altitude)
+    o = Opts(
+        pressure, temperature, delta_t, atmos_refract, refraction_limit,
+        psa_coeffs, gmst_option, spencer_correction, julian_date,
+    )
+    out = Matrix{Float64}(undef, n, 5)
+    _fill_threaded!(obs, n, unix_seconds, out, algorithm, refraction, o)
+    return out
+end
+
+@api solar_position_threaded(
+    latitude::Float64,
+    longitude::Float64,
+    unix_seconds::Vector{Float64},
+    altitude::Float64,
+    algorithm::Algorithm,
+    refraction::RefractionModel,
+    pressure::Float64,
+    temperature::Float64,
+    delta_t::Union{Float64, Nothing},
+    atmos_refract::Float64,
+    refraction_limit::Float64,
+    psa_coeffs::Int64,
+    gmst_option::Int64,
+    spencer_correction::Bool,
+    julian_date::JulianDateMode,
+)::Matrix{Float64}
+
+# `solar_position` and `solar_position_threaded` hand owned arrays to the caller, so the
+# generated bindings need the release entrypoints to give them back.
 @export_release_entrypoints
 
 end # module

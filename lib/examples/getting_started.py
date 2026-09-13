@@ -109,9 +109,16 @@ def threaded_section() -> None:
         LATITUDE, LONGITUDE, times, *bufs,
         altitude=ALTITUDE, algorithm=sp.Algorithm.SPA,
     ))
+    # solar_position_threaded is the same loop returning a new (n, 5) array, for when
+    # you do not already hold the buffers.
+    allocating = elapsed(lambda: sp.solar_position_threaded(
+        LATITUDE, LONGITUDE, times,
+        altitude=ALTITUDE, algorithm=sp.Algorithm.SPA,
+    ))
     print(f"  {len(times):,} positions, SPA")
-    print(f"    serial   {serial * 1e3:8.1f} ms")
-    print(f"    threaded {parallel * 1e3:8.1f} ms   ({serial / parallel:.2f}x)")
+    print(f"    serial     {serial * 1e3:8.1f} ms")
+    print(f"    threaded   {parallel * 1e3:8.1f} ms   ({serial / parallel:.2f}x)")
+    print(f"    allocating {allocating * 1e3:8.1f} ms   (threaded, new array)")
 
     # The count is fixed once the runtime is up. A late call raises rather than
     # silently doing nothing, so this mistake is never invisible. To use a different

@@ -138,15 +138,17 @@ import solarposition as sp
 
 sp.set_num_threads(8)          # must precede any solar position call
 sp.julia_nthreads()            # -> 8
-sp.solar_position_inplace_threaded(lat, lon, times, *buffers)
+sp.solar_position_threaded(lat, lon, times)              # -> a new (n, 5) array
+sp.solar_position_inplace_threaded(lat, lon, times, *buffers)   # into your buffers
 ```
 
 `set_num_threads` returns what it actually configured and raises `RuntimeError` if that
 does not match the request, which is what happens when the runtime is already running —
 whether from an earlier computation or an earlier call. The count cannot change after
 that; start a new process instead. `julia_nthreads()` reports the current value, and
-`solar_position_inplace_threaded` runs the loop across those threads, giving
-elementwise identical answers to the serial version.
+`solar_position_threaded` and `solar_position_inplace_threaded` run the loop across
+those threads, giving elementwise identical answers to their serial counterparts
+`solar_position` and `solar_position_inplace`.
 
 **The default is one thread, and raising it is a real trade-off.** More than one Julia
 thread requires `handle-signals=yes`, because on Julia ≥ 1.12 a library with
@@ -264,29 +266,31 @@ Ordered by how much they cost.
    the same error. PackageCompiler also stores each library three times (`libfoo.so`,
    `.so.N`, `.so.N.M`) — in `lib/out` those are links, but `pip install` materialises
    them into 231 MB on disk.
-3. **Two entrypoints must take positional arguments.** Reached through `@api`'s
+3. **Three entrypoints must take positional arguments.** Reached through `@api`'s
    keyword-argument wrapper, the `--trim` verifier cannot resolve the call
    (`unresolved call from statement Core.kwcall(...)`) for
-   `solar_position_inplace_threaded` (`Threads.@threads` builds a closure) or
+   `solar_position_threaded` and `solar_position_inplace_threaded`
+   (`Threads.@threads` builds a closure) or
    `transit_sunrise_sunset` (the seconds-returning path takes a different
    `_frac_to_event` specialisation than the `DateTime` one, and only that one trips the
    verifier — `sun_event` keeps its keywords). `lib/python/_extras.py` restores the
    keyword-only Python signatures by hand.
-4. **`solar_position` cannot use its generated binding.** Some builds of libffi
-   marshal that one signature wrongly and pass `delta_t` where `latitude` belongs, so
-   every result is silently for the wrong place. Calling the same `.so` from C is
-   correct, and so is every other entrypoint, so this is neither a Julia nor a
-   JuliaLibWrapping fault. The trigger is an argument classified across two classes —
+4. **The two allocating entrypoints cannot use their generated bindings.** Some builds
+   of libffi marshal that signature wrongly and pass `delta_t` where `latitude`
+   belongs, so every result is silently for the wrong place. Calling the same `.so`
+   from C is correct, and so is every other entrypoint, so this is neither a Julia nor
+   a JuliaLibWrapping fault. The trigger is an argument classified across two classes —
    `COpt_Float64` is an `int32` flag plus a `double` — whose integer half lands in the
    *last* free general-purpose register; libffi then puts its `double` half in `xmm0`,
-   on top of the first floating-point argument. Only this entrypoint has that shape:
-   the returned matrix forces a hidden return pointer, and with the input vector and
-   the two enums that fills the register file exactly. Seen with the libffi bundled in
+   on top of the first floating-point argument. Only `solar_position` and
+   `solar_position_threaded` have that shape: the returned matrix forces a hidden return
+   pointer, and with the input vector and the two enums that fills the register file
+   exactly. Both are wrong by the same 14.53° here. Seen with the libffi bundled in
    python-build-standalone 3.13.7, which is what `uv` installs by default, and not with
    Fedora's libffi 3.5.2 — so a version check cannot route around it.
-   `lib/python/_extras.py` reimplements the function over
-   `solar_position_inplace`, whose signature is unaffected and which is the faster
-   path anyway. `test_delta_t_does_not_leak_into_other_arguments` guards the whole
+   `lib/python/_extras.py` reimplements both over their in-place counterparts, whose
+   signatures are unaffected and which are the faster path anyway.
+   `test_delta_t_does_not_leak_into_other_arguments` guards the whole
    class: `delta_t` is the only split argument, and three algorithms ignore it, so
    changing it must change nothing.
 5. **JuliaLibWrapping forwards neither `jl_options` nor `c_sources`** to

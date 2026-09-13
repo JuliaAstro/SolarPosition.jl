@@ -18,3 +18,12 @@ play/Project.toml
 **/.CondaPkg/
 *.mem
 **/Manifest-*.toml
+
+# juliac build products
+lib/out/
+lib/c/*.o
+
+# juliac copies the whole project tree into a temp dir to build, and chokes on the
+# executable bits inside a virtualenv, so keep Python environments out of lib/
+lib/.venv/
+lib/**/__pycache__/

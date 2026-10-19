@@ -31,7 +31,7 @@ SolarPositionTimeZonesExt = "TimeZones"
 [compat]
 Aqua = "0.8"
 Dates = "1"
-DocStringExtensions = "0.8, 0.9"
+DocStringExtensions = "0.8, 0.9, 0.10"
 Interpolations = "0.15, 0.16"
 Makie = "0.24"
 ModelingToolkit = "11"

@@ -91,5 +91,5 @@ Minimum Julia: **1.10** (LTS). Extensions only activate once their trigger packa
 
 - Formatter: **Runic.jl** (enforced via pre-commit). Run before committing.
 - Imports: All used symbols must be explicitly imported (checked by ExplicitImports.jl).
-- Package quality is checked with **Aqua.jl** and type inference with **JET.jl** (Julia 1.12 only) — both run as part of `Pkg.test()` via `test/linting.jl`.
+- Package quality is checked with **Aqua.jl** and type inference with **JET.jl** (Julia 1.12 and 1.13 only) — both run as part of `Pkg.test()` via `test/linting.jl`.
 - Docstrings use **DocStringExtensions** macros: `$(TYPEDEF)` + `$(TYPEDFIELDS)` for structs, `$(TYPEDSIGNATURES)` for functions.

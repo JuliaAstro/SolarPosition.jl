@@ -8,7 +8,7 @@ using Aqua: Aqua
     Aqua.test_all(SolarPosition)
 end
 
-if v"1.12" <= VERSION < v"1.13" # JET compatibility
+if v"1.12" <= VERSION < v"1.14" # JET compatibility
     using JET: JET
     @testset "JET tests" begin
         @info "...with JET.jl"

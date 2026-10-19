@@ -7,8 +7,12 @@
 
 using CondaPkg
 
+# Pin Python below 3.15 because h5py, which pvlib pulls in through solposx, has no
+# 3.15 wheels yet and its source build fails without a system HDF5.
+CondaPkg.add("python"; version = "<3.15", resolve = false)
+
 # install solposx via pip
-CondaPkg.add_pip("solposx")
+CondaPkg.add_pip("solposx"; resolve = false)
 CondaPkg.add_pip("pandas")
 
 using PythonCall

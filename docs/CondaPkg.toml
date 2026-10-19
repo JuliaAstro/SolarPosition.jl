@@ -1,4 +1,7 @@
 
+[deps]
+python = "<3.15"
+
 [pip.deps]
 pandas = ""
 solposx = ""

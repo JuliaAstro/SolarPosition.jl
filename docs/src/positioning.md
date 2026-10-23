@@ -63,6 +63,7 @@ The following solar position algorithms are currently implemented in SolarPositi
 | [`Walraven`](@ref SolarPosition.Positioning.Walraven)   | [Wal78](@cite)  | ±0.0100° | None                                                           |
 | [`Iqbal`](@ref SolarPosition.Positioning.Iqbal)         | [Iqb83](@cite)  | ±0.0100° | None                                                           |
 | [`Michalsky`](@ref SolarPosition.Positioning.Michalsky) | [Mic88](@cite)  | ±0.0100° | [`MICHALSKY`](@ref SolarPosition.Refraction.MICHALSKY)         |
+| [`SOLPOS`](@ref SolarPosition.Positioning.SOLPOS)       | [SOLPOS](@cite) | ±0.0100° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)               |
 | [`NOAA`](@ref SolarPosition.Positioning.NOAA)           | [NOAA](@cite)   | ±0.0167° | [`HUGHES`](@ref SolarPosition.Refraction.HUGHES)               |
 | [`USNO`](@ref SolarPosition.Positioning.USNO)           | [USNO](@cite)   | ±0.0500° | None                                                           |
 
@@ -150,6 +151,19 @@ outside the 1950 to 2050 window that the paper's accuracy claim covers.
 
 ```@docs
 SolarPosition.Positioning.Michalsky
+```
+
+## [SOLPOS](@id solpos-algorithm)
+
+SOLPOS is the solar position and intensity routine of the National Laboratory of the
+Rockies, formerly NREL, documented in [SOLPOS](@cite). Its solar geometry evaluates the
+same almanac series as [Michalsky](@ref michalsky-algorithm), with the zenith and azimuth
+angles of [Iqb83](@cite) and the refraction correction of [Zim81](@cite). The port
+reproduces the original code, including its capped zenith angle and its 1950 to 2050 date
+window.
+
+```@docs
+SolarPosition.Positioning.SOLPOS
 ```
 
 ## [Interpolated](@id interpolated-algorithm)

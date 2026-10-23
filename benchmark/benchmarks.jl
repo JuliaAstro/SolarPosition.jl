@@ -47,6 +47,7 @@ const POSITION_ALGORITHMS = Dict(
     "SPA" => SPA(),
     "Iqbal" => Iqbal(),
     "Michalsky" => Michalsky(),
+    "SOLPOS" => SOLPOS(),
     # spans every timestamp generate_times can produce, up to n = 100_000 hours
     "Interpolated" => Interpolated(
         SPA();

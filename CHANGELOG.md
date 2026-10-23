@@ -11,6 +11,11 @@ Releases before v0.5.0 predate this file. See the
 
 ## unreleased
 
+### Added
+
+- `SOLPOS` positioning algorithm, a port of the solar geometry of NREL's SOLPOS 2.0 C
+  routine, with its Zimmerman refraction correction as the default
+
 ### Changed
 
 - Documentation code blocks now render with syntax highlighting, line numbers with

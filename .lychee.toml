@@ -12,6 +12,8 @@ exclude = [
   # These sites block automated requests (return 403 to the link checker)
   "^https://www\\.sciencedirect\\.com/.*$",
   "^https://www\\.timeanddate\\.com/.*$",
+  # This site does not send its intermediate certificate, so TLS verification fails
+  "^https://pvpmc\\.sandia\\.gov/.*$",
 ]
 
 exclude_path = ["docs/build"]

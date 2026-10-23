@@ -50,13 +50,13 @@ struct SOLPOS <: SolarAlgorithm end
 # Days since J2000.0 noon from the original Julian date, whose leap year count truncates
 # towards zero. The J2000 epoch is subtracted in integer arithmetic, so only the small day
 # count is converted to T and the large Julian date never is.
-@inline function _solpos_days(::Type{T}, dt::DateTime) where {T<:Real}
+@inline function _solpos_days(::Type{T}, dt::DateTime) where {T <: Real}
     Δyear = year(dt) - 1949
     days = Δyear * 365 + div(Δyear, 4) + dayofyear(dt) - 18629
     return T(days) + T(0.5) + fractional_hour(T, dt) / 24
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, ::SOLPOS) where {T<:Real}
+function _solar_position(obs::Observer{T}, dt::DateTime, ::SOLPOS) where {T <: Real}
     n = _solpos_days(T, dt)
 
     # mean longitude, mean anomaly and ecliptic longitude in degrees

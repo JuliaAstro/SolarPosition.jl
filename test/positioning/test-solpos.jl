@@ -75,10 +75,11 @@ end
 
     # Within the 1950 to 2050 window SOLPOS evaluates the same series as Michalsky with the
     # original Julian date, so the two agree wherever the sun is above the zenith cap and the
-    # azimuth is defined.
+    # azimuth is defined. The March morning puts the raw hour angle above 180°, so it is
+    # wrapped from above.
     @testset "Agreement with Michalsky" begin
-        dt = DateTime(2020, 10, 17, 13, 30)
-        for (lat, lon) in ((45.0, 10.0), (0.0, 10.0), (-45.0, 10.0), (45.0, -15.0))
+        for dt in (DateTime(2020, 10, 17, 13, 30), DateTime(2020, 3, 25, 8)),
+                (lat, lon) in ((45.0, 10.0), (0.0, 10.0), (-45.0, 10.0), (45.0, -15.0))
             obs = Observer(lat, lon)
             a = solar_position(obs, dt, SOLPOS(), NoRefraction())
             b = solar_position(obs, dt, Michalsky(), NoRefraction())

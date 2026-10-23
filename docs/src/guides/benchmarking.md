@@ -19,7 +19,10 @@ For available solar position algorithms, see the [Positioning Guide](@ref SolarP
 ## Accuracy Analysis
 
 To evaluate accuracy, we compare each algorithm against the gold standard SPA across a
-full year of hourly timestamps at various geographic locations.
+full year of hourly timestamps at various geographic locations. Hours with the sun more
+than 9° below the horizon are left out, because [SOLPOS](@ref SolarPosition.Positioning.SOLPOS)
+caps its elevation at -9° and its error there says nothing about its accuracy. Excluding
+them changes the other algorithms' errors by less than 2%.
 
 ```@example benchmarks
 # Test locations representing different latitudes
@@ -49,9 +52,10 @@ times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
         # Get algorithm positions
         algo_pos = solar_position(obs, times, algo)
 
-        # Calculate errors for all positions
-        elev_errors = abs.(algo_pos.elevation .- spa_pos.elevation)
-        azim_errors = abs.(algo_pos.azimuth .- spa_pos.azimuth)
+        # Calculate errors where the sun is at most 9° below the horizon
+        keep = spa_pos.elevation .> -9
+        elev_errors = abs.(algo_pos.elevation[keep] .- spa_pos.elevation[keep])
+        azim_errors = abs.(algo_pos.azimuth[keep] .- spa_pos.azimuth[keep])
 
         # Handle azimuth wraparound (0° and 360° are the same)
         azim_errors = min.(azim_errors, 360.0 .- azim_errors)
@@ -65,7 +69,7 @@ times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
             azimuth_p2_5 = quantile(azim_errors, 0.025),
             azimuth_p97_5 = quantile(azim_errors, 0.975),
             azimuth_max = maximum(azim_errors),
-            n_samples = length(times),
+            n_samples = count(keep),
         )
     end
 
@@ -80,7 +84,16 @@ times = collect(DateTime(2024, 1, 1):Hour(1):DateTime(2024, 12, 31, 23))
         ("NOAA", NOAA()),
         ("Walraven", Walraven()),
         ("USNO", USNO()),
+        ("Iqbal", Iqbal()),
+        ("Michalsky", Michalsky()),
+        ("SOLPOS", SOLPOS()),
     ]
+
+    # All algorithms including SPA, with one colour each for every plot on this page
+    all_algorithms = [algorithms; [("SPA", SPA())]]
+    algo_names = first.(all_algorithms)
+    algo_colors = Dict(zip(algo_names,
+        [:steelblue, :orange, :green, :purple, :brown, :teal, :magenta, :red]))
 
     # Collect accuracy data
     accuracy_results = DataFrame(
@@ -134,9 +147,13 @@ percentile) for each algorithm compared to SPA.
     )
 
     # Sort by algorithm order
-    algo_order = ["PSA", "NOAA", "Walraven", "USNO"]
+    algo_order = first.(algorithms)
     algo_stats = algo_stats[sortperm([findfirst(==(algo), algo_order) for algo in algo_stats.Algorithm]), :]
     xs = 1:nrow(algo_stats)
+
+    # the log scale needs a positive lower whisker
+    algo_stats.Elev_P2_5 = max.(algo_stats.Elev_P2_5, 1e-7)
+    algo_stats.Azim_P2_5 = max.(algo_stats.Azim_P2_5, 1e-7)
 
     fig = Figure(size = (900, 400), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
@@ -146,6 +163,8 @@ percentile) for each algorithm compared to SPA.
         xlabel = "Algorithm",
         ylabel = "Error (degrees)",
         xticks = (xs, algo_stats.Algorithm),
+        xticklabelrotation = π / 4,
+        yscale = log10,
         backgroundcolor = :transparent,
     )
 
@@ -162,6 +181,8 @@ percentile) for each algorithm compared to SPA.
         xlabel = "Algorithm",
         ylabel = "Error (degrees)",
         xticks = (xs, algo_stats.Algorithm),
+        xticklabelrotation = π / 4,
+        yscale = log10,
         backgroundcolor = :transparent,
     )
 
@@ -240,7 +261,7 @@ fig_err # hide
 
 !!! details "Visualization"
     ```@example benchmarks
-    fig2 = Figure(size = (900, 500), backgroundcolor = :transparent, fontsize = 11, textcolor = "#f5ab35")
+    fig2 = Figure(size = (900, 650), backgroundcolor = :transparent, fontsize = 11, textcolor = "#f5ab35")
 
     for (i, loc) in enumerate(locations)
         row = (i - 1) ÷ 2 + 1
@@ -250,12 +271,15 @@ fig_err # hide
             title = loc.name,
             xlabel = "Algorithm",
             ylabel = "Mean Elevation Error (°)",
-            xticks = (1:length(algorithms), [a[1] for a in algorithms]),
+            xticks = (1:length(algorithms), first.(algorithms)),
+            xticklabelrotation = π / 4,
+            yscale = log10,
             backgroundcolor = :transparent,
         )
 
         loc_data = filter(r -> r.Location == loc.name, accuracy_results)
-        barplot!(ax, 1:length(algorithms), loc_data.Elevation_Mean_Error, color = :teal)
+        barplot!(ax, 1:length(algorithms), loc_data.Elevation_Mean_Error,
+            color = :teal, fillto = 1e-4)
     end
 
     Label(fig2[0, :], "Elevation Error by Location", fontsize = 14, font = :bold)
@@ -268,7 +292,10 @@ fig2 # hide
 ```
 
 As we can see the error distribution is relatively consistent across different geographic
-locations, with PSA consistently providing the lowest mean error compared to SPA.
+locations, with PSA consistently providing the lowest mean error compared to SPA. Iqbal,
+which takes the declination and equation of time from a short Fourier series, is about
+two orders of magnitude less accurate than the others, and SOLPOS matches Michalsky, whose
+almanac series it shares.
 
 ## Performance Benchmarks
 
@@ -287,8 +314,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         Allocations = Int[],
     )
 
-    for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                          ("USNO", USNO()), ("SPA", SPA())]
+    for (name, algo) in all_algorithms
         b = @benchmark solar_position($obs, $dt, $algo) samples=100 evals=10
         push!(single_benchmarks, (
             Algorithm = name,
@@ -320,8 +346,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
     for n in sizes
         times_vec = collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1) + Hour(n-1)))
 
-        for (name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                              ("USNO", USNO()), ("SPA", SPA())]
+        for (name, algo) in all_algorithms
             b = @benchmark solar_position($obs, $times_vec, $algo) samples=10 evals=1
             time_ms = median(b.times) / 1e6
             push!(vector_benchmarks, (
@@ -340,7 +365,7 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
 
 !!! details "Visualization"
     ```@example benchmarks
-    fig3 = Figure(size = (900, 400), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
+    fig3 = Figure(size = (900, 450), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
     # Scaling plot (log-log)
     ax1 = Axis(fig3[1, 1],
@@ -352,15 +377,13 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         backgroundcolor = :transparent,
     )
 
-    colors = [:blue, :orange, :green, :purple, :red]
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
-
-    for (i, algo) in enumerate(algo_names)
+    for algo in algo_names
         data = filter(r -> r.Algorithm == algo, vector_benchmarks)
-        lines!(ax1, data.N, data.Time_ms, label = algo, color = colors[i], linewidth = 2)
-        scatter!(ax1, data.N, data.Time_ms, color = colors[i], markersize = 8)
+        lines!(ax1, data.N, data.Time_ms, label = algo, color = algo_colors[algo], linewidth = 2)
+        scatter!(ax1, data.N, data.Time_ms, color = algo_colors[algo], markersize = 8)
     end
-    axislegend(ax1, position = :rb, framevisible = false, labelsize = 10)
+    Legend(fig3[2, 1], ax1, orientation = :horizontal, nbanks = 2,
+        framevisible = false, labelsize = 10)
 
     # Throughput plot
     ax2 = Axis(fig3[1, 2],
@@ -368,11 +391,13 @@ sizes, from single timestamp calculations to bulk operations with 10,000 timesta
         xlabel = "Algorithm",
         ylabel = "Positions per Second",
         xticks = (1:length(algo_names), algo_names),
+        xticklabelrotation = π / 4,
         backgroundcolor = :transparent,
     )
 
     throughput_10k = filter(r -> r.N == 10_000, vector_benchmarks)
-    barplot!(ax2, 1:length(algo_names), throughput_10k.Throughput ./ 1e6, color = colors)
+    barplot!(ax2, 1:length(algo_names), throughput_10k.Throughput ./ 1e6,
+        color = [algo_colors[a] for a in throughput_10k.Algorithm])
     ax2.ylabel = "Million Positions / Second"
 
     nothing # hide
@@ -387,7 +412,7 @@ fig3 # hide
 The [solposx](https://github.com/assessingsolar/solposx) package is a Python library
 that implements the same solar position algorithms. This section compares the
 performance of SolarPosition.jl against solposx to demonstrate the benefits of using
-Julia.
+Julia. solposx has no SOLPOS implementation, so SOLPOS appears for Julia only.
 
 !!! note "Benchmarking Methodology"
     The benchmarks below use [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl)
@@ -417,7 +442,7 @@ For fair comparison, we use the same test conditions for both libraries:
 
 - **Observer**: London (51.5074°N, 0.1278°W, 11m elevation)
 - **Timestamps**: Hourly data from January 1, 2024
-- **Algorithms**: PSA, NOAA, Walraven, USNO, SPA
+- **Algorithms**: PSA, NOAA, Walraven, USNO, Iqbal, Michalsky, SPA
 
 ```@example benchmarks
 function create_pandas_times(n::Int)
@@ -429,6 +454,8 @@ solposx_algorithms = Dict(
     "NOAA" => (sp.noaa, NamedTuple()),
     "Walraven" => (sp.walraven, NamedTuple()),
     "USNO" => (sp.usno, NamedTuple()),
+    "Iqbal" => (sp.iqbal, NamedTuple()),
+    "Michalsky" => (sp.michalsky, NamedTuple()),
     "SPA" => (sp.spa, NamedTuple()),
 )
 
@@ -449,8 +476,8 @@ We benchmark both libraries across different input sizes:
         Algorithm = String[],
         N = Int[],
         Julia_ms = Float64[],
-        Python_ms = Float64[],
-        Speedup = Float64[],
+        Python_ms = Union{Float64, Missing}[],
+        Speedup = Union{Float64, Missing}[],
     )
 
     for n in sizes
@@ -458,13 +485,22 @@ We benchmark both libraries across different input sizes:
         julia_times_vec = collect(DateTime(2024, 1, 1):Hour(1):(DateTime(2024, 1, 1) + Hour(n-1)))
         py_times_idx = create_pandas_times(n)
 
-        for (algo_name, algo) in [("PSA", PSA()), ("NOAA", NOAA()), ("Walraven", Walraven()),
-                                   ("USNO", USNO()), ("SPA", SPA())]
+        for (algo_name, algo) in all_algorithms
             # Julia benchmark
             julia_bench = @benchmark solar_position($obs, $julia_times_vec, $algo) samples=5 evals=1
             julia_time_ms = median(julia_bench.times) / 1e6
 
-            # Python benchmark
+            # Python benchmark, where solposx has the algorithm
+            if !haskey(solposx_algorithms, algo_name)
+                push!(comparison_results, (
+                    Algorithm = algo_name,
+                    N = n,
+                    Julia_ms = round(julia_time_ms, digits=3),
+                    Python_ms = missing,
+                    Speedup = missing,
+                ))
+                continue
+            end
             py_func, py_kwargs = solposx_algorithms[algo_name]
 
             # Benchmark Python function using BenchmarkTools
@@ -492,11 +528,10 @@ We benchmark both libraries across different input sizes:
 
 !!! details "Visualization"
     ```@example benchmarks
-    fig5 = Figure(size = (600, 750), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
+    fig5 = Figure(size = (650, 850), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
-    # Group by algorithm for plotting
-    algo_names = ["PSA", "NOAA", "Walraven", "USNO", "SPA"]
-    colors_julia = [:blue, :green, :purple, :orange, :red]
+    # Algorithms that solposx implements as well
+    py_names = filter(in(keys(solposx_algorithms)), algo_names)
 
     ax1 = Axis(fig5[1, 1],
         title = "Computation Time: Julia vs Python",
@@ -511,22 +546,24 @@ We benchmark both libraries across different input sizes:
     julia_lines = []
     python_lines = []
 
-    for (i, algo) in enumerate(algo_names)
+    for algo in algo_names
         data = filter(r -> r.Algorithm == algo, comparison_results)
 
         # Julia times (solid lines)
         l1 = lines!(ax1, data.N, data.Julia_ms,
-            color = colors_julia[i],
+            color = algo_colors[algo],
             linewidth = 2)
-        scatter!(ax1, data.N, data.Julia_ms, color = colors_julia[i], markersize = 6)
+        scatter!(ax1, data.N, data.Julia_ms, color = algo_colors[algo], markersize = 6)
         push!(julia_lines, l1)
 
         # Python times (dashed lines)
-        l2 = lines!(ax1, data.N, data.Python_ms,
-            color = colors_julia[i],
+        algo in py_names || continue
+        py_ms = collect(skipmissing(data.Python_ms))
+        l2 = lines!(ax1, data.N, py_ms,
+            color = algo_colors[algo],
             linewidth = 2,
             linestyle = :dash)
-        scatter!(ax1, data.N, data.Python_ms, color = colors_julia[i], markersize = 6,
+        scatter!(ax1, data.N, py_ms, color = algo_colors[algo], markersize = 6,
             marker = :utriangle)
         push!(python_lines, l2)
     end
@@ -546,12 +583,14 @@ We benchmark both libraries across different input sizes:
         title = "Julia vs Python at N=1,000",
         xlabel = "Algorithm",
         ylabel = "Speedup Factor (×)",
-        xticks = (1:length(algo_names), algo_names),
+        xticks = (1:length(py_names), py_names),
+        xticklabelrotation = π / 4,
         backgroundcolor = :transparent,
     )
 
-    speedup_1k = filter(r -> r.N == 1_000, comparison_results)
-    barplot!(ax2, 1:length(algo_names), speedup_1k.Speedup, color = colors_julia)
+    speedup_1k = filter(r -> r.N == 1_000 && r.Algorithm in py_names, comparison_results)
+    barplot!(ax2, 1:length(py_names), Float64.(speedup_1k.Speedup),
+        color = [algo_colors[a] for a in speedup_1k.Algorithm])
     hlines!(ax2, [1.0], color = :gray, linestyle = :dash)
 
     nothing # hide
@@ -566,130 +605,97 @@ fig5 # hide
 When selecting a solar position algorithm, there is often a trade-off between accuracy
 and computational performance. The following Pareto plot visualizes this trade-off by
 plotting mean elevation error against computation time at N=1,000 timestamps, comparing
-both Julia and Python implementations.
+both Julia and Python implementations. Both axes are logarithmic. SPA is the reference
+and has no error of its own, so its computation times are drawn as vertical lines. The
+dashed lines trace each library's Pareto frontier, the algorithms that no other algorithm
+beats on both speed and accuracy. Michalsky and SOLPOS evaluate the same series at the
+same cost, so their points coincide.
 
 !!! details "Pareto Analysis"
     ```@example benchmarks
-    # Combine accuracy and performance data for Pareto analysis at N=1000
-    # Get mean elevation error across all locations for each algorithm
+    # Mean elevation error across all locations for each algorithm
     pareto_data = combine(
         groupby(accuracy_results, :Algorithm),
         :Elevation_Mean_Error => mean => :Mean_Error
     )
 
-    # Add SPA as reference (error = 0)
-    push!(pareto_data, (Algorithm = "SPA", Mean_Error = 0.0))
+    # Julia and Python timings at N=1000, one row per library
+    times_1k = filter(r -> r.N == 1_000, comparison_results)
+    pareto_combined = vcat(
+        transform(leftjoin(pareto_data, select(times_1k, :Algorithm, :Julia_ms => :Time_ms),
+            on = :Algorithm), [] => (() -> "Julia") => :Library),
+        transform(leftjoin(pareto_data, select(times_1k, :Algorithm, :Python_ms => :Time_ms),
+            on = :Algorithm), [] => (() -> "Python") => :Library),
+    )
+    dropmissing!(pareto_combined, :Time_ms)
+    sort!(pareto_combined, [:Library, :Time_ms])
 
-    # Get Julia timing at N=1000
-    julia_times_1k = filter(r -> r.N == 1_000, comparison_results)
-    pareto_julia = leftjoin(pareto_data,
-        select(julia_times_1k, :Algorithm, :Julia_ms),
-        on = :Algorithm)
-    pareto_julia.Library = fill("Julia", nrow(pareto_julia))
-
-    # Get Python timing at N=1000
-    pareto_python = leftjoin(pareto_data,
-        select(julia_times_1k, :Algorithm, :Python_ms),
-        on = :Algorithm)
-    rename!(pareto_python, :Python_ms => :Julia_ms)  # Reuse column name for convenience
-    pareto_python.Library = fill("Python", nrow(pareto_python))
-
-    # Combine both
-    pareto_combined = vcat(pareto_julia, pareto_python)
-    rename!(pareto_combined, :Julia_ms => :Time_ms)
-
-    # Sort by error then time
-    sort!(pareto_combined, [:Mean_Error, :Time_ms])
+    # SPA timings, shown as reference lines
+    spa_1k = only(filter(r -> r.Algorithm == "SPA", eachrow(times_1k)))
 
     pareto_combined
     ```
 
 !!! details "Visualization"
     ```@example benchmarks
-    fig_pareto = Figure(size = (700, 550), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
+    fig_pareto = Figure(size = (850, 650), backgroundcolor = :transparent, fontsize = 12, textcolor = "#f5ab35")
 
     ax = Axis(fig_pareto[1, 1],
         title = "Algorithm Selection: Accuracy vs Performance (N=1,000)",
         xlabel = "Computation Time (ms)",
         ylabel = "Mean Elevation Error vs SPA (°)",
+        xscale = log10,
+        yscale = log10,
+        xautolimitmargin = (0.05, 0.12),
         backgroundcolor = :transparent,
     )
 
-    # Color scheme for algorithms
-    colors_pareto = Dict(
-        "PSA" => :steelblue,
-        "NOAA" => :orange,
-        "Walraven" => :green,
-        "USNO" => :purple,
-        "SPA" => :red
-    )
-
-    # Marker scheme for library
-    markers_lib = Dict(
-        "Julia" => :circle,
-        "Python" => :utriangle
-    )
-
-    # Plot points
-    julia_points = []
-    python_points = []
+    markers_lib = Dict("Julia" => :circle, "Python" => :utriangle)
 
     for row in eachrow(pareto_combined)
-        marker = markers_lib[row.Library]
-        color = colors_pareto[row.Algorithm]
-
-        s = scatter!(ax, [row.Time_ms], [row.Mean_Error],
-                color = color,
-                marker = marker,
-                markersize = 15)
-
+        scatter!(ax, [row.Time_ms], [row.Mean_Error],
+            color = algo_colors[row.Algorithm],
+            marker = markers_lib[row.Library],
+            markersize = 15)
         if row.Library == "Julia"
-            push!(julia_points, s)
+            # one label below the coinciding Michalsky and SOLPOS points
+            row.Algorithm == "SOLPOS" && continue
+            if row.Algorithm == "Michalsky"
+                text!(ax, row.Time_ms, row.Mean_Error, text = "Michalsky, SOLPOS",
+                    align = (:right, :top), offset = (-4, -6), fontsize = 10)
+            else
+                text!(ax, row.Time_ms, row.Mean_Error, text = "  " * row.Algorithm,
+                    align = (:left, :center), fontsize = 10)
+            end
         else
-            push!(python_points, s)
+            text!(ax, row.Time_ms, row.Mean_Error, text = "  " * row.Algorithm,
+                align = (:left, :center), fontsize = 9, color = (:gray40, 0.8))
         end
     end
 
-    # Add algorithm labels for Julia implementations
-    for row in eachrow(filter(r -> r.Library == "Julia", pareto_combined))
-        text!(ax, row.Time_ms, row.Mean_Error,
-              text = "  " * row.Algorithm,
-              align = (:left, :center),
-              fontsize = 10)
+    # Pareto frontier of each library: walking from fast to slow, keep every algorithm
+    # more accurate than all faster ones
+    for (lib, color, style) in (("Julia", :steelblue, :dash), ("Python", :coral, :dot))
+        data = filter(r -> r.Library == lib, pareto_combined)
+        frontier = data[data.Mean_Error .<= accumulate(min, data.Mean_Error), :]
+        lines!(ax, frontier.Time_ms, frontier.Mean_Error,
+            color = (color, 0.5), linestyle = style, linewidth = 1.5)
     end
 
-    # Add algorithm labels for Python implementations
-    for row in eachrow(filter(r -> r.Library == "Python", pareto_combined))
-        text!(ax, row.Time_ms, row.Mean_Error,
-              text = "  " * row.Algorithm,
-              align = (:left, :center),
-              fontsize = 9,
-              color = (:gray40, 0.8))
-    end
+    # SPA reference timings
+    vlines!(ax, [spa_1k.Julia_ms], color = (algo_colors["SPA"], 0.6), linewidth = 1.5)
+    vlines!(ax, [spa_1k.Python_ms], color = (algo_colors["SPA"], 0.6), linewidth = 1.5,
+        linestyle = :dash)
 
-    # Connect Julia points to show the trade-off curve
-    julia_data = sort(filter(r -> r.Library == "Julia", pareto_combined), :Time_ms)
-    lines!(ax, julia_data.Time_ms, julia_data.Mean_Error,
-           color = (:steelblue, 0.3), linestyle = :dash, linewidth = 1.5, label = "Julia Frontier")
-
-    # Connect Python points
-    python_data = sort(filter(r -> r.Library == "Python", pareto_combined), :Time_ms)
-    lines!(ax, python_data.Time_ms, python_data.Mean_Error,
-           color = (:coral, 0.3), linestyle = :dot, linewidth = 1.5, label = "Python Frontier")
-
-    # Set y-axis limits for better discrimination
-    ylims!(ax, nothing, 0.005)
-
-    # Add guidelines for accuracy levels
-    hlines!(ax, [0.001, 0.002], color = (:gray, 0.2), linestyle = :dot, linewidth = 1)
-
-    # Create legend for library types
     library_elements = [
         MarkerElement(marker = :circle, color = :gray, markersize = 12),
-        MarkerElement(marker = :utriangle, color = :gray, markersize = 12)
+        MarkerElement(marker = :utriangle, color = :gray, markersize = 12),
+        LineElement(color = algo_colors["SPA"], linewidth = 1.5),
+        LineElement(color = algo_colors["SPA"], linewidth = 1.5, linestyle = :dash),
     ]
-    Legend(fig_pareto[1, 2], library_elements, ["Julia", "Python"], "Library",
-           framevisible = true, backgroundcolor = :transparent, labelsize = 10)
+    Legend(fig_pareto[1, 2], library_elements,
+        ["Julia", "Python", "SPA, Julia", "SPA, Python"], "Library",
+        framevisible = true, backgroundcolor = :transparent, labelsize = 10)
 
     nothing # hide
     ```

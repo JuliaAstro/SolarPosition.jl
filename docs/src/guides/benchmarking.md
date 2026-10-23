@@ -292,10 +292,7 @@ fig2 # hide
 ```
 
 As we can see the error distribution is relatively consistent across different geographic
-locations, with PSA consistently providing the lowest mean error compared to SPA. Iqbal,
-which takes the declination and equation of time from a short Fourier series, is about
-two orders of magnitude less accurate than the others, and SOLPOS matches Michalsky, whose
-almanac series it shares.
+locations, with PSA consistently providing the lowest mean error compared to SPA.
 
 ## Performance Benchmarks
 
@@ -605,11 +602,8 @@ fig5 # hide
 When selecting a solar position algorithm, there is often a trade-off between accuracy
 and computational performance. The following Pareto plot visualizes this trade-off by
 plotting mean elevation error against computation time at N=1,000 timestamps, comparing
-both Julia and Python implementations. Both axes are logarithmic. SPA is the reference
-and has no error of its own, so its computation times are drawn as vertical lines. The
-dashed lines trace each library's Pareto frontier, the algorithms that no other algorithm
-beats on both speed and accuracy. Michalsky and SOLPOS evaluate the same series at the
-same cost, so their points coincide.
+both Julia and Python implementations. Both axes are logarithmic. SPA is considered to
+be the most accurate algorithm and therefore the reference.
 
 !!! details "Pareto Analysis"
     ```@example benchmarks

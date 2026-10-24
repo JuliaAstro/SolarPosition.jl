@@ -204,3 +204,9 @@ calculate_deltat(::Type{T}, year::Real, month::Real) where {T <: Real} =
 
 calculate_deltat(::Type{T}, date::Union{DateTime, Date}) where {T <: Real} =
     T(calculate_deltat(date))
+
+# ΔT [seconds] for an algorithm with a `delta_t` field: its fixed value when set, otherwise
+# the ΔT model evaluated at `dt`.
+@inline function _resolve_deltat(::Type{T}, alg, dt) where {T <: Real}
+    return alg.delta_t === nothing ? calculate_deltat(T, dt) : T(alg.delta_t)
+end

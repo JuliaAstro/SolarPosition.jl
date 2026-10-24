@@ -2,7 +2,7 @@
 
 using Dates: Dates
 
-using ..Positioning: _compute_spa_srt_parameters
+using ..Positioning: _compute_spa_srt_parameters, _resolve_deltat
 
 _frac_to_dt(dt_midnight, frac) =
     dt_midnight + Dates.Second(round(Int, frac * 86_400))
@@ -55,11 +55,7 @@ function _transit_sunrise_sunset_impl(
     # This creates a new DateTime at midnight
     dt_midnight = DateTime(Date(dt))
 
-    δt = if alg.delta_t === nothing
-        calculate_deltat(T, dt_midnight)
-    else
-        T(alg.delta_t)
-    end
+    δt = _resolve_deltat(T, alg, dt_midnight)
 
     lon = obs.longitude
 

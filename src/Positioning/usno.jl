@@ -32,11 +32,7 @@ USNO() = USNO(67.0, 1)  # default delta_t value and gmst_option
 
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: Real}
-    δt::T = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
+    δt = _resolve_deltat(T, alg, dt)
 
     # days since J2000.0 (UT), magnitude-safe at precision T
     D = julian_day_j2000(T, dt)

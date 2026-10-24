@@ -46,8 +46,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
     q = mod(q, 360)
 
     # geocentric apparent ecliptic longitude of the sun (adjusted for aberration) [deg]
-    L = q + T(1.915) * sind(g) + T(0.02) * sind(2 * g)
-    L = mod(L, 360)
+    L = _almanac_ecliptic_longitude(q, g)
 
     # mean obliquity of the ecliptic [deg]
     ϵ = T(23.439) - T(0.00000036) * D

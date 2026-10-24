@@ -68,17 +68,19 @@ end
     return _almanac_days(T, dt, fld)
 end
 
+# Apparent ecliptic longitude [deg] of the almanac series from the mean longitude `q` and the
+# mean anomaly `g` [deg], wrapped to [0, 360). Shared by Michalsky, SOLPOS and USNO.
+@inline function _almanac_ecliptic_longitude(q::T, g::T) where {T <: Real}
+    return mod(q + T(1.915) * sind(g) + T(0.02) * sind(2 * g), 360)
+end
+
 # Declination [deg], right ascension [deg] and Greenwich mean sidereal time [hours] of the
 # almanac series, `n` days since J2000.0 noon. Shared by Michalsky and SOLPOS.
 @inline function _almanac_equatorial(n::T, dt::DateTime) where {T <: Real}
     # mean longitude, mean anomaly and ecliptic longitude in degrees
     mean_longitude = mod(T(280.46) + T(0.9856474) * n, 360)
     mean_anomaly = mod(T(357.528) + T(0.9856003) * n, 360)
-    ecliptic_longitude = mod(
-        mean_longitude + T(1.915) * sind(mean_anomaly) +
-            T(0.02) * sind(2 * mean_anomaly),
-        360,
-    )
+    ecliptic_longitude = _almanac_ecliptic_longitude(mean_longitude, mean_anomaly)
 
     # obliquity of the ecliptic in degrees
     obliquity = T(23.439) - T(0.0000004) * n

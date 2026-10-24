@@ -89,6 +89,5 @@ function _solar_position(obs::Observer{T}, dt, alg::SOLPOS, ::DefaultRefraction)
     return _solar_position(obs, dt, alg, HUGHES{T}(T(101325), T(15)))
 end
 
-# SOLPOS applies its Zimmerman refraction correction by default (which is Hughes)
 result_type(::Type{SOLPOS}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

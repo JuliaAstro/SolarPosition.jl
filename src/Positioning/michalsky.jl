@@ -150,6 +150,5 @@ function _solar_position(obs::AbstractObserver, dt, alg::Michalsky, ::DefaultRef
     return _solar_position(obs, dt, alg, MICHALSKY())
 end
 
-
 result_type(::Type{Michalsky}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

@@ -111,6 +111,5 @@ function _solar_position(obs::Observer{T}, dt, alg::NOAA, ::DefaultRefraction) w
     return _solar_position(obs, dt, alg, HUGHES{T}())
 end
 
-# NOAA with DefaultRefraction returns ApparentSolPos (uses HUGHES refraction)
 result_type(::Type{NOAA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

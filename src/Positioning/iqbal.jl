@@ -61,10 +61,3 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Iqbal) where {T <: Re
 
     return SolPos{T}(azimuth, 90 - zenith, zenith)
 end
-
-function _solar_position(obs::AbstractObserver, dt, alg::Iqbal, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# Iqbal applies no refraction by default, so DefaultRefraction returns SolPos
-result_type(::Type{Iqbal}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}

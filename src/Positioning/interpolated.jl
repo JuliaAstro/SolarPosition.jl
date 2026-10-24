@@ -153,7 +153,6 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::Interpolated) wher
     return _solar_position(spa_obs, dt, alg)
 end
 
-# DefaultRefraction resolves exactly as it does for the wrapped SPA
 function _solar_position(
         obs::AbstractObserver{T},
         dt,
@@ -187,9 +186,7 @@ function solar_position!(
     return pos
 end
 
-# Interpolated mirrors SPA: SolPos with NoRefraction, ApparentSolPos with any refraction
-result_type(::Type{<:Interpolated}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
-result_type(::Type{<:Interpolated}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} =
+result_type(::Type{<:Interpolated}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}
 
 """

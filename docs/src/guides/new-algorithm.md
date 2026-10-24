@@ -120,22 +120,14 @@ end
 
 ## [Step 3: Handle Default Refraction](@id step-3-handle-refraction)
 
-Each algorithm must specify how it handles `DefaultRefraction`. There are two common
+Each algorithm decides how it handles `DefaultRefraction`. There are two common
 patterns:
 
 ### Pattern A: No Refraction by Default (like [`PSA`](@ref SolarPosition.Positioning.PSA))
 
-If your algorithm should NOT apply refraction by default:
-
-```julia
-function _solar_position(obs, dt, alg::SimpleAlgorithm, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# Return type for DefaultRefraction
-result_type(::Type{SimpleAlgorithm}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
-    SolPos{T}
-```
+If your algorithm should NOT apply refraction by default, there is nothing to define.
+`DefaultRefraction` falls back to [`NoRefraction`](@ref SolarPosition.Refraction.NoRefraction)
+for every `SolarAlgorithm` and returns a `SolPos`.
 
 ### Pattern B: Apply Refraction by Default (like [`NOAA`](@ref SolarPosition.Positioning.NOAA))
 
@@ -302,8 +294,7 @@ Before submitting your algorithm for review, ensure you've completed the followi
 | Algorithm struct   | Subtypes [`SolarAlgorithm`](@ref SolarPosition.Positioning.SolarAlgorithm)                  |
 | Docstring          | Includes `TYPEDEF`, `TYPEDFIELDS`, accuracy, and references                                 |
 | `_solar_position`  | Function implemented with correct signature                                                 |
-| Default refraction | Handling defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
-| `result_type`      | Function defined for [`DefaultRefraction`](@ref SolarPosition.Refraction.DefaultRefraction) |
+| Default refraction | Only with a default model: `_solar_position` and `result_type` for `DefaultRefraction`      |
 | Time base          | Uses `timebase.jl` helpers, never `datetime2julian`                                         |
 | Inverse trig       | `asin`/`acos` arguments guarded with `unit_clamp`                                           |
 | Export             | Algorithm exported from `Positioning`, which re-exports automatically                       |

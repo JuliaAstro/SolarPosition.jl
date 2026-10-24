@@ -107,10 +107,3 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
 
     return SolPos{T}(mod(azimuth, 360), elevation, 90 - elevation)
 end
-
-function _solar_position(obs, dt, alg::USNO, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# USNO with DefaultRefraction returns SolPos (no refraction by default)
-result_type(::Type{USNO}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}

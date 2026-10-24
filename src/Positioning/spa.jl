@@ -448,7 +448,4 @@ function solar_position!(
     return pos
 end
 
-# SPA returns SolPos with NoRefraction, ApparentSolPos with any refraction
-result_type(::Type{SPA}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
-result_type(::Type{SPA}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} =
-    ApparentSolPos{T}
+result_type(::Type{SPA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = ApparentSolPos{T}

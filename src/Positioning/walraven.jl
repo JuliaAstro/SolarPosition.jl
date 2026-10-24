@@ -92,10 +92,3 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     elevation_deg = rad2deg(el)
     return SolPos{T}(az, elevation_deg, 90 - elevation_deg)
 end
-
-function _solar_position(obs, dt, alg::Walraven, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# Walraven with DefaultRefraction returns SolPos (no refraction by default)
-result_type(::Type{Walraven}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}

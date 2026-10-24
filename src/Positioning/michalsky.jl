@@ -48,22 +48,29 @@ function Michalsky(; spencer_correction::Bool = true, julian_date::Symbol = :ori
     return Michalsky(spencer_correction, julian_date)
 end
 
-# Days since J2000.0 noon, the quantity the almanac series are expressed in.
+# Days since J2000.0 noon. `leapdiv` counts the leap days since 1949:
+# - Michalsky floors (`fld`)
+# - SOLPOS truncates towards zero (`div`).
+# The definitions also differ before 1949.
 #
 # The paper builds a Julian Date from a naive leap year count since 1949, which would
 # materialise the ~2.43e6 Julian Date magnitude at precision T. The constant J2000 offset is
 # folded into the integer day count instead, so nothing larger than the day count itself is
 # ever represented at T. The half day is the paper's midnight epoch against J2000 noon.
-@inline function _michalsky_days(::Type{T}, dt::DateTime, julian_date::Symbol) where {T <: Real}
-    julian_date === :original || return julian_day_j2000(T, dt)
+@inline function _almanac_days(::Type{T}, dt::DateTime, leapdiv::F) where {T <: Real, F}
     Δyear = year(dt) - 1949
-    days = Δyear * 365 + fld(Δyear, 4) + dayofyear(dt) - 18629
+    days = Δyear * 365 + leapdiv(Δyear, 4) + dayofyear(dt) - 18629
     return T(days) + T(0.5) + fractional_hour(T, dt) / 24
 end
 
-function _solar_position(obs::Observer{T}, dt::DateTime, alg::Michalsky) where {T <: Real}
-    n = _michalsky_days(T, dt, alg.julian_date)
+@inline function _michalsky_days(::Type{T}, dt::DateTime, julian_date::Symbol) where {T <: Real}
+    julian_date === :original || return julian_day_j2000(T, dt)
+    return _almanac_days(T, dt, fld)
+end
 
+# Declination [deg], right ascension [deg] and Greenwich mean sidereal time [hours] of the
+# almanac series, `n` days since J2000.0 noon. Shared by Michalsky and SOLPOS.
+@inline function _almanac_equatorial(n::T, dt::DateTime) where {T <: Real}
     # mean longitude, mean anomaly and ecliptic longitude in degrees
     mean_longitude = mod(T(280.46) + T(0.9856474) * n, 360)
     mean_anomaly = mod(T(357.528) + T(0.9856003) * n, 360)
@@ -83,8 +90,17 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::Michalsky) where {
     declination = asind(unit_clamp(sin_ε * sin_λ))
     right_ascension = mod(atand(cos_ε * sin_λ, cos_λ), 360)
 
-    # Greenwich and local mean sidereal time in hours
+    # Greenwich mean sidereal time in hours
     gmst = mod(T(6.697375) + T(0.0657098242) * n + fractional_hour(T, dt), 24)
+
+    return (declination, right_ascension, gmst)
+end
+
+function _solar_position(obs::Observer{T}, dt::DateTime, alg::Michalsky) where {T <: Real}
+    n = _michalsky_days(T, dt, alg.julian_date)
+    (declination, right_ascension, gmst) = _almanac_equatorial(n, dt)
+
+    # local mean sidereal time in hours
     lmst = mod(gmst + obs.longitude / 15, 24)
 
     # hour angle in hours, wrapped to [-12, 12)

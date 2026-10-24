@@ -4,8 +4,7 @@
 Michalsky solar position algorithm.
 
 Implements the approximate solar position algorithm of the Astronomical Almanac. The
-default refraction model is [`MICHALSKY`](@ref), matching the original publication, so
-`solar_position` returns an [`ApparentSolPos`](@ref) unless another model is given.
+default refraction model is [`MICHALSKY`](@ref).
 
 # Accuracy
 ±0.01° between 1950 and 2050 with the original Julian date formulation.
@@ -68,16 +67,12 @@ end
     return _almanac_days(T, dt, fld)
 end
 
-# Apparent ecliptic longitude [deg] of the almanac series from the mean longitude `q` and the
-# mean anomaly `g` [deg], wrapped to [0, 360). Shared by Michalsky, SOLPOS and USNO.
 @inline function _almanac_ecliptic_longitude(q::T, g::T) where {T <: Real}
     return mod(q + T(1.915) * sind(g) + T(0.02) * sind(2 * g), 360)
 end
 
-# Declination [deg], right ascension [deg] and Greenwich mean sidereal time [hours] of the
-# almanac series, `n` days since J2000.0 noon. Shared by Michalsky and SOLPOS.
+
 @inline function _almanac_equatorial(n::T, dt::DateTime) where {T <: Real}
-    # mean longitude, mean anomaly and ecliptic longitude in degrees
     mean_longitude = mod(T(280.46) + T(0.9856474) * n, 360)
     mean_anomaly = mod(T(357.528) + T(0.9856003) * n, 360)
     ecliptic_longitude = _almanac_ecliptic_longitude(mean_longitude, mean_anomaly)
@@ -115,7 +110,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::Michalsky) where {
     azimuth = asind(unit_clamp(-cos_δ * sin_ω / cosd(elevation)))
 
     azimuth = if alg.spencer_correction
-        _spencer_quadrant(azimuth, elevation, sin_δ, obs.sin_lat)
+        _spencer_quadrant(azimuth, sin_δ - sind(elevation) * obs.sin_lat)
     else
         _original_quadrant(azimuth, elevation, sin_δ, obs.sin_lat, hour_angle)
     end
@@ -123,10 +118,8 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::Michalsky) where {
     return SolPos{T}(azimuth, elevation, 90 - elevation)
 end
 
-# Spencer (1989) quadrant correction. The sign of the azimuth cosine picks the branch, which
-# makes the result valid in both hemispheres.
-@inline function _spencer_quadrant(azimuth::T, elevation, sin_δ, sin_lat) where {T <: Real}
-    cos_azimuth = sin_δ - sind(elevation) * sin_lat
+# Spencer (1989) quadrant correction for an arcsine azimuth in [-90, 90] degrees
+@inline function _spencer_quadrant(azimuth::T, cos_azimuth) where {T <: Real}
     if cos_azimuth < 0
         azimuth = 180 - azimuth
     elseif sind(azimuth) < 0
@@ -157,7 +150,6 @@ function _solar_position(obs::AbstractObserver, dt, alg::Michalsky, ::DefaultRef
     return _solar_position(obs, dt, alg, MICHALSKY())
 end
 
-# Michalsky applies the MICHALSKY refraction model by default, matching the paper, so
-# DefaultRefraction returns ApparentSolPos
+
 result_type(::Type{Michalsky}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

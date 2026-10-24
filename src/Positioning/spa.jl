@@ -411,9 +411,22 @@ function _solar_position(
     return _spa_topocentric(obs, ν, α, δ, R)
 end
 
+# SPA and Interpolated run on an SPAObserver, which caches the parallax terms
+@inline function _spa_observer(obs::AbstractObserver{T}) where {T <: Real}
+    return SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+end
+
+# SPARefraction built at precision T from the atmosphere fields of an SPA
+@inline function _spa_refraction(::Type{T}, alg::SPA) where {T <: Real}
+    return SPARefraction{T}(
+        pressure = T(alg.pressure),
+        temperature = T(alg.temperature),
+        atmos_refract = T(alg.atmos_refract),
+    )
+end
+
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::SPA) where {T <: Real}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
+    return _solar_position(_spa_observer(obs), dt, alg)
 end
 
 function _solar_position(
@@ -422,30 +435,7 @@ function _solar_position(
         alg::SPA,
         ::DefaultRefraction,
     ) where {T <: Real}
-    return _solar_position(
-        obs,
-        dt,
-        alg,
-        SPARefraction{T}(
-            pressure = T(alg.pressure),
-            temperature = T(alg.temperature),
-            atmos_refract = T(alg.atmos_refract),
-        ),
-    )
-end
-
-function solar_position!(
-        pos::StructArrays.StructVector{S},
-        obs::AbstractObserver{T},
-        dts::AbstractVector{DateTime},
-        alg::SPA,
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {S <: AbstractSolPos, T <: Real}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(spa_obs, dts[i], alg, refraction)
-    end
-    return pos
+    return _solar_position(obs, dt, alg, _spa_refraction(T, alg))
 end
 
 result_type(::Type{SPA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = ApparentSolPos{T}

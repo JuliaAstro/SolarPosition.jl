@@ -1,10 +1,8 @@
 """
     SolarPositionInterpolationsExt
 
-Extension that builds the cubic B-spline interpolants behind the `Interpolated` solar
-position algorithm. It activates when Interpolations.jl is loaded and implements the
-sampling of the wrapped algorithm's geocentric solar coordinates on a uniform time
-grid. Evaluation lives in the main package and needs no extension.
+Extension that builds cubic B-spline interpolants to provide the `Interpolated` solar
+position algorithm.
 """
 module SolarPositionInterpolationsExt
 

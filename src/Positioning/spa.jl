@@ -403,11 +403,7 @@ function _solar_position(
         dt::DateTime,
         alg::SPA,
     ) where {T <: Real}
-    δt::T = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
+    δt = _resolve_deltat(T, alg, dt)
 
     # Compute sidereal time, right ascension, declination, and related parameters
     (; ν, α, δ, R) = _compute_spa_srt_parameters(T, dt, δt)

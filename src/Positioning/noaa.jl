@@ -35,12 +35,6 @@ NOAA() = NOAA(67.0)  # default delta_t value (2020 default from pvlib)
 
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
-    δt = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
-
     # Julian century since J2000.0, at precision T
     jc = julian_century(T, dt)
 

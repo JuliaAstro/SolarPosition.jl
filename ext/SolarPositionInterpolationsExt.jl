@@ -8,7 +8,7 @@ grid. Evaluation lives in the main package and needs no extension.
 """
 module SolarPositionInterpolationsExt
 
-using SolarPosition.Positioning: Positioning, SPA, calculate_deltat
+using SolarPosition.Positioning: Positioning, SPA
 using Interpolations: interpolate, scale, BSpline, Cubic, Line, OnGrid
 using Dates: Dates, DateTime, Millisecond
 using Base.Threads: @threads
@@ -28,11 +28,7 @@ function Positioning._build_interpolants(
     eqs = Vector{Float64}(undef, n)
     @threads for i in 1:n
         dti = t0p + (i - 1) * step
-        δt = if algorithm.delta_t === nothing
-            calculate_deltat(Float64, dti)
-        else
-            Float64(algorithm.delta_t)
-        end
+        δt = Positioning._resolve_deltat(Float64, algorithm, dti)
         p = Positioning._compute_spa_srt_parameters(Float64, dti, δt)
         αs[i] = p.α
         δs[i] = p.δ

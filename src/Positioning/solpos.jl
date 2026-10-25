@@ -47,39 +47,12 @@ solar_position(obs, DateTime(1999, 7, 22, 14, 45, 37), SOLPOS(), refraction)
 """
 struct SOLPOS <: SolarAlgorithm end
 
-# Days since J2000.0 noon from the original Julian date, whose leap year count truncates
-# towards zero. The J2000 epoch is subtracted in integer arithmetic, so only the small day
-# count is converted to T and the large Julian date never is.
-@inline function _solpos_days(::Type{T}, dt::DateTime) where {T <: Real}
-    Δyear = year(dt) - 1949
-    days = Δyear * 365 + div(Δyear, 4) + dayofyear(dt) - 18629
-    return T(days) + T(0.5) + fractional_hour(T, dt) / 24
-end
-
 function _solar_position(obs::Observer{T}, dt::DateTime, ::SOLPOS) where {T <: Real}
-    n = _solpos_days(T, dt)
 
-    # mean longitude, mean anomaly and ecliptic longitude in degrees
-    mean_longitude = mod(T(280.46) + T(0.9856474) * n, 360)
-    mean_anomaly = mod(T(357.528) + T(0.9856003) * n, 360)
-    ecliptic_longitude = mod(
-        mean_longitude + T(1.915) * sind(mean_anomaly) +
-            T(0.02) * sind(2 * mean_anomaly),
-        360,
-    )
+    n = _almanac_days(T, dt, div)
+    (declination, right_ascension, gmst) = _almanac_equatorial(n, dt)
 
-    # obliquity of the ecliptic in degrees
-    obliquity = T(23.439) - T(4.0e-7) * n
-
-    (sin_λ, cos_λ) = sincosd(ecliptic_longitude)
-    (sin_ε, cos_ε) = sincosd(obliquity)
-
-    # declination and right ascension in degrees
-    declination = asind(unit_clamp(sin_ε * sin_λ))
-    right_ascension = mod(atand(cos_ε * sin_λ, cos_λ), 360)
-
-    # Greenwich mean sidereal time in hours, local mean sidereal time in degrees
-    gmst = mod(T(6.697375) + T(0.0657098242) * n + fractional_hour(T, dt), 24)
+    # local mean sidereal time in degrees
     lmst = mod(15 * gmst + obs.longitude, 360)
 
     # hour angle in degrees, wrapped once into [-180, 180] like the original code
@@ -116,6 +89,5 @@ function _solar_position(obs::Observer{T}, dt, alg::SOLPOS, ::DefaultRefraction)
     return _solar_position(obs, dt, alg, HUGHES{T}(T(101325), T(15)))
 end
 
-# SOLPOS applies its Zimmerman refraction correction by default (which is Hughes)
 result_type(::Type{SOLPOS}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

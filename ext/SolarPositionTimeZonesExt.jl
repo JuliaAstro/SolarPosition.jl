@@ -1,14 +1,7 @@
 """
 TimeZones support for SolarPosition.jl.
 
-`ZonedDateTime` inputs and timezone aware sunrise/sunset results live here rather than in
-the package proper, so that loading SolarPosition does not pull in TimeZones and, through
-it, TZJData, Downloads and LibCURL. This is invisible in practice: a `ZonedDateTime` or a
-`TimeZone` cannot be constructed without TimeZones being loaded, which is exactly what
-triggers this extension.
-
-Every method here converts to UTC and delegates to the `DateTime` method in the package,
-converting back into the given zone where the result is itself a time.
+This module adds support for `ZonedDateTime` inputs and timezone aware sunrise/sunset.
 """
 module SolarPositionTimeZonesExt
 
@@ -25,7 +18,9 @@ using SolarPosition.Utilities: SPA, TransitSunriseSunset, _transit_sunrise_sunse
     _transit_sunrise_sunset_impl, next_solar_noon, next_sunrise, next_sunset,
     previous_solar_noon, previous_sunrise, previous_sunset, transit_sunrise_sunset
 
-# ------------------------------------------------------------------ solar position
+const ZonedVector = Union{
+    AbstractVector{ZonedDateTime}, AbstractVector{Union{DateTime, ZonedDateTime}},
+}
 
 function Positioning.solar_position(
         obs::AbstractObserver{T},
@@ -39,20 +34,7 @@ end
 function Positioning.solar_position!(
         pos::StructArrays.StructVector{T},
         obs::AbstractObserver,
-        dts::AbstractVector{ZonedDateTime},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: AbstractSolPos}
-    @inbounds for i in eachindex(dts, pos)
-        pos[i] = solar_position(obs, dts[i], alg, refraction)
-    end
-    return pos
-end
-
-function Positioning.solar_position!(
-        pos::StructArrays.StructVector{T},
-        obs::AbstractObserver,
-        dts::AbstractVector{Union{DateTime, ZonedDateTime}},
+        dts::ZonedVector,
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: AbstractSolPos}
@@ -64,21 +46,7 @@ end
 
 function Positioning.solar_position(
         obs::AbstractObserver{T},
-        dts::AbstractVector{ZonedDateTime},
-        alg::SolarAlgorithm = PSA(),
-        refraction::RefractionAlgorithm = DefaultRefraction(),
-    ) where {T <: Real}
-    RetType = result_type(
-        typeof(alg), typeof(refraction), _result_eltype(T, refraction),
-    )
-    pos = StructArrays.StructVector{RetType}(undef, length(dts))
-    solar_position!(pos, obs, dts, alg, refraction)
-    return pos
-end
-
-function Positioning.solar_position(
-        obs::AbstractObserver{T},
-        dts::AbstractVector{Union{DateTime, ZonedDateTime}},
+        dts::ZonedVector,
         alg::SolarAlgorithm = PSA(),
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {T <: Real}
@@ -101,7 +69,6 @@ Positioning.calculate_deltat(datetime::ZonedDateTime) =
 Positioning.calculate_deltat(::Type{T}, datetime::ZonedDateTime) where {T <: Real} =
     T(calculate_deltat(datetime))
 
-# the interpolant span accepts zoned endpoints
 Positioning._as_utc(zdt::ZonedDateTime) = DateTime(zdt, UTC)
 
 # --------------------------------------------------------- sunrise, sunset, transit

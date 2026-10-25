@@ -149,47 +149,33 @@ function _solar_position(
 end
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::Interpolated) where {T <: Real}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
-    return _solar_position(spa_obs, dt, alg)
+    return _solar_position(_spa_observer(obs), dt, alg)
 end
 
-# DefaultRefraction resolves exactly as it does for the wrapped SPA
 function _solar_position(
         obs::AbstractObserver{T},
         dt,
         alg::Interpolated,
         ::DefaultRefraction,
     ) where {T <: Real}
-    spa = alg.algorithm
-    return _solar_position(
-        obs,
-        dt,
-        alg,
-        SPARefraction{T}(
-            pressure = T(spa.pressure),
-            temperature = T(spa.temperature),
-            atmos_refract = T(spa.atmos_refract),
-        ),
-    )
+    return _solar_position(obs, dt, alg, _spa_refraction(T, alg.algorithm))
 end
 
 function solar_position!(
         pos::StructArrays.StructVector{S},
         obs::AbstractObserver{T},
         dts::AbstractVector{DateTime},
-        alg::Interpolated,
+        alg::Union{SPA, Interpolated},
         refraction::RefractionAlgorithm = DefaultRefraction(),
     ) where {S <: AbstractSolPos, T <: Real}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    spa_obs = _spa_observer(obs)
     @inbounds for i in eachindex(dts, pos)
         pos[i] = solar_position(spa_obs, dts[i], alg, refraction)
     end
     return pos
 end
 
-# Interpolated mirrors SPA: SolPos with NoRefraction, ApparentSolPos with any refraction
-result_type(::Type{<:Interpolated}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
-result_type(::Type{<:Interpolated}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} =
+result_type(::Type{<:Interpolated}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}
 
 """
@@ -208,7 +194,7 @@ function solar_rate(
         dt::DateTime,
         alg::Interpolated,
     ) where {T <: Real}
-    spa_obs = SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
+    spa_obs = _spa_observer(obs)
     p1 = _solar_position(spa_obs, dt - Dates.Second(1), alg)
     p2 = _solar_position(spa_obs, dt + Dates.Second(1), alg)
     # 1800 converts the difference over a two second baseline to degrees per hour

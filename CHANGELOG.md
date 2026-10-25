@@ -22,6 +22,13 @@ Releases before v0.5.0 predate this file. See the
   linkable permalinks, and hover tooltips on identifiers that link to their docstrings,
   via [DocumenterCodeBlocks.jl](https://github.com/fredrikekre/DocumenterCodeBlocks.jl)
 - Compat widened to DocStringExtensions 0.10
+- A new algorithm without a `DefaultRefraction` method now falls back to `NoRefraction`
+  [#136](https://github.com/JuliaAstro/SolarPosition.jl/pull/136)
+
+### Fixed
+
+- `Walraven` azimuth is now always in [0°, 360°). It could previously return exactly 360°
+  [#136](https://github.com/JuliaAstro/SolarPosition.jl/pull/136)
 
 ## v0.5.0 - 2026-07-31
 

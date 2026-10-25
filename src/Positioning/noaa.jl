@@ -35,12 +35,6 @@ NOAA() = NOAA(67.0)  # default delta_t value (2020 default from pvlib)
 
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::NOAA) where {T}
-    δt = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
-
     # Julian century since J2000.0, at precision T
     jc = julian_century(T, dt)
 
@@ -117,6 +111,5 @@ function _solar_position(obs::Observer{T}, dt, alg::NOAA, ::DefaultRefraction) w
     return _solar_position(obs, dt, alg, HUGHES{T}())
 end
 
-# NOAA with DefaultRefraction returns ApparentSolPos (uses HUGHES refraction)
 result_type(::Type{NOAA}, ::Type{DefaultRefraction}, ::Type{T}) where {T} =
     ApparentSolPos{T}

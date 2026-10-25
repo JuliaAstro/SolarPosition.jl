@@ -14,6 +14,8 @@ exclude = [
   "^https://www\\.timeanddate\\.com/.*$",
   # This site does not send its intermediate certificate, so TLS verification fails
   "^https://pvpmc\\.sandia\\.gov/.*$",
+  # This site resets connections from automated clients
+  "^https://aa\\.usno\\.navy\\.mil/.*$",
 ]
 
 exclude_path = ["docs/build"]

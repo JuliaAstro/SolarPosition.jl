@@ -87,23 +87,8 @@ function _solar_position(obs::Observer{T}, dt::DateTime, ::Walraven) where {T}
     az = rad2deg(asin(unit_clamp(cos_d * sin_ha / cos_el)))
 
     # azimuth quadrant assignment - Spencer (1989) correction for all longitudes
-    cos_az = sin_d - sin_el * obs.sin_lat
-
-    if (cos_az >= 0) && (sin(deg2rad(az)) < 0)
-        az = 360 + az
-    end
-
-    if cos_az < 0
-        az = 180 - az
-    end
+    az = _spencer_quadrant(az, sin_d - sin_el * obs.sin_lat)
 
     elevation_deg = rad2deg(el)
     return SolPos{T}(az, elevation_deg, 90 - elevation_deg)
 end
-
-function _solar_position(obs, dt, alg::Walraven, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# Walraven with DefaultRefraction returns SolPos (no refraction by default)
-result_type(::Type{Walraven}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}

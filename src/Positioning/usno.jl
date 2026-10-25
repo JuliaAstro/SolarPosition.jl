@@ -32,11 +32,7 @@ USNO() = USNO(67.0, 1)  # default delta_t value and gmst_option
 
 
 function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: Real}
-    δt::T = if alg.delta_t === nothing
-        calculate_deltat(T, dt)
-    else
-        T(alg.delta_t)
-    end
+    δt = _resolve_deltat(T, alg, dt)
 
     # days since J2000.0 (UT), magnitude-safe at precision T
     D = julian_day_j2000(T, dt)
@@ -50,8 +46,7 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
     q = mod(q, 360)
 
     # geocentric apparent ecliptic longitude of the sun (adjusted for aberration) [deg]
-    L = q + T(1.915) * sind(g) + T(0.02) * sind(2 * g)
-    L = mod(L, 360)
+    L = _almanac_ecliptic_longitude(q, g)
 
     # mean obliquity of the ecliptic [deg]
     ϵ = T(23.439) - T(0.00000036) * D
@@ -112,10 +107,3 @@ function _solar_position(obs::Observer{T}, dt::DateTime, alg::USNO) where {T <: 
 
     return SolPos{T}(mod(azimuth, 360), elevation, 90 - elevation)
 end
-
-function _solar_position(obs, dt, alg::USNO, ::DefaultRefraction)
-    return _solar_position(obs, dt, alg, NoRefraction())
-end
-
-# USNO with DefaultRefraction returns SolPos (no refraction by default)
-result_type(::Type{USNO}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}

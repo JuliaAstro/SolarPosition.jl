@@ -1,7 +1,7 @@
 module Utilities
 
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS, TYPEDSIGNATURES
-using ..Positioning: Observer, SPA, SolarAlgorithm, calculate_deltat
+using ..Positioning: Observer, SPA, SolarAlgorithm
 import Dates: DateTime, Date, Day
 
 include("spa.jl")

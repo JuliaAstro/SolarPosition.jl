@@ -332,6 +332,10 @@ function _solar_position(obs, dt, alg::SolarAlgorithm, ::NoRefraction)
     return _solar_position(obs, dt, alg)
 end
 
+function _solar_position(obs, dt, alg::SolarAlgorithm, ::DefaultRefraction)
+    return _solar_position(obs, dt, alg, NoRefraction())
+end
+
 function _solar_position(obs, dt, alg::SolarAlgorithm, refraction::RefractionAlgorithm)
     pos = _solar_position(obs, dt, alg)
 
@@ -449,6 +453,7 @@ end
 
 # helper function to determine return type based on refraction
 result_type(::Type{<:SolarAlgorithm}, ::Type{NoRefraction}, ::Type{T}) where {T} = SolPos{T}
+result_type(::Type{<:SolarAlgorithm}, ::Type{DefaultRefraction}, ::Type{T}) where {T} = SolPos{T}
 result_type(::Type{<:SolarAlgorithm}, ::Type{<:RefractionAlgorithm}, ::Type{T}) where {T} =
     ApparentSolPos{T}
 

@@ -27,6 +27,8 @@ Releases before v0.5.0 predate this file. See the
 
 ### Fixed
 
+- `SPA` and `Interpolated` default refraction is now applied down to an elevation of
+  -(0.26667° + `atmos_refract`), matching NREL SPA and pvlib [#140](https://github.com/JuliaAstro/SolarPosition.jl/issues/140)
 - `Walraven` azimuth is now always in [0°, 360°). It could previously return exactly 360°
   [#136](https://github.com/JuliaAstro/SolarPosition.jl/pull/136)
 

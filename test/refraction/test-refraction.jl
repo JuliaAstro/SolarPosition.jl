@@ -101,11 +101,17 @@ elevations = test_elevation_angles()
 end
 
 @testset "SPARefraction refraction limit" begin
-    @test refraction(SPARefraction(101325.0, 12.0, -1.0), -2.0) == 0.0
-    @test refraction(SPARefraction(101325.0, 12.0, -3.0), -2.0) != 0.0
-    @test refraction(SPARefraction(101325.0, 12.0, -2.0), -2.0) != 0.0
+    # refraction is applied for elevations >= -(0.26667 + atmos_refract)
+    @test refraction(SPARefraction(101325.0, 12.0, 1.0), -2.0) == 0.0
+    @test refraction(SPARefraction(101325.0, 12.0, 3.0), -2.0) != 0.0
+    @test refraction(SPARefraction(101325.0, 12.0, 2.0), -2.0) != 0.0
     @test refraction(SPARefraction(101325.0, 12.0, 0.0), -0.26667) != 0.0
-    @test refraction(SPARefraction(101325.0, 12.0, 0.0), -0.26668) != 1.0
+    @test refraction(SPARefraction(101325.0, 12.0, 0.0), -0.26668) == 0.0
+
+    # the default cutoff is -0.83337°, as in NREL SPA and pvlib (#140)
+    @test refraction(SPARefraction(), -0.8333) > 0.5
+    @test refraction(SPARefraction(), -0.8334) == 0.0
+    @test refraction(SPARefraction(), 0.0) > 0.4
 end
 
 @testset "SPARefraction constructor variants" begin
@@ -113,13 +119,13 @@ end
     ref1 = SPARefraction()
     @test ref1.pressure == 101325.0
     @test ref1.temperature == 12.0
-    @test ref1.atmos_refract == -0.5667
+    @test ref1.atmos_refract == 0.5667
 
     # with pressure and temperature
     ref2 = SPARefraction(100000.0, 15.0)
     @test ref2.pressure == 100000.0
     @test ref2.temperature == 15.0
-    @test ref2.atmos_refract == -0.5667
+    @test ref2.atmos_refract == 0.5667
 
     # refraction works
     obs = Observer(45.0, 10.0, 100.0)

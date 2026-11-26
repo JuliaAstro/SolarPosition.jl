@@ -416,15 +416,12 @@ end
     return SPAObserver{T}(obs.latitude, obs.longitude, obs.altitude)
 end
 
-# SPARefraction built at precision T from the atmosphere fields of an SPA. The two use
-# opposite sign conventions: SPA.atmos_refract is the NREL/pvlib refraction at sunrise
-# (+0.5667, cutoff -(0.26667 + atmos_refract)), SPARefraction.atmos_refract is the
-# solposx refraction limit (-0.5667, cutoff atmos_refract - 0.26667), hence the negation.
+# SPARefraction built at precision T from the atmosphere fields of an SPA
 @inline function _spa_refraction(::Type{T}, alg::SPA) where {T <: Real}
     return SPARefraction{T}(
         pressure = T(alg.pressure),
         temperature = T(alg.temperature),
-        atmos_refract = -T(alg.atmos_refract),
+        atmos_refract = T(alg.atmos_refract),
     )
 end
 

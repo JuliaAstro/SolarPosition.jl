@@ -32,6 +32,7 @@ jobs:
     name: Julia ${{ inputs.version }} - ${{ inputs.os }} - ${{ inputs.arch }} - ${{ github.event_name }}
     runs-on: ${{ inputs.os }}
     continue-on-error: ${{ inputs.allow_failure }}
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v7

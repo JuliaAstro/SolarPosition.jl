@@ -13,9 +13,9 @@ Solar Position Algorithm (SPA).
 $(TYPEDFIELDS)
 
 # Constructor
-- `SPARefraction()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C, atmos_refract = -0.5667°
+- `SPARefraction()`: Uses default parameters: pressure = 101325 Pa, temperature = 12 °C, atmos_refract = 0.5667°
 - `SPARefraction(pressure, temperature)`: Specify custom pressure [Pa] and temperature [°C], uses default atmos_refract
-- `SPARefraction(pressure, temperature, atmos_refract)`: Also specify refraction limit [degrees]
+- `SPARefraction(pressure, temperature, atmos_refract)`: Also specify the refraction at sunrise and sunset [degrees]
 
 # Notes
 The equation to calculate the refraction correction is given by:
@@ -27,9 +27,11 @@ The equation to calculate the refraction correction is given by:
 where ``el`` is the true solar elevation angle, ``P`` is the annual average local
 air pressure in hPa/mbar, and ``T`` is the annual average local air temperature in °C.
 
-The refraction limit parameter determines the solar elevation angle below which
-refraction is not applied, as the sun is assumed to be below horizon. Note that
-the sun diameter (0.26667°) is added to this limit.
+`atmos_refract` is the approximate atmospheric refraction at sunrise and sunset, with the
+same sign convention as NREL SPA, pvlib and [`SPA`](@ref SolarPosition.Positioning.SPA).
+Refraction is applied for true elevations ≥ -(0.26667° + `atmos_refract`), where 0.26667°
+is the solar semidiameter. Below that the sun is fully below the horizon and the
+correction is zero. The default of 0.5667° gives a cutoff of -0.83337°.
 
 # Literature
 This method was described by [RA04](@cite).
@@ -45,7 +47,7 @@ spa = SPARefraction()
 spa_custom = SPARefraction(101325.0, 25.0)  # 25°C temperature
 
 # With custom refraction limit
-spa_limit = SPARefraction(101325.0, 12.0, -1.0)  # Don't correct below -1°
+spa_limit = SPARefraction(101325.0, 12.0, 1.0)  # Don't correct below -1.26667°
 
 # Apply refraction correction to elevation angle
 elevation = 30.0  # degrees
@@ -58,8 +60,8 @@ apparent_elevation = elevation + refraction_correction
     pressure::T = 101325.0
     "Annual average temperature [°C]"
     temperature::T = 12.0
-    "Minimum elevation angle for refraction correction [degrees]"
-    atmos_refract::T = -0.5667
+    "Approximate atmospheric refraction at sunrise and sunset [degrees]. Refraction is applied for elevations ≥ -(0.26667 + atmos_refract)."
+    atmos_refract::T = 0.5667
 end
 
 # mixed argument types promote, so a ForwardDiff.Dual pressure alongside a Float64
@@ -67,7 +69,7 @@ end
 # that @kwdef generates routes through the three argument form, so it promotes too.
 function SPARefraction(pressure::Real, temperature::Real)
     T = promote_type(typeof(pressure), typeof(temperature))
-    return SPARefraction{T}(pressure, temperature, T(-0.5667))
+    return SPARefraction{T}(pressure, temperature, T(0.5667))
 end
 
 function SPARefraction(pressure::Real, temperature::Real, atmos_refract::Real)
@@ -79,8 +81,8 @@ function _refraction(model::SPARefraction{T}, elevation_deg::Real) where {T <: R
     # Convert pressure from Pascal to hPa/mbar
     pressure_hPa = model.pressure / T(100.0)
 
-    # Only apply correction when sun is above horizon accounting for refraction
-    if elevation_deg < model.atmos_refract - T(0.26667)
+    # no correction once the upper limb of the sun is below the refracted horizon
+    if elevation_deg < -(T(0.26667) + model.atmos_refract)
         return T(0.0)
     end
 

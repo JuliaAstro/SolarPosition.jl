@@ -24,9 +24,16 @@ Releases before v0.5.0 predate this file. See the
 - Compat widened to DocStringExtensions 0.10
 - A new algorithm without a `DefaultRefraction` method now falls back to `NoRefraction`
   [#136](https://github.com/JuliaAstro/SolarPosition.jl/pull/136)
+- **Breaking:** `SPARefraction` now uses the NREL SPA and pvlib sign convention for
+  `atmos_refract`, the same as `SPA`. The default is 0.5667° instead of -0.5667°, and
+  refraction is applied for elevations ≥ -(0.26667° + `atmos_refract`). The default
+  cutoff of -0.83337° is unchanged. A custom limit `x` passed before should now be passed
+  as `-x` [#140](https://github.com/JuliaAstro/SolarPosition.jl/issues/140)
 
 ### Fixed
 
+- `SPA` and `Interpolated` default refraction is now applied down to an elevation of
+  -(0.26667° + `atmos_refract`), matching NREL SPA and pvlib [#140](https://github.com/JuliaAstro/SolarPosition.jl/issues/140)
 - `Walraven` azimuth is now always in [0°, 360°). It could previously return exactly 360°
   [#136](https://github.com/JuliaAstro/SolarPosition.jl/pull/136)
 

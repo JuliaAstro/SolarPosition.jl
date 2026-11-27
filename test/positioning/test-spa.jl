@@ -48,6 +48,20 @@
         end
     end
 
+    @testset "Refraction near the horizon" begin
+        # sun just below and just above the horizon should still get refraction (#140)
+        conds_h = spa_horizon_conditions()
+        df_h = expected_spa_horizon()
+        for ((dt, lat, lon), row) in zip(eachrow(conds_h), eachrow(df_h))
+            res = solar_position(Observer(lat, lon), dt, SPA())
+            @test isapprox(res.elevation, row.elevation, atol = 1.0e-8)
+            @test isapprox(res.zenith, row.zenith, atol = 1.0e-8)
+            @test isapprox(res.azimuth, row.azimuth, atol = 1.0e-8)
+            @test isapprox(res.apparent_elevation, row.apparent_elevation, atol = 1.0e-8)
+            @test isapprox(res.apparent_zenith, row.apparent_zenith, atol = 1.0e-8)
+        end
+    end
+
     @testset "SPA refraction at high elevation" begin
         times = [ZonedDateTime(2020, 3, 23, 12, 0, 0, tz"UTC")]
         obs = Observer(0.0, 0.0)  # Equator at prime meridian

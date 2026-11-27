@@ -28,7 +28,7 @@ struct SPA <: SolarAlgorithm
     pressure::Float64
     "Annual average air temperature [°C]"
     temperature::Float64
-    "Approximate atmospheric refraction at sunrise/sunset [degrees]"
+    "Approximate atmospheric refraction at sunrise/sunset [degrees]. Refraction is applied for elevations ≥ -(0.26667 + atmos_refract)."
     atmos_refract::Float64
 
     function SPA(

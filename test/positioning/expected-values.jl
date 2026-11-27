@@ -337,6 +337,32 @@ function expected_spa()
     return DataFrame(reduce(hcat, values)', columns)
 end
 
+function spa_horizon_conditions()
+    return DataFrame(
+        time = fill(ZonedDateTime(2020, 10, 17, 5, 48, 45, tz"UTC"), 2),
+        latitude = [45.0, 45.0],
+        longitude = [8.0, 8.75],
+    )
+end
+
+function expected_spa_horizon()
+    columns = [
+        :elevation,
+        :apparent_elevation,
+        :zenith,
+        :apparent_zenith,
+        :azimuth,
+        :equation_of_time,
+    ]
+
+    values = [
+        [-0.4805421442662726, 0.07554508353047618, 90.48054214426627, 89.92445491646953, 102.90221228375816, 14.703170867880544],
+        [0.03584365389941399, 0.511875885586415, 89.96415634610058, 89.48812411441358, 103.4320825166082, 14.703170867880544],
+    ]
+
+    return DataFrame(reduce(hcat, values)', columns)
+end
+
 function expected_iqbal()
     columns = [:elevation, :zenith, :azimuth]
 

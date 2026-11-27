@@ -25,16 +25,18 @@ include("test/positioning/expected-values.jl")
 end
 ```
 
+Hooks are defined in `.pre-commit-config.yaml` and run with either `prek` or `pre-commit`, whichever is installed. The two take the same commands, so `prek run` and `pre-commit run` are interchangeable below.
+
 **Format code (Runic.jl):**
 
 ```bash
-pre-commit run runic --all-files
+prek run runic --all-files
 ```
 
 **Run all linting/formatting checks:**
 
 ```bash
-pre-commit run -a
+prek run -a
 ```
 
 **Build docs:**
@@ -45,7 +47,7 @@ julia --project=docs docs/make.jl
 
 **Run benchmarks** (AirspeedVelocity.jl: `benchpkg SolarPosition --rev=main,dirty`, or include `benchmark/benchmarks.jl` and `run(SUITE)` with BenchmarkTools).
 
-Note: the pre-commit `no-commit-to-branch` hook blocks commits to `main` — always work on a branch. `test/`, `docs/`, `benchmark/`, and `examples/` are workspace subprojects (root `Project.toml` `[workspace]`) with their own `Project.toml` that depends on the package via `[sources]` path — no `Pkg.develop` needed.
+Note: the `no-commit-to-branch` hook blocks commits to `main` — always work on a branch. `test/`, `docs/`, `benchmark/`, and `examples/` are workspace subprojects (root `Project.toml` `[workspace]`) with their own `Project.toml` that depends on the package via `[sources]` path — no `Pkg.develop` needed.
 
 ## Architecture
 
@@ -89,7 +91,7 @@ Minimum Julia: **1.10** (LTS). Extensions only activate once their trigger packa
 
 ## Code Style
 
-- Formatter: **Runic.jl** (enforced via pre-commit). Run before committing.
+- Formatter: **Runic.jl** (enforced via the pre-commit hooks). Run before committing.
 - Imports: All used symbols must be explicitly imported (checked by ExplicitImports.jl).
 - Package quality is checked with **Aqua.jl** and type inference with **JET.jl** (Julia 1.12 and 1.13 only) — both run as part of `Pkg.test()` via `test/linting.jl`.
 - Docstrings use **DocStringExtensions** macros: `$(TYPEDEF)` + `$(TYPEDFIELDS)` for structs, `$(TYPEDSIGNATURES)` for functions.
